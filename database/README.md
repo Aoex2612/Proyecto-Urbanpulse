@@ -1,6 +1,8 @@
 # Inicialización de Base de Datos — UrbanPulse
 
+
 Este directorio contiene la configuración y los scripts necesarios para desplegar la base de datos PostgreSQL del proyecto **UrbanPulse** mediante contenedores con Docker Compose.
+
 
 ---
 
