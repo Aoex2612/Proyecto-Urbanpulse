@@ -1,6 +1,10 @@
 # Inicialización de Base de Datos — UrbanPulse
 
+<<<<<<< HEAD
 Este directorio contiene la configuración y los scripts necesarios para desplegar la base de datos PostgreSQL del proyecto **UrbanPulse** mediante contenedores con Docker Compose.
+=======
+Este directorio contiene la configuración y los scripts necesarios para desplegar y poblar la base de datos PostgreSQL del proyecto **UrbanPulse** mediante contenedores con Docker Compose.
+>>>>>>> e223635 (fix: .idea removed)
 
 ---
 
@@ -31,6 +35,7 @@ Este directorio contiene la configuración y los scripts necesarios para despleg
 Proyecto-Urbanpulse/
 ├── database/
 │   ├── init/
+<<<<<<< HEAD
 │   │   └── diagramUrbanPulse.sql   # ENUMs, tablas, ForeignKeys, índices y triggers
 │   └── README.md                   
 └── docker-compose.yml              # Orquestación del servicio PostgreSQL
@@ -95,3 +100,9 @@ El schema define **3 tipos ENUM** y **11 tablas**:
 | `incident_contexts` | Vínculo incidencia ↔ observación ambiental (N:M) |
 
 Consulta [`BD.md`](../BD.md) en la raíz del proyecto para la documentación detallada del modelo, cardinalidades y trazabilidad con requisitos funcionales.
+=======
+│   │   ├── 01-schema.sql       # Creación de tablas, restricciones e índices
+│   │   └── 02-seed-data.sql    # Datos iniciales de prueba (opcional)
+│   └── README.md
+└── docker-compose.yml          # Orquestación del servicio PostgreSQL
+>>>>>>> e223635 (fix: .idea removed)
