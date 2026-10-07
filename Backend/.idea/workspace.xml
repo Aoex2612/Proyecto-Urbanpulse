@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+<<<<<<< HEAD
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
@@ -80,4 +81,12 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+=======
+  <component name="ProjectId" id="3KKaRxyK8sTBhgwl7UQsJZFLG15" />
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;last_opened_file_path&quot;: &quot;/home/alejandro/Documentos/ETSII/4 curso/Desarrollo Software en Plataformas en la Nube/Proyecto Cloud Computing&quot;
+  }
+}</component>
+>>>>>>> f34fe2f (Revert "Feature/docker compose")
 </project>
