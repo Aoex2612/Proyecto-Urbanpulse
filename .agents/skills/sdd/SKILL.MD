@@ -1,57 +1,30 @@
 ---
 name: sdd
-description: Úsala siempre que trabajes con Spec-Driven Development en este proyecto
-(docs/constitution.md o cualquier archivo dentro de specs/) - redactar, revisar o cambiar
-specs, planes y tareas, o implementar y validar tareas de una spec.
+description: Úsala siempre que trabajes con Spec-Driven Development en este proyecto (docs/constitution.md o cualquier archivo dentro de specs/) - redactar, revisar o cambiar specs, planes y tareas, o implementar y validar tareas de una spec.
 ---
 # Spec-Driven Development (SDD)
 ## Flujo
-Constitución → Spec → Clarificación → Plan → Tareas → Implementación → Validación →
+Constitución → Spec → Clarificación(aplicable tras plan y tareas) → Plan → Tareas → Implementación → Validación →
 Cambio.
+
+## Normas
+- Lee los archivos en `/constitution` y cada spec en `/features/NNN-nombre/spec.md` antes de empezar a trabajar en una feature, si no la has leido ya y las tienes en el contexto.
+- Si necesitas aclarar algo, en `/docs/NNN-feature/` estará la documentación de la implementación de la feature, separadas por tareas. Si no está, pregunta al usuario antes de asumir nada.
+- En `docs/NNN-feature/repare.md` se encuentran los problemas encontrados durantre la validación de la feature. Debe eliminarse tras su uso en una implementación posterior. Si existe, debes tenerlo en cuenta antes de implementar de nuevo la feature.
 - Nunca pases a la siguiente fase sin la aprobación explícita del usuario.
-- La spec manda: si algo no está en la spec, no se implementa. Si falta una decisión,
-para y pregunta.
-- Un cambio de requisitos se hace primero en la spec, luego en el plan y las tareas, y
-por último en el código.
-- Cada spec vive en su carpeta: `specs/NNN-nombre/` con `spec.md`, `plan.md` y
-`tasks.md`.
-- Al terminar cada fase, actualiza `MEMORY.md`.
-## Plantilla de spec (spec.md)
-```
-# Spec NNN — <Nombre>
-Estado: borrador | aprobada | implementada
-## Contexto y objetivo
-## Usuarios
-## Historias de usuario
-- HU-1. Como <rol>, quiero <acción> para <beneficio>.
-## Definiciones (solo si hay términos que puedan interpretarse de varias formas)
-## Requisitos funcionales
-## Requisitos no funcionales
-## Casos límite
-## Fuera de alcance
-## Criterios de finalización
-## Dudas abiertas
-- [NECESITA ACLARACIÓN] <duda>
-```
-La spec describe el QUÉ y el POR QUÉ. Nada de stack, arquitectura ni nombres de archivos.
-## Requisitos en EARS (en español)
-- RF-x: CUANDO <evento>, EL SISTEMA <respuesta>.
-- RF-x: SI <condición no deseada>, ENTONCES EL SISTEMA <respuesta>.
-- RF-x: MIENTRAS <estado>, EL SISTEMA <respuesta>.
-- RF-x: EL SISTEMA <comportamiento permanente>.
-Cada RF debe ser verificable: nada de "rápido", "intenso" o "bonito" sin un criterio
-medible.
-## Plan (plan.md)
-Archivos y responsabilidades · Funciones puras (con "hoy" como parámetro) · Algoritmo en
-pseudocódigo · Interfaz · Decisiones justificadas con su alternativa descartada ·
-Estrategia de tests con `node --test`. Indica qué RF cubre cada parte.
-## Tareas (tasks.md)
-```
-- [ ] **Tn. <Descripción>.** RF-x, RF-y
-- Hecho cuando: <comprobación verificable>.
-```
-Máximo 20-30 min por tarea, en orden de dependencia. Si salen más de 10, propón dividir
-la spec.
-## Implementación
-Una sola tarea cada vez: tests primero (en rojo), después el código, `node --test` en
-verde, marcar la tarea y parar.
+- Un cambio de requisitos se hace primero en la spec, luego en el plan y las tareas, y por último en el código.
+- Cada spec vive en su carpeta: `/features/NNN-nombre` con `spec.md`, `plan.md` y `tasks.md`.
+- La spec manda: si algo no está en la spec, no se implementa. 
+- Si falta una decisión o necesitas más información, para y pregunta. 
+- Al crear una feature, se añade a `/constitution/roadmap.md` (si no está) en la sección "Siguiente" y se crea la carpeta `/features/NNN-nombre-feature` con `spec.md`, `plan.md` y `tasks.md`.
+- Si se pide implementar algo fuera de la spec, se actualiza `spec.md`, `plan.md` y `tasks.md` antes de implementarlo.
+- Al comenzar una implementación, se moverá la feature a "En curso" en `constitution/roadmap.md`.
+- Tras cada implementación, redacta en `/docs/NNN-feature/NN-task.md` un resumen de que se hecho en esa tarea/tareas principales, incluyendo decisiones de diseño y problemas encontrados junto a la solución aplicada. Debe tener un apartado para cada subtarea de la tarea principal, además del global de la tarea principal. Debe ser un resumen que sirva como contexto a otro agente, asique debe tener suficiente información, pero sin sobrecargar el contexto.
+- Tras acabar una tarea, marca la tarea como completada en `tasks.md`. Esto aplica a subtareas también, y debe hacerse en el orden de dependencia de las tareas.
+- Tras cada implementación deben pasar los tests de código, y debe verse reflejada la cobertura de tests de cada feature en `/constitution/roadmap.md`.
+- Al acabar la implementación de la feature, moverla feature a "En validación" en `constitution/roadmap.md`.
+- Si falla la validación, se debe mover la feature a "En curso" en `/constitution/roadmap.md` y arreglar lo que haya fallado.
+- Tras completar la implementación y validación, mover la feature a "Hecho" en `/constitution/roadmap.md`.
+- El archivo `/docs/NNN-feature/qa-note.md` dará un resumen de la validación de la feature y de como debe probarse. Debe ser fácil de seguir para podre probar manualmente la feature, y debe incluir los criterios de aceptación de la spec, los casos límite y los errores que se han probado. Si hay algo que no se ha podido probar, debe indicarse.   
+- Para realizar cambios en la spec, plan o tareas, se debe mover la feature a "En mejora" en `/constitution/roadmap.md`. Si está aqui, no se mueve a "En curso", se implementa y se valida, y tras ello se mueve a "Hecho" en `/constitution/roadmap.md`.
+- Las plantillas funcionan asi: Sustituye todo lo que esté entre `<…>` y borra las notas en _cursiva_.
