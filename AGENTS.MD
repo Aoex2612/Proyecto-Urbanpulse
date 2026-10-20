@@ -1,45 +1,46 @@
-# AGENTS.md — <proyecto>
+# AGENTS.md — UrbanPulse
 
-Plataforma cloud para la gestión inteligente de incidencias urbanas. Recibe información de reportes enviados por los ciudadanos con datos contextuales de la ciudad para mejorar su clasificación, priorización, seguimiento, análisis y resolución. (clima, tráfico, activos urbanos)
+Plataforma integral para la gestión, monitorización y resolución de incidencias urbanas en tiempo real. Arquitectura desacoplada con backend en Java/Spring Boot, frontend en React/Vite y persistencia en PostgreSQL.
 
 ## Estructura del proyecto
-- `frontend/` — Aplicación web (React, Vite, ESLint, assets y configuración del cliente)
-- `Backend/` — Servicio backend en Java con Spring Boot y Maven (`pom.xml`, código fuente en `src/` y compilación en `target/`)
-- `features/` — Especificaciones, artefactos o documentación de las diferentes funcionalidades (`NNN-nombre-feature`)
-- `docs/` — Documentación técnica del proyecto, incluyendo registros de decisiones de arquitectura (`docs/ADR/`)
-- `constitution/` — Reglas clave, hoja de ruta, stack tecnológico y misión del proyecto (`tech-stack.md`, `roadmap.md`, `mission.md`)
-- `.github/` — Workflows de integración continua (CI/CD), plantillas de PR e issues para GitHub
 
-## Comandos 
-### Backend (Java/Spring Boot)
-- Ejecutar: `cd Backend && mvn spring-boot:run`
-- Tests: `cd Backend && mvn test`
-- Lint/formato: `cd Backend && mvn verify`
+- `Backend/` — Código fuente del servidor (Spring Boot, Java, Maven).
+- `frontend/` — Aplicación web cliente (React 19, Vite).
+- `database/` — Configuración Docker y scripts de inicialización SQL (`diagramUrbanPulse.sql`).
+- `constitution/` — Directrices de gobernanza, visión técnica, principios y roadmap del proyecto.
+- `docs/` — Documentación técnica de diseño y Architectural Decision Records (ADRs).
+- `features/` — Especificaciones (`spec.md`), planes técnicos (`plan.md`) y desglose de tareas (`tasks.md`) de cada funcionalidad siguiendo SDD.
 
-### Frontend (react/vite)
-- **Backend:** Java 21 con Spring Boot. Código y comentarios en inglés.
-- **Frontend:** React + Vite con configuración de ESLint.
-- **Commits:** Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
-- **Ramas:** GitHub Flow (`feature/nombre-feature`, `fix/nombre-bug`).
+## Comandos
 
+- BD Local: `docker compose up -d`
+- Backend Tests: `cd Backend && mvn clean test`
+- Backend Dev: `cd Backend && mvn spring-boot:run`
+- Frontend Dev: `cd frontend && npm run dev`
+- Frontend Lint: `cd frontend && npm run lint`
 
 ## Estilo y convenciones
-- **Backend:** Java 21 con Spring Boot. Comentar cuando sea necesario.
-- **Frontend:** React + Vite con configuración de ESLint.
-- **Commits:** Commits convencionales (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
-- **Ramas:** GitHub Flow (`feature/nombre-feature`, `fix/nombre-bug`).
 
+- Lenguaje: Java 17/21 para backend; JavaScript/React para frontend.
+- Código y nombres: Clases en PascalCase, métodos/variables en camelCase, constantes en UPPER_CASE.
+- Mensajes de commit y documentación: Español técnico o inglés coherente con el equipo.
+- **Documentación de código:** Comentar obligatoriamente con **Javadoc** en el backend (clases, métodos, parámetros `@param`, retornos `@return` y excepciones `@throws`) y de forma análoga con **JSDoc** en el frontend (componentes, hooks, funciones utilitarias y servicios, indicando parámetros `@param` y retornos `@returns`).
 
-## Flujo de trabajo
+## Flujo de trabajo (SDD)
+
 - Antes de una tarea no trivial, propón un plan y espera mi OK.
 - Una tarea a la vez; al terminar, dime qué cambiaste para que lo revise.
 - Si no estás seguro al 80%, pregunta. No inventes.
+- Ninguna feature se implementa sin su correspondiente especificación (`spec.md`) aprobada.
 
 ## Al terminar cualquier tarea
-- Ejecutar validaciones correspondientes (`mvn verify` en Backend y `npm run lint` / tests en Frontend).
-- Comprobar que no se suban archivos de configuración personal (`.idea/`, `.kate-swp`, etc.) ni credenciales.
+
+- Verificar que los tests unitarios y de integración pasen (`mvn test`, `npm run lint`).
+- Documentar los cambios realizados e indicar el siguiente paso.
 
 ## Documentación
-- Reglas y decisiones técnicas detalladas en `constitution/` (`tech-stack.md`, `roadmap.md`, `mission.md`).
-- Histórico de decisiones de arquitectura en `docs/ADR/`.
-- Especificaciones de casos de uso/funcionalidades en `features/`.
+
+- [Misión y Gobernanza](constitution/mission.md)
+- [Tech Stack y Convenciones](constitution/tech-stack.md)
+- [Roadmap](constitution/roadmap.md)
+- [README Principal](README.md)

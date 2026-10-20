@@ -1,0 +1,145 @@
+/* Estilos del Portal Ciudadano (HomePage) */
+
+.home-container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border, #e5e4e7);
+  margin-bottom: 32px;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  margin: 0;
+}
+
+.brand-badge {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: var(--accent-bg, rgba(170, 59, 255, 0.15));
+  color: var(--accent, #aa3bff);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--accent-border, rgba(170, 59, 255, 0.4));
+}
+
+.logout-button {
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.home-main {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.welcome-card {
+  background-color: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow, 0 4px 6px -2px rgba(0, 0, 0, 0.05));
+}
+
+.welcome-card h2 {
+  font-size: 24px;
+  margin: 0 0 8px 0;
+  color: var(--text-h, #08060d);
+}
+
+.welcome-subtitle {
+  color: var(--text, #6b6375);
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+.user-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border, #e5e4e7);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text, #6b6375);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 15px;
+  color: var(--text-h, #08060d);
+  font-weight: 500;
+}
+
+.role-tag {
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.features-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.feature-card {
+  background-color: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  color: var(--text-h, #08060d);
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: var(--text, #6b6375);
+  line-height: 1.5;
+  margin: 0;
+}
