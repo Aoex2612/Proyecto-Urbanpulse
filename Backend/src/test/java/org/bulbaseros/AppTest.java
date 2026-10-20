@@ -1,38 +1,25 @@
 package org.bulbaseros;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Unit test for simple App.
+ * Pruebas unitarias básicas para verificar la carga inicial de componentes de la aplicación.
+ *
+ * @author UrbanPulse Team
+ * @version 1.0
  */
-public class AppTest 
-    extends TestCase
-{
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
-    }
+class AppTest {
 
     /**
-     * @return the suite of tests being tested
+     * Verifica que la instancia de la aplicación principal pueda ser instanciada correctamente.
      */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
-    }
-
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        assertTrue( true );
+    @Test
+    @DisplayName("Debería instanciar la clase principal App correctamente")
+    void shouldInstantiateApp() {
+        App app = new App();
+        assertNotNull(app);
     }
 }
