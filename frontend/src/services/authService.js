@@ -101,6 +101,43 @@ export const getUser = () => {
   }
 };
 
+/**
+ * Obtiene el rol del usuario autenticado normalizado a mayúsculas.
+ *
+ * @returns {string|null} Rol del usuario en mayúsculas (ej. 'CITIZEN', 'OPERATOR', 'ADMIN') o null si no existe.
+ */
+export const getUserRole = () => {
+  const user = getUser();
+  if (!user || !user.role || typeof user.role !== 'string') {
+    return null;
+  }
+  return user.role.trim().toUpperCase();
+};
+
+/**
+ * Comprueba si el rol del usuario autenticado coincide con alguno de los roles permitidos.
+ *
+ * @param {string[]|string} allowedRoles - Lista de roles permitidos o rol individual requerido.
+ * @returns {boolean} Verdadero si el usuario posee al menos uno de los roles permitidos, falso en caso contrario.
+ */
+export const hasAnyRole = (allowedRoles) => {
+  const currentRole = getUserRole();
+  if (!currentRole) {
+    return false;
+  }
+  if (!allowedRoles) {
+    return false;
+  }
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  if (roles.length === 0) {
+    return false;
+  }
+  const normalizedAllowedRoles = roles.map((role) =>
+    typeof role === 'string' ? role.trim().toUpperCase() : String(role).trim().toUpperCase()
+  );
+  return normalizedAllowedRoles.includes(currentRole);
+};
+
 const authService = {
   register,
   login,
@@ -108,6 +145,8 @@ const authService = {
   getToken,
   isAuthenticated,
   getUser,
+  getUserRole,
+  hasAnyRole,
 };
 
 export default authService;

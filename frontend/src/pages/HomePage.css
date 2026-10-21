@@ -15,7 +15,9 @@
   justify-content: space-between;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--border, #e5e4e7);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .home-brand {
@@ -42,6 +44,30 @@
   border: 1px solid var(--accent-border, rgba(170, 59, 255, 0.4));
 }
 
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.operator-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0284c7;
+  color: #ffffff;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.operator-nav-link:hover {
+  background-color: #0369a1;
+}
+
 .logout-button {
   background-color: transparent;
   color: #ef4444;
@@ -57,6 +83,71 @@
 .logout-button:hover {
   background-color: #ef4444;
   color: #ffffff;
+}
+
+/* Alerta visual de advertencia ante acceso denegado (RF-8, RF-9) */
+.access-denied-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .access-denied-alert {
+    background-color: rgba(146, 64, 14, 0.2);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fef3c7;
+  }
+}
+
+.alert-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.alert-icon {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.alert-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.alert-description {
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.alert-dismiss-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.75;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.alert-dismiss-btn:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .home-main {
@@ -142,4 +233,38 @@
   color: var(--text, #6b6375);
   line-height: 1.5;
   margin: 0;
+}
+
+/* Tarjeta especial para usuarios autorizados con roles OPERATOR o ADMIN (RF-11, RF-12) */
+.operator-feature-card {
+  border-color: #38bdf8;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, var(--bg, #ffffff) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.operator-feature-tag {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0284c7;
+  background-color: rgba(2, 132, 199, 0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.operator-feature-btn {
+  display: inline-block;
+  margin-top: auto;
+  padding-top: 14px;
+  color: #0284c7;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.operator-feature-btn:hover {
+  text-decoration: underline;
 }
