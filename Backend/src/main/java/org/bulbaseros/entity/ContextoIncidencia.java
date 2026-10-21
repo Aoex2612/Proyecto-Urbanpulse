@@ -19,5 +19,5 @@ public class ContextoIncidencia {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("observationId")
     @JoinColumn(name = "observation_id")
-    private Observaciones_Externas observation;
+    private ObservacionesExternas observation;
 }
