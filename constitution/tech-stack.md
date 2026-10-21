@@ -4,16 +4,17 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 
 ## Tecnologías
 
-- **Backend:** Java (JDK 17/21 recomendado), Spring Boot 3.x, Apache Maven.
+- **Backend:** Java (compatible con JDK 17 y JDK 21), Spring Boot 3.4.x, Apache Maven.
   - Paquete base: `org.bulbaseros`
-  - Persistencia: Spring Data JPA / Hibernate
+  - Persistencia: Spring Data JPA / Hibernate.
+  - Utilidad y boilerplate: Lombok (`@Data`, `@Getter`, `@Setter`, etc.) para entidades y DTOs.
   - Seguridad: Spring Security con JWT (`jjwt` 0.12.x) y contraseñas hasheadas con BCrypt.
   - Validación: Bean Validation (`spring-boot-starter-validation`).
   - CORS: Configuración de orígenes cruzados permitiendo clientes de desarrollo (`http://localhost:5173`).
 - **Frontend:** React 19, Vite, Axios, React Router (`react-router-dom`), ESLint.
   - Enrutamiento: React Router para navegación SPA (`/`, `/login`, `/register`).
   - Almacenamiento de sesión: JWT en `localStorage` con interceptor de Axios para cabecera `Authorization: Bearer <token>` y captura de 401 para limpieza de sesión.
-- **Base de datos:** PostgreSQL 16 (desplegado con Docker Compose en Alpine).
+- **Base de datos:** PostgreSQL 16 (desplegado con Docker Compose en Alpine). Base de datos H2 en modo compatibilidad para tests locales y suite de integración.
 - **Testing:**
   - Backend: JUnit 5 / Spring Boot Starter Test / Spring Security Test.
   - Frontend: Testing en cliente según estándares React/Vite.
@@ -41,12 +42,18 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 - **`user_role` (ENUM):** `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN`, `ANALYST`.
 - **`incident_status` (ENUM):** `REPORTED`, `VALIDATED`, `REJECTED`, `ASSIGNED`, `IN_PROGRESS`, `RESOLVED`, `REOPENED`, `CLOSED`.
 - **`incident_priority` (ENUM):** `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
-- **Tabla `users`:** Almacena credenciales (`email` UNIQUE varchar(150), `password_hash` varchar(255)), `full_name` varchar(150), `role` y `department_id` opcional.
-- **Tabla `incidents`:** Reportes geolocalizados vinculados a un `citizen_id` con coordenadas y estado.
-- **Tabla `status_changes`:** Registro inmutable de transiciones de estado para auditoría.
+- **Tabla `users` (`Usuario`):** Almacena credenciales (`email` UNIQUE varchar(150), `password_hash` varchar(255)), `full_name` varchar(150), `role` y relación con `departments` (`department_id` opcional).
+- **Tabla `departments` (`Departamento`):** Departamentos operativos del ayuntamiento (infraestructuras, medio ambiente, movilidad, etc.).
+- **Tabla `incidents` (`Incidencia`):** Reportes geolocalizados vinculados a un ciudadano (`citizen_id`) con coordenadas, categoría y estado.
+- **Tabla `urban_assets` (`ActivoUrbano`):** Mobiliario e infraestructura física urbana con geolocalización y código único.
+- **Tabla `incident_asset_associations` (`AsociacionIncidenciaActivo`):** Relación entre incidencias y elementos de mobiliario afectados.
+- **Tabla `status_changes` (`CambiosEstado`):** Registro inmutable de transiciones de estado para auditoría y trazabilidad.
 
 ## Convenciones
 
+- **Convención de paquetes y persistencia:**
+  - Las entidades de persistencia JPA se ubican en `org.bulbaseros.entity` con nombres de clase en PascalCase en español (`Usuario`, `Incidencia`, `Departamento`, `ActivoUrbano`, etc.).
+  - Se unifica el modelo de dominio en torno a `org.bulbaseros.entity`, evitando duplicidades con paquetes auxiliares.
 - **Convención de nombres:**
   - Java: PascalCase para clases (`AuthService`), camelCase para métodos y variables, UPPER_CASE para constantes.
   - Endpoints REST: Plurales o prefijos funcionales en minúsculas y kebab-case (p. ej. `/api/auth/register`, `/api/auth/login`).

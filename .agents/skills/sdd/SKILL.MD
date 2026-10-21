@@ -27,4 +27,5 @@ Cambio.
 - Tras completar la implementación y validación, mover la feature a "Hecho" en `/constitution/roadmap.md`.
 - El archivo `/docs/NNN-feature/qa-note.md` dará un resumen de la validación de la feature y de como debe probarse. Debe ser fácil de seguir para podre probar manualmente la feature, y debe incluir los criterios de aceptación de la spec, los casos límite y los errores que se han probado. Si hay algo que no se ha podido probar, debe indicarse.   
 - Para realizar cambios en la spec, plan o tareas, se debe mover la feature a "En mejora" en `/constitution/roadmap.md`. Si está aqui, no se mueve a "En curso", se implementa y se valida, y tras ello se mueve a "Hecho" en `/constitution/roadmap.md`.
+- Evita que se dupliquen specs en `roadmap.md`. Si hay una spec duplicada, pregunta al usuario antes de asumir nada. Si se ha movido una spec a, por ejemplo, "En mejora", debe borrarse la otra spec duplicada de "Siguiente" o "En curso" en `roadmap.md` para que no esté duplicado y lleve a dudas.
 - Las plantillas funcionan asi: Sustituye todo lo que esté entre `<…>` y borra las notas en _cursiva_.
