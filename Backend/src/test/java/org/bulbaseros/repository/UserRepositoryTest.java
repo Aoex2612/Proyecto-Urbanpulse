@@ -1,5 +1,6 @@
 package org.bulbaseros.repository;
 
+import org.bulbaseros.entity.Departamento;
 import org.bulbaseros.model.User;
 import org.bulbaseros.model.UserRole;
 import org.junit.jupiter.api.DisplayName;
@@ -95,13 +96,17 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería persistir usuario con rol TECHNICIAN y departamento asignado")
     void shouldPersistUserWithTechnicianRoleAndDepartment() {
-        User technician = new User("tecnico.red@urbanpulse.es", "$2a$10$hashTecnico", "Marta V.", UserRole.TECHNICIAN, 10L);
+        Departamento dept = new Departamento();
+        dept.setName("Redes y Telecomunicaciones");
+        dept = entityManager.persistAndFlush(dept);
+
+        User technician = new User("tecnico.red@urbanpulse.es", "$2a$10$hashTecnico", "Marta V.", UserRole.TECHNICIAN, dept.getId());
         entityManager.persistAndFlush(technician);
 
         Optional<User> found = userRepository.findByEmail("tecnico.red@urbanpulse.es");
 
         assertTrue(found.isPresent());
         assertEquals(UserRole.TECHNICIAN, found.get().getRole());
-        assertEquals(10L, found.get().getDepartmentId());
+        assertEquals(dept.getId(), found.get().getDepartmentId());
     }
 }
