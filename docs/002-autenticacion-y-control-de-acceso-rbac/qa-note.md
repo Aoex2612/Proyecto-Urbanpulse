@@ -1,6 +1,6 @@
 # QA Note — Validación de Feature 002: Autenticación y Control de Acceso por Roles (RBAC)
 
-**Fecha de validación:** 2026-10-21  
+**Fecha de validación:** 2026-10-22  
 **Rol evaluador:** QA Engineer  
 **Feature:** `002-autenticacion-y-control-de-acceso-rbac`  
 **Rama:** `featute/HU2`  
@@ -52,7 +52,7 @@
 ## 3. Revisión de Calidad de Código y Estándares
 
 - **Backend (Java / Spring Boot):**
-  - Todas las clases, interfaces, métodos y atributos cuentan con documentación **Javadoc** exhaustiva (`@param`, `@return`, `@throws`).
+  - Documentación **Javadoc** en clases, interfaces, métodos y atributos (`@param`, `@return`, `@throws`).
   - Suite de pruebas de Maven ejecutada: **116 tests ejecutados, 0 fallos, 0 errores, 0 omitidos (`BUILD SUCCESS`)**.
 - **Frontend (React 19 / Vite):**
   - Documentación con **JSDoc** en componentes (`RoleGuard`, `OperatorPanelPage`, `ProtectedRoute`) y servicios (`authService`, `api`).
@@ -63,20 +63,89 @@
 
 ## 4. Comprobación de Criterios de Aceptación de `spec.md`
 
-- [x] Filtro backend (`JwtAuthenticationFilter`) implementado e integrado en `SecurityConfig`, extrayendo rol y registrando las autoridades en `SecurityContextHolder`.
-- [x] Peticiones sin token o con token corrupto/expirado a endpoints protegidos responden HTTP 401 con DTO `ErrorResponse` en JSON.
-- [x] Rutas públicas (`/api/auth/**`, `/h2-console/**`) permanecen accesibles sin token o con token inválido.
+- [x] Filtro backend (`JwtAuthenticationFilter`) implementado e integrado en `SecurityConfig`, extrayendo rol y registrando autoridades en `SecurityContextHolder`.
+- [x] Peticiones sin token o con token inválido/expirado a endpoints protegidos responden HTTP 401 con DTO `ErrorResponse` en JSON.
+- [x] Rutas públicas (`/api/auth/**`, `/h2-console/**`) permanecen accesibles sin token.
 - [x] Endpoint `PATCH /api/incidents/{id}/status` protegido exclusivamente para roles `OPERATOR` y `ADMIN`.
-- [x] Peticiones de usuarios con rol `CITIZEN` a `PATCH /api/incidents/{id}/status` son rechazadas con HTTP 403 Forbidden y DTO `ErrorResponse`.
+- [x] Peticiones de usuarios con rol `CITIZEN` a `PATCH /api/incidents/{id}/status` reciben HTTP 403 Forbidden y DTO `ErrorResponse`.
 - [x] Componente `RoleGuard` implementado y compuesto con `ProtectedRoute` en el Frontend.
-- [x] Navegación de usuario anónimo a `/operator-panel` redirige a `/login`.
-- [x] Navegación de usuario con rol `CITIZEN` a `/operator-panel` redirige a `/` mostrando alerta visual sin cerrar sesión.
-- [x] Navegación de usuario con rol `OPERATOR` o `ADMIN` a `/operator-panel` renderiza correctamente el panel.
-- [x] Pruebas unitarias y de integración de backend y frontend ejecutadas y en verde.
+- [x] Navegación anónima a `/operator-panel` redirige a `/login`.
+- [x] Navegación de `CITIZEN` a `/operator-panel` redirige a `/` mostrando alerta visual sin cerrar sesión.
+- [x] Navegación de `OPERATOR` o `ADMIN` a `/operator-panel` renderiza el panel correctamente.
+- [x] Suite completa de pruebas unitarias y de integración en verde.
 
 ---
 
-## 5. Veredicto del QA
+## 5. Guía de Pruebas Manuales Paso a Paso (Para Humanos)
+
+Esta guía permite a cualquier persona comprobar manualmente el funcionamiento de la autenticación y control de acceso (RBAC) en pocos minutos de forma sencilla.
+
+### Paso 0: Levantar el entorno local
+1. En una terminal, inicia el backend:
+   ```bash
+   cd Backend && mvn spring-boot:run
+   ```
+2. En otra terminal, inicia el frontend:
+   ```bash
+   cd frontend && npm run dev
+   ```
+3. Abre tu navegador en `http://localhost:5173`.
+
+---
+
+### Prueba 1: Acceso no autenticado (Usuario anónimo)
+1. Con la sesión cerrada, escribe directamente en la barra de direcciones del navegador:  
+   👉 `http://localhost:5173/operator-panel`
+2. **Resultado esperado:**  
+   El sistema no te permite entrar y te redirige automáticamente a `http://localhost:5173/login`.
+
+---
+
+### Prueba 2: Acceso no autorizado (Rol Ciudadano / `CITIZEN`)
+1. Inicia sesión en `/login` con una cuenta de ciudadano (o regístrate en `/register`).
+2. Una vez dentro de la app (en `/`), intenta forzar la navegación al panel de operador escribiendo en la URL:  
+   👉 `http://localhost:5173/operator-panel`
+3. **Resultado esperado:**  
+   - No te deja entrar al panel de operador.
+   - Te devuelve a la página de inicio (`/`).
+   - Muestra un banner de advertencia avisando que no tienes permisos de operador.
+   - **Tu sesión continúa iniciada** (tu nombre sigue apareciendo y no se te ha cerrado la sesión).
+
+---
+
+### Prueba 3: Acceso autorizado (Rol Operador o Administrador)
+1. Cierra sesión y entra con una cuenta que tenga rol `OPERATOR` o `ADMIN`.
+2. En la barra de navegación verás visible el enlace/botón **"Panel de Operador"**.
+3. Haz clic en el botón o navega a `http://localhost:5173/operator-panel`.
+4. **Resultado esperado:**  
+   Carga correctamente la pantalla del **Panel de Operador**, mostrando las opciones de gestión de incidencias sin ningún bloqueo.
+
+---
+
+### Prueba 4: Validación de seguridad en Backend (API REST)
+Abre una terminal y ejecuta estas tres peticiones rápidas:
+
+1. **Petición sin token (debe fallar con 401):**
+   ```bash
+   curl -i -X PATCH http://localhost:8080/api/incidents/1/status
+   ```
+   *Respuesta esperada:* Código `HTTP/1.1 401 Unauthorized` con mensaje JSON indicando token ausente.
+
+2. **Petición con token de Ciudadano (debe fallar con 403):**
+   ```bash
+   curl -i -X PATCH http://localhost:8080/api/incidents/1/status -H "Authorization: Bearer <TOKEN_CIUDADANO>"
+   ```
+   *Respuesta esperada:* Código `HTTP/1.1 403 Forbidden` con mensaje `"Acceso denegado: permisos insuficientes"`.
+
+3. **Petición con token de Operador (debe responder 200 OK):**
+   ```bash
+   curl -i -X PATCH http://localhost:8080/api/incidents/1/status -H "Authorization: Bearer <TOKEN_OPERADOR>"
+   ```
+   *Respuesta esperada:* Código `HTTP/1.1 200 OK`.
+
+---
+
+## 6. Veredicto del QA
 
 > **¿La especificación está cumplida?**  
-> **SÍ.** Todos los requisitos funcionales, no funcionales y criterios de aceptación se cumplen estrictamente sin desviaciones ni errores. No se requiere archivo auxiliar de reparaciones (`repare.md`). La feature está lista para ser integrada a la rama principal mediante Pull Request.
+> **SÍ.** Todos los requisitos funcionales, no funcionales, criterios de aceptación y pruebas manuales son satisfactorios. No hay defectos bloqueantes. La feature está aprobada y lista para producción.
