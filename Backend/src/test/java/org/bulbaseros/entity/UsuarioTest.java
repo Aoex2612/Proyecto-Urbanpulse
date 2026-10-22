@@ -1,4 +1,4 @@
-package org.bulbaseros.model;
+package org.bulbaseros.entity;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Pruebas unitarias para la entidad de dominio {@link User}.
+ * Pruebas unitarias para la entidad de dominio {@link Usuario}.
  * <p>
- * Verifica los constructores, valores por defecto (rol {@link UserRole#CITIZEN}),
+ * Verifica los constructores, valores por defecto (rol {@link RolUsuario#CITIZEN}),
  * validaciones defensivas de longitud, comportamiento de igualdad y exclusión
  * de datos sensibles en el método {@code toString()}.
  * </p>
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author UrbanPulse Team
  * @version 1.0
  */
-class UserTest {
+class UsuarioTest {
 
     /**
      * Verifica que el constructor por defecto asigne el rol CITIZEN y deje campos vacíos.
@@ -32,15 +32,15 @@ class UserTest {
     @Test
     @DisplayName("Debería inicializar con rol CITIZEN por defecto en constructor sin argumentos")
     void shouldInitializeWithCitizenRoleByDefault() {
-        User user = new User();
+        Usuario usuario = new Usuario();
 
-        assertEquals(UserRole.CITIZEN, user.getRole(), "El rol por defecto debe ser CITIZEN");
-        assertNull(user.getId());
-        assertNull(user.getEmail());
-        assertNull(user.getPasswordHash());
-        assertNull(user.getFullName());
-        assertNull(user.getDepartmentId());
-        assertNull(user.getCreatedAt());
+        assertEquals(RolUsuario.CITIZEN, usuario.getRole(), "El rol por defecto debe ser CITIZEN");
+        assertNull(usuario.getId());
+        assertNull(usuario.getEmail());
+        assertNull(usuario.getPasswordHash());
+        assertNull(usuario.getFullName());
+        assertNull(usuario.getDepartment());
+        assertNull(usuario.getCreatedAt());
     }
 
     /**
@@ -49,13 +49,13 @@ class UserTest {
     @Test
     @DisplayName("Debería crear usuario con constructor básico asignando rol CITIZEN")
     void shouldCreateUserWithBasicConstructor() {
-        User user = new User("ciudadano@urbanpulse.es", "$2a$10$hashEjemplo", "Juan Pérez");
+        Usuario usuario = new Usuario("ciudadano@urbanpulse.es", "$2a$10$hashEjemplo", "Juan Pérez");
 
-        assertEquals("ciudadano@urbanpulse.es", user.getEmail());
-        assertEquals("$2a$10$hashEjemplo", user.getPasswordHash());
-        assertEquals("Juan Pérez", user.getFullName());
-        assertEquals(UserRole.CITIZEN, user.getRole());
-        assertNull(user.getDepartmentId());
+        assertEquals("ciudadano@urbanpulse.es", usuario.getEmail());
+        assertEquals("$2a$10$hashEjemplo", usuario.getPasswordHash());
+        assertEquals("Juan Pérez", usuario.getFullName());
+        assertEquals(RolUsuario.CITIZEN, usuario.getRole());
+        assertNull(usuario.getDepartment());
     }
 
     /**
@@ -64,13 +64,17 @@ class UserTest {
     @Test
     @DisplayName("Debería crear usuario con rol específico y departamento")
     void shouldCreateUserWithRoleAndDepartment() {
-        User user = new User("tecnico@urbanpulse.es", "$2a$10$hash", "Ana Gómez", UserRole.TECHNICIAN, 5L);
+        Departamento depto = new Departamento();
+        depto.setId(5L);
+        depto.setName("Movilidad");
 
-        assertEquals("tecnico@urbanpulse.es", user.getEmail());
-        assertEquals("$2a$10$hash", user.getPasswordHash());
-        assertEquals("Ana Gómez", user.getFullName());
-        assertEquals(UserRole.TECHNICIAN, user.getRole());
-        assertEquals(5L, user.getDepartmentId());
+        Usuario usuario = new Usuario("tecnico@urbanpulse.es", "$2a$10$hash", "Ana Gómez", RolUsuario.TECHNICIAN, depto);
+
+        assertEquals("tecnico@urbanpulse.es", usuario.getEmail());
+        assertEquals("$2a$10$hash", usuario.getPasswordHash());
+        assertEquals("Ana Gómez", usuario.getFullName());
+        assertEquals(RolUsuario.TECHNICIAN, usuario.getRole());
+        assertEquals(depto, usuario.getDepartment());
     }
 
     /**
@@ -79,11 +83,11 @@ class UserTest {
     @Test
     @DisplayName("Debería asignar rol CITIZEN si se provee null como rol")
     void shouldFallbackToCitizenWhenRoleIsNull() {
-        User user = new User("test@urbanpulse.es", "$2a$10$hash", "Carlos", null);
-        assertEquals(UserRole.CITIZEN, user.getRole());
+        Usuario usuario = new Usuario("test@urbanpulse.es", "$2a$10$hash", "Carlos", null);
+        assertEquals(RolUsuario.CITIZEN, usuario.getRole());
 
-        user.setRole(null);
-        assertEquals(UserRole.CITIZEN, user.getRole());
+        usuario.setRole(null);
+        assertEquals(RolUsuario.CITIZEN, usuario.getRole());
     }
 
     /**
@@ -92,24 +96,26 @@ class UserTest {
     @Test
     @DisplayName("Debería permitir modificar y obtener todos los atributos mediante getters y setters")
     void shouldGetAndSetAllProperties() {
-        User user = new User();
+        Usuario usuario = new Usuario();
+        Departamento depto = new Departamento();
+        depto.setId(2L);
         OffsetDateTime now = OffsetDateTime.now();
 
-        user.setId(10L);
-        user.setEmail("operador@urbanpulse.es");
-        user.setPasswordHash("$2a$10$hashedPass");
-        user.setFullName("María Ruiz");
-        user.setRole(UserRole.OPERATOR);
-        user.setDepartmentId(2L);
-        user.setCreatedAt(now);
+        usuario.setId(10L);
+        usuario.setEmail("operador@urbanpulse.es");
+        usuario.setPasswordHash("$2a$10$hashedPass");
+        usuario.setFullName("María Ruiz");
+        usuario.setRole(RolUsuario.OPERATOR);
+        usuario.setDepartment(depto);
+        usuario.setCreatedAt(now);
 
-        assertEquals(10L, user.getId());
-        assertEquals("operador@urbanpulse.es", user.getEmail());
-        assertEquals("$2a$10$hashedPass", user.getPasswordHash());
-        assertEquals("María Ruiz", user.getFullName());
-        assertEquals(UserRole.OPERATOR, user.getRole());
-        assertEquals(2L, user.getDepartmentId());
-        assertEquals(now, user.getCreatedAt());
+        assertEquals(10L, usuario.getId());
+        assertEquals("operador@urbanpulse.es", usuario.getEmail());
+        assertEquals("$2a$10$hashedPass", usuario.getPasswordHash());
+        assertEquals("María Ruiz", usuario.getFullName());
+        assertEquals(RolUsuario.OPERATOR, usuario.getRole());
+        assertEquals(depto, usuario.getDepartment());
+        assertEquals(now, usuario.getCreatedAt());
     }
 
     /**
@@ -118,12 +124,12 @@ class UserTest {
     @Test
     @DisplayName("Debería rechazar correos que excedan 150 caracteres")
     void shouldRejectEmailExceeding150Characters() {
-        User user = new User();
+        Usuario usuario = new Usuario();
         String longEmail = "a".repeat(140) + "@urbanpulse.es"; // 154 caracteres
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> user.setEmail(longEmail)
+                () -> usuario.setEmail(longEmail)
         );
         assertTrue(exception.getMessage().contains("150 caracteres"));
     }
@@ -134,12 +140,12 @@ class UserTest {
     @Test
     @DisplayName("Debería rechazar nombres completos que excedan 150 caracteres")
     void shouldRejectFullNameExceeding150Characters() {
-        User user = new User();
+        Usuario usuario = new Usuario();
         String longName = "A".repeat(151);
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> user.setFullName(longName)
+                () -> usuario.setFullName(longName)
         );
         assertTrue(exception.getMessage().contains("150 caracteres"));
     }
@@ -150,12 +156,12 @@ class UserTest {
     @Test
     @DisplayName("Debería rechazar hashes de contraseña que excedan 255 caracteres")
     void shouldRejectPasswordHashExceeding255Characters() {
-        User user = new User();
+        Usuario usuario = new Usuario();
         String longHash = "h".repeat(256);
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> user.setPasswordHash(longHash)
+                () -> usuario.setPasswordHash(longHash)
         );
         assertTrue(exception.getMessage().contains("255 caracteres"));
     }
@@ -167,9 +173,9 @@ class UserTest {
     @DisplayName("Debería excluir el hash de contraseña en el método toString")
     void shouldNotIncludePasswordHashInToString() {
         String secretHash = "$2a$10$SuperSecretHashValue";
-        User user = new User("seguridad@urbanpulse.es", secretHash, "Seguridad");
+        Usuario usuario = new Usuario("seguridad@urbanpulse.es", secretHash, "Seguridad");
 
-        String toStringResult = user.toString();
+        String toStringResult = usuario.toString();
 
         assertNotNull(toStringResult);
         assertFalse(toStringResult.contains(secretHash), "El toString jamás debe exponer la contraseña hasheada");
@@ -183,18 +189,18 @@ class UserTest {
     @Test
     @DisplayName("Debería evaluar igualdad por id o por email")
     void shouldEvaluateEqualityCorrectly() {
-        User user1 = new User("user1@urbanpulse.es", "hash1", "User One");
-        User user2 = new User("user1@urbanpulse.es", "hash2", "User Dos");
+        Usuario usuario1 = new Usuario("user1@urbanpulse.es", "hash1", "User One");
+        Usuario usuario2 = new Usuario("user1@urbanpulse.es", "hash2", "User Dos");
 
         // Sin id persistido, compara por email
-        assertEquals(user1, user2);
-        assertEquals(user1.hashCode(), user2.hashCode());
+        assertEquals(usuario1, usuario2);
+        assertEquals(usuario1.hashCode(), usuario2.hashCode());
 
-        user1.setId(1L);
-        user2.setId(1L);
-        assertEquals(user1, user2);
+        usuario1.setId(1L);
+        usuario2.setId(1L);
+        assertEquals(usuario1, usuario2);
 
-        user2.setId(2L);
-        assertNotEquals(user1, user2);
+        usuario2.setId(2L);
+        assertNotEquals(usuario1, usuario2);
     }
 }

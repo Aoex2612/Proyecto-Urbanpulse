@@ -1,7 +1,8 @@
 package org.bulbaseros.repository;
 
-import org.bulbaseros.model.User;
-import org.bulbaseros.model.UserRole;
+import org.bulbaseros.entity.Departamento;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Usuario;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,15 +41,15 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería persistir un usuario y recuperarlo mediante findByEmail")
     void shouldPersistAndFindByEmail() {
-        User user = new User("ciudadano.test@urbanpulse.es", "$2a$10$xyzHashedPassword", "Carlos López");
-        entityManager.persistAndFlush(user);
+        Usuario usuario = new Usuario("ciudadano.test@urbanpulse.es", "$2a$10$xyzHashedPassword", "Carlos López");
+        entityManager.persistAndFlush(usuario);
 
-        Optional<User> found = userRepository.findByEmail("ciudadano.test@urbanpulse.es");
+        Optional<Usuario> found = userRepository.findByEmail("ciudadano.test@urbanpulse.es");
 
         assertTrue(found.isPresent(), "El usuario debería encontrarse en el repositorio");
         assertEquals("ciudadano.test@urbanpulse.es", found.get().getEmail());
         assertEquals("Carlos López", found.get().getFullName());
-        assertEquals(UserRole.CITIZEN, found.get().getRole());
+        assertEquals(RolUsuario.CITIZEN, found.get().getRole());
         assertNotNull(found.get().getId(), "El identificador generado no debe ser nulo");
         assertNotNull(found.get().getCreatedAt(), "La fecha de creación no debe ser nula");
     }
@@ -59,7 +60,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería retornar Optional vacío si el correo no existe en la base de datos")
     void shouldReturnEmptyOptionalWhenEmailNotFound() {
-        Optional<User> found = userRepository.findByEmail("inexistente@urbanpulse.es");
+        Optional<Usuario> found = userRepository.findByEmail("inexistente@urbanpulse.es");
 
         assertFalse(found.isPresent(), "No debería encontrarse ningún usuario");
     }
@@ -70,8 +71,8 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería devolver true cuando el correo ya existe en existsByEmail")
     void shouldReturnTrueWhenEmailExists() {
-        User user = new User("existente@urbanpulse.es", "$2a$10$hashed123", "Laura Martínez");
-        entityManager.persistAndFlush(user);
+        Usuario usuario = new Usuario("existente@urbanpulse.es", "$2a$10$hashed123", "Laura Martínez");
+        entityManager.persistAndFlush(usuario);
 
         boolean exists = userRepository.existsByEmail("existente@urbanpulse.es");
 
@@ -95,13 +96,17 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería persistir usuario con rol TECHNICIAN y departamento asignado")
     void shouldPersistUserWithTechnicianRoleAndDepartment() {
-        User technician = new User("tecnico.red@urbanpulse.es", "$2a$10$hashTecnico", "Marta V.", UserRole.TECHNICIAN, 10L);
+        Departamento dept = new Departamento();
+        dept.setName("Redes y Telecomunicaciones");
+        dept = entityManager.persistAndFlush(dept);
+
+        Usuario technician = new Usuario("tecnico.red@urbanpulse.es", "$2a$10$hashTecnico", "Marta V.", RolUsuario.TECHNICIAN, dept);
         entityManager.persistAndFlush(technician);
 
-        Optional<User> found = userRepository.findByEmail("tecnico.red@urbanpulse.es");
+        Optional<Usuario> found = userRepository.findByEmail("tecnico.red@urbanpulse.es");
 
         assertTrue(found.isPresent());
-        assertEquals(UserRole.TECHNICIAN, found.get().getRole());
-        assertEquals(10L, found.get().getDepartmentId());
+        assertEquals(RolUsuario.TECHNICIAN, found.get().getRole());
+        assertEquals(dept.getId(), found.get().getDepartmentId());
     }
 }

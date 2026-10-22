@@ -31,7 +31,7 @@
 1. **Seguridad y Criptografía:**
    - Hashing seguro con `BCryptPasswordEncoder` verificado en tests unitarios.
    - Las contraseñas no se modifican con trim, respetando el secreto exacto introducido por el usuario.
-   - La entidad `User` excluye explícitamente el hash de la contraseña en su método `toString()` para evitar fugas en logs (`UserTest.toString_ShouldNotIncludePasswordHash()`).
+   - La entidad `Usuario` excluye explícitamente el hash de la contraseña en su método `toString()` para evitar fugas en logs (`UsuarioTest.shouldNotIncludePasswordHashInToString()`).
    - Secreto JWT de 512 bits y algoritmos estándar HMAC-SHA256 (RFC 7519).
    - *Resultado: CUMPLIDO.*
 
@@ -73,7 +73,66 @@
 
 ---
 
-## 5. Veredicto del QA
+## 5. Guía de Pruebas Manuales Paso a Paso (Para Humanos)
+
+Esta guía permite a cualquier persona comprobar manualmente el flujo de registro, inicio de sesión y gestión de sesión en el navegador.
+
+### Paso 0: Levantar el entorno local
+1. Iniciar el backend:
+   ```bash
+   cd Backend && mvn spring-boot:run
+   ```
+2. Iniciar el frontend:
+   ```bash
+   cd frontend && npm run dev
+   ```
+3. Abre tu navegador en `http://localhost:5173`.
+
+---
+
+### Prueba 1: Registro de un nuevo ciudadano
+1. Ve a `http://localhost:5173/register`.
+2. Introduce los siguientes datos:
+   - **Nombre completo:** `Ana García`
+   - **Correo electrónico:** `ana.garcia@urbanpulse.es`
+   - **Contraseña:** `Segura1234` (al menos 8 caracteres, con letra y número).
+3. Haz clic en el botón **"Crear cuenta"**.
+4. **Resultado esperado:**
+   - Aparece un mensaje verde de confirmación de registro.
+   - En un instante te redirige automáticamente a la pantalla de login (`/login`).
+
+---
+
+### Prueba 2: Validaciones de error en registro
+1. En `http://localhost:5173/register`:
+   - Intenta registrarte de nuevo con el mismo email `ana.garcia@urbanpulse.es`.
+   - *Resultado esperado:* Aparece un aviso de error indicando que el correo electrónico ya está registrado (HTTP 409).
+2. Borra los campos o introduce una contraseña simple como `123`.
+   - *Resultado esperado:* El formulario no se envía y muestra un mensaje en rojo indicando el formato exigido.
+
+---
+
+### Prueba 3: Inicio de sesión correcto y fallido
+1. Ve a `http://localhost:5173/login`.
+2. **Prueba de fallo:** Escribe `ana.garcia@urbanpulse.es` con contraseña incorrecta `claveErronea1` y pulsa "Iniciar sesión".
+   - *Resultado esperado:* Mensaje de error `"Credenciales inválidas"` (HTTP 401) y no te deja entrar.
+3. **Prueba correcta:** Escribe `ana.garcia@urbanpulse.es` con la contraseña correcta `Segura1234` y pulsa "Iniciar sesión".
+   - *Resultado esperado:*
+     - Te redirige a la página principal (`/`).
+     - Se guarda el token JWT en el almacenamiento del navegador (`localStorage`).
+     - Ves el saludo de bienvenida con tu nombre y el botón de **"Cerrar sesión"**.
+
+---
+
+### Prueba 4: Protección de rutas y cierre de sesión
+1. Con la sesión iniciada, intenta navegar a `http://localhost:5173/login` o `http://localhost:5173/register`.
+   - *Resultado esperado:* Te redirige automáticamente a `/` para evitar que vuelvas a autenticarte estando ya conectado.
+2. Haz clic en **"Cerrar sesión"**.
+   - *Resultado esperado:* Se elimina el token de `localStorage` y te redirige a `/login`. Si intentas entrar a `/`, te bloqueará y te pedirá iniciar sesión.
+
+---
+
+## 6. Veredicto del QA
 
 > **¿La especificación está cumplida?**  
 > **SÍ.** Todos los requisitos funcionales, no funcionales y criterios de aceptación se cumplen estrictamente sin desviaciones ni errores. No se requiere archivo auxiliar de reparaciones (`repare.md`). La feature está lista para ser integrada a la rama principal mediante Pull Request.

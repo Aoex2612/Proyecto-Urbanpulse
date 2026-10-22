@@ -1,13 +1,15 @@
 /**
  * @fileoverview Componente principal de la aplicación UrbanPulse.
  * Configura el enrutamiento con React Router, estableciendo las rutas públicas de autenticación
- * (/login, /register), la ruta protegida del dashboard (/) y el redireccionamiento para rutas desconocidas.
+ * (/login, /register), la ruta protegida del portal ciudadano (/), la ruta de triaje operativo
+ * (/operator-panel) protegida con RBAC y el redireccionamiento para rutas desconocidas.
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
+import OperatorPanelPage from './pages/OperatorPanelPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -24,6 +26,14 @@ function App() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/operator-panel"
+          element={
+            <ProtectedRoute allowedRoles={['OPERATOR', 'ADMIN']}>
+              <OperatorPanelPage />
             </ProtectedRoute>
           }
         />

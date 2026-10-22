@@ -5,7 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.bulbaseros.model.User;
+import org.bulbaseros.entity.Usuario;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -54,13 +54,13 @@ public class JwtService {
     }
 
     /**
-     * Genera un token JWT a partir de la entidad de dominio {@link User}.
+     * Genera un token JWT a partir de la entidad de dominio {@link Usuario}.
      *
      * @param user Entidad del usuario para el cual se emite el token.
      * @return Cadena que representa el token JWT compacto y firmado.
      * @throws IllegalArgumentException si el usuario o su correo electrónico son nulos.
      */
-    public String generateToken(User user) {
+    public String generateToken(Usuario user) {
         if (user == null || user.getEmail() == null) {
             throw new IllegalArgumentException("El usuario y su correo electrónico no pueden ser nulos");
         }

@@ -1,8 +1,8 @@
 package org.bulbaseros.security;
 
 import io.jsonwebtoken.JwtException;
-import org.bulbaseros.model.User;
-import org.bulbaseros.model.UserRole;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,15 +44,15 @@ class JwtServiceTest {
     }
 
     /**
-     * Verifica que se genere un token válido a partir de una entidad {@link User}
+     * Verifica que se genere un token válido a partir de una entidad {@link Usuario}
      * y que los claims de correo y rol sean extraídos con exactitud.
      */
     @Test
-    @DisplayName("Debería generar un token desde una entidad User y extraer sus claims")
+    @DisplayName("Debería generar un token desde una entidad Usuario y extraer sus claims")
     void shouldGenerateTokenFromUserAndExtractClaims() {
-        User user = new User("ciudadano@urbanpulse.es", "hashBcrypt", "Carlos Ruiz", UserRole.CITIZEN);
+        Usuario usuario = new Usuario("ciudadano@urbanpulse.es", "hashBcrypt", "Carlos Ruiz", RolUsuario.CITIZEN);
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(usuario);
 
         assertNotNull(token, "El token generado no debe ser nulo");
         assertFalse(token.isBlank(), "El token generado no debe estar vacío");
@@ -70,8 +70,8 @@ class JwtServiceTest {
     @Test
     @DisplayName("Debería incluir y verificar los claims 'sub' y 'role' explícitos en el payload JWT")
     void shouldIncludeExplicitSubAndRoleClaims() {
-        User user = new User("verificacion.claims@urbanpulse.es", "hash123", "Pedro Almodóvar", UserRole.CITIZEN);
-        String token = jwtService.generateToken(user);
+        Usuario usuario = new Usuario("verificacion.claims@urbanpulse.es", "hash123", "Pedro Almodóvar", RolUsuario.CITIZEN);
+        String token = jwtService.generateToken(usuario);
 
         io.jsonwebtoken.Claims claims = jwtService.extractAllClaims(token);
         assertNotNull(claims);
@@ -176,7 +176,7 @@ class JwtServiceTest {
     @Test
     @DisplayName("Debería lanzar IllegalArgumentException si los argumentos son nulos o vacíos")
     void shouldThrowExceptionForInvalidArguments() {
-        assertThrows(IllegalArgumentException.class, () -> jwtService.generateToken((User) null));
+        assertThrows(IllegalArgumentException.class, () -> jwtService.generateToken((Usuario) null));
         assertThrows(IllegalArgumentException.class, () -> jwtService.generateToken((String) null, "CITIZEN"));
         assertThrows(IllegalArgumentException.class, () -> jwtService.generateToken("   ", "CITIZEN"));
     }
