@@ -31,7 +31,7 @@
 1. **Seguridad y Criptografía:**
    - Hashing seguro con `BCryptPasswordEncoder` verificado en tests unitarios.
    - Las contraseñas no se modifican con trim, respetando el secreto exacto introducido por el usuario.
-   - La entidad `User` excluye explícitamente el hash de la contraseña en su método `toString()` para evitar fugas en logs (`UserTest.toString_ShouldNotIncludePasswordHash()`).
+   - La entidad `Usuario` excluye explícitamente el hash de la contraseña en su método `toString()` para evitar fugas en logs (`UsuarioTest.shouldNotIncludePasswordHashInToString()`).
    - Secreto JWT de 512 bits y algoritmos estándar HMAC-SHA256 (RFC 7519).
    - *Resultado: CUMPLIDO.*
 
