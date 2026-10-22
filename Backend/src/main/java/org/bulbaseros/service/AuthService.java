@@ -4,10 +4,10 @@ import org.bulbaseros.dto.AuthResponse;
 import org.bulbaseros.dto.LoginRequest;
 import org.bulbaseros.dto.RegisterRequest;
 import org.bulbaseros.dto.RegisterResponse;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.EmailAlreadyExistsException;
 import org.bulbaseros.exception.InvalidCredentialsException;
-import org.bulbaseros.model.User;
-import org.bulbaseros.model.UserRole;
 import org.bulbaseros.repository.UserRepository;
 import org.bulbaseros.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,7 +45,7 @@ public class AuthService {
     }
 
     /**
-     * Registra a un nuevo usuario en la plataforma con el rol por defecto {@link UserRole#CITIZEN}.
+     * Registra a un nuevo usuario en la plataforma con el rol por defecto {@link RolUsuario#CITIZEN}.
      * <p>
      * Normaliza el correo electrónico eliminando espacios y convirtiéndolo a minúsculas,
      * comprueba la unicidad en la base de datos, encripta la contraseña y persiste la entidad.
@@ -70,8 +70,8 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         String fullName = request.getFullName() != null ? request.getFullName().trim() : "";
 
-        User user = new User(normalizedEmail, encodedPassword, fullName, UserRole.CITIZEN);
-        User savedUser = userRepository.save(user);
+        Usuario usuario = new Usuario(normalizedEmail, encodedPassword, fullName, RolUsuario.CITIZEN);
+        Usuario savedUser = userRepository.save(usuario);
 
         return new RegisterResponse("Usuario registrado exitosamente", savedUser.getEmail());
     }
@@ -98,16 +98,16 @@ public class AuthService {
 
         String normalizedEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
 
-        User user = userRepository.findByEmail(normalizedEmail)
+        Usuario usuario = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new InvalidCredentialsException("Credenciales inválidas."));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPasswordHash())) {
             throw new InvalidCredentialsException("Credenciales inválidas.");
         }
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(usuario);
         long expiresInSeconds = jwtService.getJwtExpiration() > 0 ? (jwtService.getJwtExpiration() / 1000L) : 86400L;
 
-        return new AuthResponse(token, "Bearer", expiresInSeconds, user.getRole().name(), user.getFullName());
+        return new AuthResponse(token, "Bearer", expiresInSeconds, usuario.getRole().name(), usuario.getFullName());
     }
 }

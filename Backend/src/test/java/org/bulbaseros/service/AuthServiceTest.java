@@ -4,10 +4,10 @@ import org.bulbaseros.dto.AuthResponse;
 import org.bulbaseros.dto.LoginRequest;
 import org.bulbaseros.dto.RegisterRequest;
 import org.bulbaseros.dto.RegisterResponse;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.EmailAlreadyExistsException;
 import org.bulbaseros.exception.InvalidCredentialsException;
-import org.bulbaseros.model.User;
-import org.bulbaseros.model.UserRole;
 import org.bulbaseros.repository.UserRepository;
 import org.bulbaseros.security.JwtService;
 import org.junit.jupiter.api.DisplayName;
@@ -69,9 +69,9 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("carlos@urbanpulse.es")).thenReturn(false);
         when(passwordEncoder.encode("Password123")).thenReturn("encodedPasswordHash");
 
-        User savedUser = new User("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", UserRole.CITIZEN);
+        Usuario savedUser = new Usuario("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", RolUsuario.CITIZEN);
         savedUser.setId(1L);
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.save(any(Usuario.class))).thenReturn(savedUser);
 
         RegisterResponse response = authService.register(request);
 
@@ -79,13 +79,13 @@ class AuthServiceTest {
         assertEquals("Usuario registrado exitosamente", response.getMessage());
         assertEquals("carlos@urbanpulse.es", response.getEmail());
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<Usuario> userCaptor = ArgumentCaptor.forClass(Usuario.class);
         verify(userRepository).save(userCaptor.capture());
-        User capturedUser = userCaptor.getValue();
+        Usuario capturedUser = userCaptor.getValue();
         assertEquals("carlos@urbanpulse.es", capturedUser.getEmail());
         assertEquals("encodedPasswordHash", capturedUser.getPasswordHash());
         assertEquals("Carlos Ruiz", capturedUser.getFullName());
-        assertEquals(UserRole.CITIZEN, capturedUser.getRole());
+        assertEquals(RolUsuario.CITIZEN, capturedUser.getRole());
     }
 
     /**
@@ -102,8 +102,8 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("maria@urbanpulse.es")).thenReturn(false);
         when(passwordEncoder.encode("Password123")).thenReturn("hash123");
 
-        User savedUser = new User("maria@urbanpulse.es", "hash123", "María Gómez", UserRole.CITIZEN);
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        Usuario savedUser = new Usuario("maria@urbanpulse.es", "hash123", "María Gómez", RolUsuario.CITIZEN);
+        when(userRepository.save(any(Usuario.class))).thenReturn(savedUser);
 
         RegisterResponse response = authService.register(request);
 
@@ -125,7 +125,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("carlos@urbanpulse.es")).thenReturn(true);
 
         assertThrows(EmailAlreadyExistsException.class, () -> authService.register(request));
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).save(any(Usuario.class));
     }
 
     /**
@@ -135,11 +135,11 @@ class AuthServiceTest {
     @DisplayName("Debería autenticar al usuario y retornar AuthResponse con token JWT")
     void shouldLoginSuccessfully() {
         LoginRequest request = new LoginRequest("carlos@urbanpulse.es", "Password123");
-        User user = new User("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", UserRole.CITIZEN);
+        Usuario usuario = new Usuario("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", RolUsuario.CITIZEN);
 
-        when(userRepository.findByEmail("carlos@urbanpulse.es")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("carlos@urbanpulse.es")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("Password123", "encodedPasswordHash")).thenReturn(true);
-        when(jwtService.generateToken(user)).thenReturn("mocked.jwt.token");
+        when(jwtService.generateToken(usuario)).thenReturn("mocked.jwt.token");
         when(jwtService.getJwtExpiration()).thenReturn(86400000L);
 
         AuthResponse response = authService.login(request);
@@ -159,11 +159,11 @@ class AuthServiceTest {
     @DisplayName("Debería normalizar el correo electrónico al iniciar sesión")
     void shouldNormalizeEmailOnLogin() {
         LoginRequest request = new LoginRequest("   CARLOS@UrbanPulse.ES   ", "Password123");
-        User user = new User("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", UserRole.CITIZEN);
+        Usuario usuario = new Usuario("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", RolUsuario.CITIZEN);
 
-        when(userRepository.findByEmail("carlos@urbanpulse.es")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("carlos@urbanpulse.es")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("Password123", "encodedPasswordHash")).thenReturn(true);
-        when(jwtService.generateToken(user)).thenReturn("mocked.jwt.token");
+        when(jwtService.generateToken(usuario)).thenReturn("mocked.jwt.token");
         when(jwtService.getJwtExpiration()).thenReturn(86400000L);
 
         AuthResponse response = authService.login(request);
@@ -184,7 +184,7 @@ class AuthServiceTest {
 
         assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
         verify(passwordEncoder, never()).matches(anyString(), anyString());
-        verify(jwtService, never()).generateToken(any(User.class));
+        verify(jwtService, never()).generateToken(any(Usuario.class));
     }
 
     /**
@@ -194,13 +194,13 @@ class AuthServiceTest {
     @DisplayName("Debería lanzar InvalidCredentialsException si la contraseña suministrada no coincide")
     void shouldThrowInvalidCredentialsWhenPasswordDoesNotMatch() {
         LoginRequest request = new LoginRequest("carlos@urbanpulse.es", "PasswordErronea");
-        User user = new User("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", UserRole.CITIZEN);
+        Usuario usuario = new Usuario("carlos@urbanpulse.es", "encodedPasswordHash", "Carlos Ruiz", RolUsuario.CITIZEN);
 
-        when(userRepository.findByEmail("carlos@urbanpulse.es")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("carlos@urbanpulse.es")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("PasswordErronea", "encodedPasswordHash")).thenReturn(false);
 
         assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
-        verify(jwtService, never()).generateToken(any(User.class));
+        verify(jwtService, never()).generateToken(any(Usuario.class));
     }
 
     /**
