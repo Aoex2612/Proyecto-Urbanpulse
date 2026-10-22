@@ -44,3 +44,29 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 - [Tech Stack y Convenciones](constitution/tech-stack.md)
 - [Roadmap](constitution/roadmap.md)
 - [README Principal](README.md)
+
+## Gestión de Git y Commits
+
+- **Herramientas:** Realizar las operaciones de Git (crear ramas, commits y pull requests) preferentemente mediante el **MCP de GitHub**. Si no se encuentra disponible o falla, ejecutar directamente los comandos de terminal (`git`).
+- **Flujo de ramas:** Toda nueva rama debe partir obligatoriamente desde `develop` y su correspondiente Pull Request debe apuntar hacia `develop`.
+- **Idioma y caracteres:** 
+  - Redactar mensajes de commit, nombres de ramas y PRs en **español**.
+  - Si una palabra lleva la letra `ñ`, sustituirla obligatoriamente por `n` (por ejemplo: `diseno`, `anadir`).
+  - No usar tildes ni caracteres especiales en ramas o comandos.
+- **Nomenclatura de ramas:** Formato `<tipo>/<descripcion-kebab-case>`:
+  - `feature/...`: Nueva funcionalidad
+  - `fix/...`: Corrección de bug
+  - `docs/...`: Documentación
+  - `refactor/...`: Refactorización
+  - `test/...`: Pruebas
+  - `hotfix/...`: Corrección urgente en producción
+- **Convención de commits:** Seguir **Conventional Commits** en español:
+  - `feat`: Nueva funcionalidad
+  - `fix`: Corrección de errores
+  - `docs`: Documentación
+  - `test`: Pruebas unitarias o de integración
+  - `refactor`: Cambios en código que no alteran el comportamiento
+  - `chore`: Tareas de mantenimiento, configuración o dependencias
+  - *Ejemplo:* `feat: anadir endpoint para creacion de incidencias`
+
+
