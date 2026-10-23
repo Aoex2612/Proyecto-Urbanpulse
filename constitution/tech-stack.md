@@ -1,74 +1,64 @@
-# Tech stack y convenciones — UrbanPulse
+# Tech stack y convenciones
 
 _Cómo está construido el proyecto y las reglas que todo el código debe respetar. Es la referencia técnica que ningún plan de feature debería contradecir._
 
 ## Tecnologías
 
-- **Backend:** Java (compatible con JDK 17 y JDK 21), Spring Boot 3.4.x, Apache Maven.
-  - Paquete base: `org.bulbaseros`
-  - Persistencia: Spring Data JPA / Hibernate.
-  - Utilidad y boilerplate: Lombok (`@Data`, `@Getter`, `@Setter`, etc.) para entidades y DTOs.
-  - Seguridad: Spring Security con JWT (`jjwt` 0.12.x) y contraseñas hasheadas con BCrypt.
-  - Validación: Bean Validation (`spring-boot-starter-validation`).
-  - CORS: Configuración de orígenes cruzados permitiendo clientes de desarrollo (`http://localhost:5173`).
-- **Frontend:** React 19, Vite, Axios, React Router (`react-router-dom`), ESLint.
-  - Enrutamiento: React Router para navegación SPA (`/`, `/login`, `/register`).
-  - Almacenamiento de sesión: JWT en `localStorage` con interceptor de Axios para cabecera `Authorization: Bearer <token>` y captura de 401 para limpieza de sesión.
-- **Base de datos:** PostgreSQL 16 (desplegado con Docker Compose en Alpine). Base de datos H2 en modo compatibilidad para tests locales y suite de integración.
-- **Testing:**
-  - Backend: JUnit 5 / Spring Boot Starter Test / Spring Security Test.
-  - Frontend: Testing en cliente según estándares React/Vite.
+- **Lenguaje:** Java 21 (Backend) / JavaScript ES2022+ (Frontend).
+- **Framework / runtime:** Spring Boot 3.4.3 (Java) / Node.js 20+ con Vite 6 (React 19).
+- **Seguridad:** Spring Security 6 con autenticación perimetral sin estado (Stateless) mediante JWT (JJWT 0.12.6, algoritmo HMAC-SHA256) y codificación de contraseñas con BCrypt.
+- **Base de datos:** PostgreSQL 16 (Alpine) orquestada con Docker Compose para desarrollo/producción local; H2 Database en modo compatibilidad PostgreSQL para ejecución ágil de pruebas unitarias y de integración.
+- **Persistencia:** Spring Data JPA con Hibernate 6. Las enumeraciones se persisten como cadenas (`@Enumerated(EnumType.STRING)`) emparejadas con restricciones `CHECK` en el DDL (ADR-01).
+- **Tests:** JUnit 5, Mockito y Spring Security Test para backend; Vitest/Testing Library para frontend.
+- **Cliente HTTP:** Axios 1.x con interceptores para inyección automática de cabecera `Authorization: Bearer <token>` y captura de expiración de sesión (401).
 
 ## Archivos / módulos clave
 
-- `Backend/` — Código fuente del servidor Java/Spring Boot y archivo `pom.xml`.
-- `frontend/` — Código fuente de la aplicación React y configuración Vite.
-- `database/init/diagramUrbanPulse.sql` — Schema inicial de PostgreSQL con tipos ENUM y tablas.
-- `docker-compose.yml` — Orquestación del contenedor PostgreSQL.
-- `constitution/` — Definición de directrices, principios y convenciones del proyecto.
-- `features/` — Especificaciones, planes técnicos y listas de tareas por funcionalidad.
+- `Backend/` — Servidor de API REST desacoplado, lógica de negocio y persistencia en Spring Boot.
+  - `src/main/java/org/bulbaseros/config/` — Configuración de seguridad perimetral, CORS y beans de infraestructura.
+  - `src/main/java/org/bulbaseros/controller/` — Controladores REST con endpoints públicos y protegidos con RBAC.
+  - `src/main/java/org/bulbaseros/entity/` — Entidades JPA que mapean el modelo de dominio relacional.
+  - `src/main/java/org/bulbaseros/security/` — Filtro JWT (`JwtAuthenticationFilter`), servicio criptográfico y manejadores de error (401/403).
+  - `src/main/java/org/bulbaseros/service/` — Servicios de lógica de negocio (registro con hash BCrypt, login, emisión de tokens).
+- `frontend/` — Aplicación web cliente SPA con React 19 y enrutamiento con React Router 7.
+  - `src/components/` — Componentes transversales de protección de rutas (`ProtectedRoute`, `RoleGuard`).
+  - `src/pages/` — Vistas de la aplicación (`LoginPage`, `RegisterPage`, `HomePage`, `OperatorPanelPage`).
+  - `src/services/` — Cliente Axios (`api.js`) y capa de servicio de autenticación y sesión (`authService.js`).
+- `database/` — Infraestructura de base de datos relacional.
+  - `init/diagramUrbanPulse.sql` — Esquema DDL completo, claves foráneas, índices, trigger de auditoría y datos iniciales (seed).
+  - `README.md` — Parámetros de conexión y comandos de orquestación.
+- `docker-compose.yml` — Definición del servicio de base de datos PostgreSQL con volumen persistente y healthcheck.
+- `docs/ADR/` — Registro formal de Decisiones de Arquitectura (ADRs).
 
 ## Comandos
 
-- `docker compose up -d` — Arranca la base de datos PostgreSQL local.
-- `cd Backend && mvn clean test` — Ejecuta las pruebas del backend.
-- `cd Backend && mvn spring-boot:run` — Inicia el servidor backend en desarrollo.
-- `cd frontend && npm install` — Instala dependencias del cliente.
-- `cd frontend && npm run dev` — Inicia el servidor de desarrollo de React con Vite.
-- `cd frontend && npm run lint` — Valida el estilo y buenas prácticas de código JavaScript/React.
+- `docker compose up -d` — Levanta la base de datos PostgreSQL local en segundo plano.
+- `cd Backend && mvn spring-boot:run` — Arranca el backend en desarrollo (`http://localhost:8080`).
+- `cd Backend && mvn clean test` — Ejecuta la suite completa de pruebas unitarias y de integración del backend.
+- `cd frontend && npm run dev` — Inicia el servidor de desarrollo del cliente web (`http://localhost:5173`).
+- `cd frontend && npm run lint` — Valida el estilo y buenas prácticas de código con ESLint.
+- `cd frontend && npm run build` — Compila y empaqueta el frontend para producción.
 
 ## Modelo de datos / dominio
 
-- **`user_role` (ENUM):** `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN`, `ANALYST`.
-- **`incident_status` (ENUM):** `REPORTED`, `VALIDATED`, `REJECTED`, `ASSIGNED`, `IN_PROGRESS`, `RESOLVED`, `REOPENED`, `CLOSED`.
-- **`incident_priority` (ENUM):** `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
-- **Tabla `users` (`Usuario`):** Almacena credenciales (`email` UNIQUE varchar(150), `password_hash` varchar(255)), `full_name` varchar(150), `role` y relación con `departments` (`department_id` opcional).
-- **Tabla `departments` (`Departamento`):** Departamentos operativos del ayuntamiento (infraestructuras, medio ambiente, movilidad, etc.).
-- **Tabla `incidents` (`Incidencia`):** Reportes geolocalizados vinculados a un ciudadano (`citizen_id`) con coordenadas, categoría y estado.
-- **Tabla `urban_assets` (`ActivoUrbano`):** Mobiliario e infraestructura física urbana con geolocalización y código único.
-- **Tabla `incident_asset_associations` (`AsociacionIncidenciaActivo`):** Relación entre incidencias y elementos de mobiliario afectados.
-- **Tabla `status_changes` (`CambiosEstado`):** Registro inmutable de transiciones de estado para auditoría y trazabilidad.
+- `users` — Identidad y acceso. Almacena `password_hash` con BCrypt y el rol asignado (`CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN`, `ANALYST`) mediante `VARCHAR(30)` y restricción `CHECK`.
+- `departments` — Catálogo de áreas operativas municipales para enrutamiento y asignación de trabajos.
+- `incidents` — Entidad central del dominio geolocalizada con latitud y longitud decimales. Mantiene `status` (`REPORTED`, `VALIDATED`, etc.) y `priority` con restricciones `CHECK` y marcas temporales `created_at` y `updated_at`.
+- `assignments` — Vinculación temporal de incidencias a departamentos y técnicos responsables.
+- `status_changes` — Histórico inmutable para auditoría y trazabilidad completa del ciclo de vida de cada aviso.
+- `attachments` — Metadatos de evidencias fotográficas o documentales almacenadas fuera de la base de datos relacional.
 
 ## Convenciones
 
-- **Convención de paquetes y persistencia:**
-  - Las entidades de persistencia JPA se ubican en `org.bulbaseros.entity` con nombres de clase en PascalCase en español (`Usuario`, `Incidencia`, `Departamento`, `ActivoUrbano`, etc.).
-  - Se unifica el modelo de dominio en torno a `org.bulbaseros.entity`, evitando duplicidades con paquetes auxiliares.
-- **Convención de nombres:**
-  - Java: PascalCase para clases (`AuthService`), camelCase para métodos y variables, UPPER_CASE para constantes.
-  - Endpoints REST: Plurales o prefijos funcionales en minúsculas y kebab-case (p. ej. `/api/auth/register`, `/api/auth/login`).
-  - Frontend: PascalCase para componentes React (`LoginForm.jsx`), camelCase para hooks y utilidades.
-- **Documentación de código:**
-  - Backend: Todo código (clases, métodos, interfaces) debe documentarse obligatoriamente con bloques Javadoc (`/** ... */`) detallando propósito, `@param`, `@return` y `@throws`.
-  - Frontend: Documentar de forma análoga con JSDoc (`/** ... */`) en componentes, hooks, servicios y utilidades con `@param` y `@returns`.
-- **Manejo de errores y respuestas:**
-  - El backend responde con códigos HTTP estándar (400 Bad Request, 401 Unauthorized, 404 Not Found, 409 Conflict, 500 Internal Server Error).
-  - Respuestas de error con estructura JSON consistente y mensajes descriptivos (sin filtrar detalles sensibles de seguridad en fallos de autenticación).
-  - Estándar de tiempo: configuración interna de expiración en milisegundos y exposición en payloads REST en segundos (`expiresIn`).
+- **Código:** Clases en `PascalCase`, métodos y variables en `camelCase`, constantes y valores enum en `UPPER_CASE`.
+- **Documentación de código:** Obligatorio comentar con **Javadoc** en clases, métodos públicos, parámetros (`@param`), retornos (`@return`) y excepciones (`@throws`) en backend; y **JSDoc** equivalente en frontend.
+- **Git y ramas:** Flujo partiendo desde `develop` con formato `<tipo>/<descripcion-kebab-case>` (ej. `feature/...`, `fix/...`, `docs/...`).
+- **Commits:** Obligatorio seguir el estándar **Conventional Commits** redactado en **español** (`feat: ...`, `fix: ...`, `docs: ...`, `test: ...`, `refactor: ...`, `chore: ...`). Sustituir siempre `ñ` por `n` y prescindir de tildes en ramas y commits.
+- **Manejo de errores:** Códigos HTTP semánticos (200, 201, 400, 401, 403, 404, 409, 500) con respuestas JSON estructuradas (`ErrorResponse`). Las denegaciones de login responden con 401 genérico para mitigar enumeración de usuarios.
 
 ## Límites duros
 
-- **Seguridad de contraseñas:** NUNCA almacenar contraseñas en texto plano; siempre aplicar hashing seguro con BCrypt.
-- **Credenciales en commits:** NUNCA commitear archivos `.env` ni credenciales privadas en el repositorio.
-- **Control de dependencias:** No añadir nuevas dependencias críticas en `pom.xml` o `package.json` sin documentar el motivo.
-- **Consistencia SDD:** Ningún código de funcionalidad se escribe sin tener previamente aprobada su especificación (`spec.md`), su plan (`plan.md`) y sus tareas (`tasks.md`).
+- **Seguridad:** Nunca versionar ficheros `.env` con secretos reales ni registrar contraseñas en texto plano en logs (`Usuario.toString()` omite deliberadamente `passwordHash`).
+- **Persistencia:** No utilizar tipos específicos de base de datos no soportados por el estándar JPA sin un ADR que lo justifique expresamente.
+- **Desacoplamiento:** El frontend jamás accede directamente a la base de datos; toda interacción se realiza a través de la API REST protegida por JWT.
+- **Flujo SDD:** Ninguna funcionalidad se implementa sin su correspondiente especificación (`spec.md`) aprobada y desglosada en tareas.
