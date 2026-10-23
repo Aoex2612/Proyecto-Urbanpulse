@@ -1,6 +1,6 @@
 # UrbanPulse
 
-Plataforma para la gestión, monitorización y resolución de incidencias urbanas en tiempo real. UrbanPulse permite centralizar el reporte ciudadano, la coordinación interdepartamental y el seguimiento del ciclo de vida de cada incidencia en la ciudad.
+Plataforma integral para la gestión, monitorización y resolución de incidencias urbanas en tiempo real. UrbanPulse centraliza el reporte ciudadano geolocalizado, la coordinación interdepartamental, la supervisión operativa y el seguimiento del ciclo de vida de cada aviso en la ciudad.
 
 Proyecto desarrollado para la asignatura Desarrollo Software en Plataformas en la Nube (DSPN), Escuela Técnica Superior de Ingeniería Informática (ETSII).
 
@@ -8,49 +8,57 @@ Proyecto desarrollado para la asignatura Desarrollo Software en Plataformas en l
 
 ## Tabla de contenidos
 
-1. [Vision general](#vision-general)
-2. [Arquitectura y tecnologias](#arquitectura-y-tecnologias)
+1. [Visión general](#visión-general)
+2. [Arquitectura y tecnologías](#arquitectura-y-tecnologías)
 3. [Estructura del repositorio](#estructura-del-repositorio)
 4. [Requisitos previos](#requisitos-previos)
-5. [Instalacion y ejecucion](#instalacion-y-ejecucion)
-   - [Backend](#backend)
-   - [Frontend](#frontend)
-6. [Estandares y documentacion tecnica](#estandares-y-documentacion-tecnica)
-7. [Equipo](#equipo)
+5. [Instalación y ejecución](#instalación-y-ejecución)
+   - [Paso 1: Base de datos (Docker)](#paso-1-base-de-datos-docker)
+   - [Paso 2: Backend (Spring Boot)](#paso-2-backend-spring-boot)
+   - [Paso 3: Frontend (React + Vite)](#paso-3-frontend-react--vite)
+6. [Cuentas de prueba preconfiguradas](#cuentas-de-prueba-preconfiguradas)
+7. [Estándares y documentación técnica](#estándares-y-documentación-técnica)
+8. [Equipo](#equipo)
 
 ---
 
-## Vision general
+## Visión general
 
-UrbanPulse aborda la problematica del mantenimiento de infraestructuras y servicios municipales mediante una plataforma centralizada que ofrece:
+UrbanPulse aborda la problemática del mantenimiento de infraestructuras y servicios municipales mediante una plataforma centralizada que ofrece:
 
-- Reporte de incidencias geolocalizadas (coordenadas de latitud y longitud).
-- Adjuncion de contenido multimedia (fotografias y videos) asociado a cada reporte.
-- Asignacion a departamentos municipales y seguimiento de operarios.
-- Trazabilidad y auditoria inmutable de los cambios de estado.
-- Enriquecimiento contextual (sensores, condiciones climaticas o trafico).
+- Reporte de incidencias geolocalizadas mediante coordenadas decimales (latitud y longitud).
+- Adjuntos multimedia (fotografías y evidencias) asociados a cada reporte.
+- Panel de triaje y operaciones urbanas con control de acceso basado en roles (RBAC).
+- Asignación a departamentos municipales y seguimiento de operarios y técnicos.
+- Trazabilidad y auditoría inmutable de los cambios de estado.
+- Enriquecimiento contextual futuro (sensores ambientales, condiciones climáticas y tráfico).
 
 ---
 
-## Arquitectura y tecnologias
+## Arquitectura y tecnologías
 
-El proyecto esta disenado siguiendo una arquitectura desacoplada:
+El proyecto sigue una arquitectura desacoplada basada en microservicios/monolito modular:
 
 - **Backend:**
-  - Lenguaje: Java
-  - Gestor de dependencias y construccion: Apache Maven
-  - Modulo principal: `Backend/`
-  - Paquete base: `org.bulbaseros`
+  - Lenguaje: Java 21
+  - Framework: Spring Boot 3.4.3 (Spring Security 6, Spring Data JPA)
+  - Autenticación: Tokens JWT (HMAC-SHA256, JJWT 0.12.6) y cifrado de contraseñas con BCrypt
+  - Gestor de dependencias: Apache Maven
+  - Directorio principal: `Backend/` (paquete base `org.bulbaseros`)
 
 - **Frontend:**
   - Biblioteca de interfaz: React 19
-  - Entorno de desarrollo y empaquetador: Vite
+  - Entorno y empaquetador: Vite 6
+  - Enrutamiento: React Router 7 con guardias de rol (`RoleGuard`, `ProtectedRoute`)
+  - Cliente HTTP: Axios con interceptor automático para cabeceras Bearer
   - Linter: ESLint
   - Directorio principal: `frontend/`
 
 - **Persistencia:**
-  - Base de datos relacional: PostgreSQL
-  - Diseno centrado en la entidad de incidencias y registro de estados
+  - Motor relacional: PostgreSQL 16 (Alpine) orquestado mediante Docker Compose
+  - Base de datos de testing: H2 Database en memoria (modo PostgreSQL)
+  - Mapeo de enumeraciones: `VARCHAR` con restricciones `CHECK` para total compatibilidad con JPA (ADR-01)
+  - Directorio de scripts: `database/`
 
 ---
 
@@ -58,95 +66,122 @@ El proyecto esta disenado siguiendo una arquitectura desacoplada:
 
 ```text
 .
-├── Backend/                 # Codigo fuente y configuracion del servidor (Java/Maven)
-│   ├── pom.xml              # Fichero de configuracion y dependencias Maven
-│   └── src/                 # Codigo fuente y tests de la aplicacion Java
-├── frontend/                # Aplicacion cliente en React y Vite
+├── Backend/                 # Servidor de API REST y lógica de negocio (Java 21 / Spring Boot)
+│   ├── pom.xml              # Fichero de configuración y dependencias Maven
+│   └── src/                 # Código fuente (config, controller, entity, security, service) y tests
+├── frontend/                # Aplicación cliente web SPA (React 19 / Vite)
 │   ├── package.json         # Dependencias y scripts de Node.js
-│   ├── vite.config.js       # Configuracion de Vite
-│   └── src/                 # Componentes y logica de la interfaz de usuario
-├── constitution/            # Definicion de directrices y convenciones del proyecto
-│   ├── mission.md           # Mision, alcance y principios rectores
+│   ├── vite.config.js       # Configuración de Vite
+│   └── src/                 # Vistas (pages), componentes, estilos y servicios Axios
+├── database/                # Configuración y scripts de persistencia
+│   ├── init/
+│   │   └── diagramUrbanPulse.sql  # Esquema DDL, claves foráneas, índices, triggers y seed
+│   └── README.md            # Parámetros y comandos de gestión de base de datos
+├── constitution/            # Directrices de gobernanza y arquitectura
+│   ├── mission.md           # Misión, principios y alcance del sistema
 │   ├── roadmap.md           # Hoja de ruta y estado de las funcionalidades
-│   └── tech-stack.md        # Especificacion tecnica de tecnologias y convenciones
-├── docs/                    # Documentacion tecnica de diseno
-│   └── ADR/                 # Architectural Decision Records (ADRs)
-├── features/                # Especificaciones, planes y tareas por funcionalidad
-└── README.md                # Documentacion principal del repositorio
+│   └── tech-stack.md        # Especificación técnica detallada y convenciones
+├── docs/                    # Documentación técnica de diseño
+│   ├── ADR/                 # Architectural Decision Records (ADR-01: Persistencia de Enums con JPA)
+│   └── api.md               # Especificación de contratos de API REST
+├── features/                # Especificaciones SDD (spec.md, plan.md, tasks.md)
+├── docker-compose.yml       # Orquestación del contenedor PostgreSQL
+└── README.md                # Este documento
 ```
 
 ---
 
 ## Requisitos previos
 
-Para ejecutar y desarrollar en este proyecto se recomienda disponer de:
+Para ejecutar y desarrollar en este proyecto se requiere:
 
-- Java Development Kit (JDK) 17 o superior
-- Apache Maven 3.8+
-- Node.js (version 20 LTS recomendada, minimo v18)
-- npm (incluido con Node.js)
-- Docker y Docker Compose (opcional, para servicios auxiliares y base de datos)
+- **Java Development Kit (JDK):** Versión 21 recomendada (mínimo 17).
+- **Apache Maven:** 3.8 o superior.
+- **Node.js:** Versión 20 LTS o superior (incluye `npm`).
+- **Docker Desktop:** Con Docker Compose v2+ en ejecución.
 
 ---
 
-## Instalacion y ejecucion
+## Instalación y ejecución
 
-### Backend
+### Paso 1: Base de datos (Docker)
+
+Desde la **raíz del proyecto**, levanta el contenedor de PostgreSQL (que ejecutará automáticamente el script de inicialización con las tablas y datos semilla):
+
+```bash
+docker compose up -d
+```
+
+Para verificar que la base de datos está lista y saludable:
+
+```bash
+docker compose ps
+docker exec -it db_postgres psql -U admin -d urban_pulse_db -c "SELECT email, role FROM users;"
+```
+
+### Paso 2: Backend (Spring Boot)
 
 1. Acceder al directorio del backend:
    ```bash
    cd Backend
    ```
 
-2. Compilar el proyecto y empaquetar:
+2. Ejecutar los tests unitarios y de integración:
    ```bash
-   mvn clean package
+   mvn clean test
    ```
 
-3. Ejecutar los tests unitarios:
+3. Iniciar el servidor Spring Boot conectado a PostgreSQL:
    ```bash
-   mvn test
+   mvn spring-boot:run
    ```
+   El backend arrancará escuchando en `http://localhost:8080`.
 
-4. Ejecutar la aplicacion:
-   ```bash
-   mvn exec:java -Dexec.mainClass="org.bulbaseros.App"
-   ```
-
-### Frontend
+### Paso 3: Frontend (React + Vite)
 
 1. Acceder al directorio del frontend:
    ```bash
    cd frontend
    ```
 
-2. Instalar las dependencias:
+2. Instalar dependencias:
    ```bash
    npm install
    ```
 
-3. Iniciar el servidor de desarrollo local:
+3. Iniciar el servidor local de desarrollo:
    ```bash
    npm run dev
    ```
+   La aplicación web estará disponible en `http://localhost:5173`.
 
-4. Validar el codigo con el linter:
+4. Validar el código con el linter:
    ```bash
    npm run lint
    ```
 
-5. Generar la compilacion para produccion:
-   ```bash
-   npm run build
-   ```
+---
+
+## Cuentas de prueba preconfiguradas
+
+La base de datos incluye usuarios semilla precargados con contraseñas seguras hasheadas mediante BCrypt para evaluar los flujos de autenticación y control de acceso (RBAC):
+
+| Rol | Correo electrónico | Contraseña (sensible a mayúsculas) | Permisos y vistas |
+| :--- | :--- | :--- | :--- |
+| **ADMIN** | `admin@urbanpulse.es` | `Admin1234` | Acceso a administración y triaje operativo completo |
+| **OPERATOR** | `operator@urbanpulse.es` | `Operator1234` | Acceso al Panel de Operador (`/operator-panel`) y cambio de estados |
+| **CITIZEN** | `citizen@urbanpulse.es` | `Citizen1234` | Portal ciudadano (`/`), consulta y reporte de incidencias |
+
+*(Nuevos ciudadanos pueden registrarse libremente a través de la vista `/register` recibiendo automáticamente el rol `CITIZEN`).*
 
 ---
 
-## Estandares y documentacion tecnica
+## Estándares y documentación técnica
 
-- **Mision y Gobernanza:** Consulta los principios y alcance del sistema en [`constitution/mission.md`](constitution/mission.md).
-- **Decisiones de Arquitectura:** Las decisiones tecnicas significativas se documentan mediante el formato ADR en [`docs/ADR/`](docs/ADR/).
-- **Gestion de Funcionalidades:** Cada nueva funcionalidad se define dentro del directorio [`features/`](features/) siguiendo la estructura de especificacion (`spec.md`), plan tecnico (`plan.md`) y lista de tareas (`tasks.md`).
+- **Misión y Gobernanza:** Consulta los principios rectores en [`constitution/mission.md`](constitution/mission.md).
+- **Especificación Técnica:** Revisa las directrices de arquitectura y límites en [`constitution/tech-stack.md`](constitution/tech-stack.md).
+- **Decisiones de Arquitectura:** Registradas en [`docs/ADR/`](docs/ADR/) (ver [`ADR-01: Persistencia de Enums con JPA`](docs/ADR/ADR-01-persistencia-enums-jpa.md)).
+- **Gestión de Funcionalidades (SDD):** Cada funcionalidad cuenta con su especificación (`spec.md`), plan (`plan.md`) y tareas (`tasks.md`) dentro de [`features/`](features/).
 
 ---
 
