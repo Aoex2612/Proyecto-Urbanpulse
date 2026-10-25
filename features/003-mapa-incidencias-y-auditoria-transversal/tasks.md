@@ -15,10 +15,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 2.4 Implementar método `getIncidentHistory(Long id)` que verifique la existencia de la incidencia (lanzando 404 si no existe) y devuelva la lista cronológica de transiciones como `StatusChangeResponse`.
 - [x] 2.5 Crear pruebas unitarias con Mockito en `IncidentServiceTest` para verificar filtrado de activas, creación con categoría válida, auditoría transaccional de estados, captura de 404 e historial ordenado.
 
-## [ ] Tarea 3: Endpoints REST y Reglas de Seguridad RBAC en Backend - Depende de Tarea 2 - RF: RF-1, RF-10, RF-13, RF-14, RF-15, RF-16, RF-17
-- [ ] 3.1 Actualizar `IncidentController` inyectando `IncidentService` y exponiendo `GET /api/incidents`, `POST /api/incidents` (HTTP 201), `PATCH /api/incidents/{id}/status` y `GET /api/incidents/{id}/history` (HTTP 200 / 404) documentados con Javadoc.
-- [ ] 3.2 Actualizar `SecurityConfig` declarando las reglas de autorización: `GET /api/incidents/{id}/history` restringido a `.hasRole("ADMIN")`, `PATCH /api/incidents/*/status` a `.hasAnyRole("OPERATOR", "ADMIN")`, y endpoints generales a `.authenticated()`.
-- [ ] 3.3 Desarrollar suite de pruebas de integración y seguridad en `IncidentControllerSecurityTest` comprobando respuestas 200, 201, 401, 403 y 404 según roles (`ANONYMOUS`, `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ANALYST`, `ADMIN`).
+## [x] Tarea 3: Endpoints REST y Reglas de Seguridad RBAC en Backend - Depende de Tarea 2 - RF: RF-1, RF-10, RF-13, RF-14, RF-15, RF-16, RF-17
+- [x] 3.1 Actualizar `IncidentController` inyectando `IncidentService` y exponiendo `GET /api/incidents`, `POST /api/incidents` (HTTP 201), `PATCH /api/incidents/{id}/status` y `GET /api/incidents/{id}/history` (HTTP 200 / 404) documentados con Javadoc.
+- [x] 3.2 Actualizar `SecurityConfig` declarando las reglas de autorización: `GET /api/incidents/{id}/history` restringido a `.hasRole("ADMIN")`, `PATCH /api/incidents/*/status` a `.hasAnyRole("OPERATOR", "ADMIN")`, y endpoints generales a `.authenticated()`.
+- [x] 3.3 Desarrollar suite de pruebas de integración y seguridad en `IncidentControllerSecurityTest` comprobando respuestas 200, 201, 401, 403 y 404 según roles (`ANONYMOUS`, `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ANALYST`, `ADMIN`).
 
 ## [ ] Tarea 4: Dependencias Cartográficas y Capa de Servicio en Frontend - RF: RF-1, RF-10, RF-15
 - [ ] 4.1 Instalar e incorporar dependencias `leaflet` y `react-leaflet` en `frontend/package.json` e importar `leaflet/dist/leaflet.css`.
