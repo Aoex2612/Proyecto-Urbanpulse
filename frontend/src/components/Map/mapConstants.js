@@ -43,10 +43,16 @@ export const getStatusLabel = (status) => {
   switch (status) {
     case 'REPORTED':
       return 'Reportada';
+    case 'VALIDATED':
+      return 'Validada';
+    case 'ASSIGNED':
+      return 'Asignada';
     case 'IN_PROGRESS':
       return 'En progreso';
     case 'RESOLVED':
       return 'Resuelta';
+    case 'REOPENED':
+      return 'Reabierta';
     case 'CLOSED':
       return 'Cerrada';
     case 'REJECTED':
