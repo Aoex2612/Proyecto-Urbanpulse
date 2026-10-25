@@ -129,7 +129,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         // Paso transparente en rutas públicas o si el servicio JWT no está provisto en el contexto
-        if (jwtService == null || isPublicPath(request)) {
+        if (jwtService == null || "OPTIONS".equalsIgnoreCase(request.getMethod()) || isPublicPath(request)) {
             filterChain.doFilter(request, response);
             return;
         }
