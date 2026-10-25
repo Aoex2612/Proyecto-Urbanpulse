@@ -36,11 +36,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 6.2 Implementar modal de detalle `IncidentDetailModal.jsx` que se abra al pulsar "Ver detalle completo" desde el Popup del marcador, mostrando la información de la incidencia.
 - [x] 6.3 Renderizar condicionalmente `StatusTimeline` dentro de `IncidentDetailModal.jsx` exclusivamente cuando el usuario autenticado posea rol `ADMIN`, desacoplado para facilitar su futura extensión al rol `OPERATOR`.
 
-## [ ] Tarea 7: Vista `/map`, Enrutamiento y Navegación en Frontend - Depende de Tareas 5 y 6 - RF: RF-1, RF-6, RF-7
-- [ ] 7.1 Crear vista de página `MapPage.jsx` y su hoja de estilos `MapPage.css` orquestando el mapa a pantalla completa, barra superior con botón "Crear incidencia" / "Cancelar selección" y modales asociados.
-- [ ] 7.2 Registrar la ruta protegida `/map` en `App.jsx` mediante `<ProtectedRoute>`.
-- [ ] 7.3 Añadir enlace de navegación visible al "Mapa" en la cabecera/navegación accesible para usuarios autenticados.
-- [ ] 7.4 Ejecutar y validar `npm run lint` en frontend garantizando 0 errores y advertencias.
+## [x] Tarea 7: Vista `/map`, Enrutamiento y Navegación en Frontend - Depende de Tareas 5 y 6 - RF: RF-1, RF-6, RF-7
+- [x] 7.1 Crear vista de página `MapPage.jsx` y su hoja de estilos `MapPage.css` orquestando el mapa a pantalla completa, barra superior con botón "Crear incidencia" / "Cancelar selección" y modales asociados.
+- [x] 7.2 Registrar la ruta protegida `/map` en `App.jsx` mediante `<ProtectedRoute>`.
+- [x] 7.3 Añadir enlace de navegación visible al "Mapa" en la cabecera/navegación accesible para usuarios autenticados.
+- [x] 7.4 Ejecutar y validar `npm run lint` en frontend garantizando 0 errores y advertencias.
 
 ## [ ] Tarea 8: Verificación Integral de Criterios de Aceptación y Pruebas - Depende de Tareas 3 y 7 - RF: Todos
 - [ ] 8.1 Ejecutar suite completa de tests de Backend (`mvn clean test`) comprobando 100% de tests en verde.

@@ -1,0 +1,449 @@
+/**
+ * @fileoverview Estilos de la vista de mapa interactivo (MapPage) en UrbanPulse.
+ * Diseñado con layout a pantalla completa, barra superior fija de mandos,
+ * chip de contador, botón toggle con mutación visual y banner de feedback.
+ */
+
+/* ==========================================================================
+   Contenedor Principal de la Página de Mapa
+   ========================================================================== */
+
+.map-page-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 32px);
+  min-height: 600px;
+  box-sizing: border-box;
+  padding: 12px 16px 16px 16px;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   Cabecera Superior de Mandos del Mapa
+   ========================================================================== */
+
+.map-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  background-color: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: var(--shadow, 0 4px 6px -2px rgba(0, 0, 0, 0.05));
+  z-index: 10;
+}
+
+/* Sección izquierda: navegación y título */
+.map-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.map-nav-back {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent, #aa3bff);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: var(--accent-bg, rgba(170, 59, 255, 0.08));
+  border: 1px solid var(--accent-border, rgba(170, 59, 255, 0.3));
+  transition: all 0.2s ease;
+}
+
+.map-nav-back:hover {
+  background-color: var(--accent-border, rgba(170, 59, 255, 0.2));
+  transform: translateX(-2px);
+}
+
+.map-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.map-main-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.map-badge-city {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Sección central: contador de incidencias no terminadas */
+.map-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-counter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--code-bg, #f4f3ec);
+  border: 1px solid var(--border, #e5e4e7);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-h, #08060d);
+}
+
+.counter-icon {
+  font-size: 14px;
+}
+
+.counter-number {
+  font-weight: 700;
+  color: var(--accent, #aa3bff);
+}
+
+.counter-text {
+  color: var(--text, #6b6375);
+}
+
+/* Sección derecha: controles de acción */
+.map-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.map-header-operator-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  background-color: #0284c7;
+  color: #ffffff;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.map-header-operator-link:hover {
+  background-color: #0369a1;
+}
+
+/* Botón de refresco manual */
+.map-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h, #08060d);
+  background-color: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-btn-refresh:hover:not(:disabled) {
+  background-color: var(--code-bg, #f4f3ec);
+  border-color: #cbd5e1;
+}
+
+.map-btn-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.is-spinning .refresh-icon {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Botón toggle de creación de incidencia / cancelación de selección */
+.map-btn-toggle-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.map-btn-toggle-create.mode-inactive {
+  background-color: var(--accent, #aa3bff);
+  color: #ffffff;
+}
+
+.map-btn-toggle-create.mode-inactive:hover {
+  background-color: #932ae6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(170, 59, 255, 0.3);
+}
+
+/* Modo activo: Estilo secundario destacado para cancelar la selección (RF-6 y RF-7) */
+.map-btn-toggle-create.mode-active {
+  background-color: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+  animation: pulseSelection 2s infinite;
+}
+
+.map-btn-toggle-create.mode-active:hover {
+  background-color: #dc2626;
+}
+
+@keyframes pulseSelection {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* ==========================================================================
+   Banner Toast de Confirmación (Feedback)
+   ========================================================================== */
+
+.map-toast-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast-icon {
+  font-size: 16px;
+}
+
+.toast-close-btn {
+  background: none;
+  border: none;
+  color: #065f46;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.toast-close-btn:hover {
+  color: #047857;
+}
+
+/* ==========================================================================
+   Alerta de Error con Botón de Reintento
+   ========================================================================== */
+
+.map-error-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.error-alert-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-retry-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background-color: #b91c1c;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.error-retry-btn:hover {
+  background-color: #991b1b;
+}
+
+/* ==========================================================================
+   Área Principal del Mapa y Pantalla Completa
+   ========================================================================== */
+
+.map-page-main {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.map-view-fullscreen {
+  width: 100%;
+  height: 100%;
+}
+
+.map-loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  background-color: var(--code-bg, #f4f3ec);
+  border-radius: 12px;
+  border: 1px solid var(--border, #e5e4e7);
+  gap: 16px;
+}
+
+.map-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid rgba(170, 59, 255, 0.2);
+  border-top-color: var(--accent, #aa3bff);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.map-loading-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text, #6b6375);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Modo Oscuro (Dark Mode)
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  .map-badge-city {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+  }
+
+  .map-toast-banner {
+    background-color: #064e3b;
+    color: #d1fae5;
+    border-color: #059669;
+  }
+
+  .toast-close-btn {
+    color: #d1fae5;
+  }
+
+  .map-error-alert {
+    background-color: #450a0a;
+    color: #fecaca;
+    border-color: #7f1d1d;
+  }
+}
+
+/* ==========================================================================
+   Adaptabilidad Responsiva (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .map-page-container {
+    height: auto;
+    min-height: 100vh;
+    padding: 8px;
+  }
+
+  .map-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .map-header-left {
+    justify-content: space-between;
+  }
+
+  .map-header-actions {
+    justify-content: space-between;
+  }
+
+  .map-btn-toggle-create,
+  .map-btn-refresh {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .map-page-main {
+    min-height: calc(100vh - 220px);
+  }
+}

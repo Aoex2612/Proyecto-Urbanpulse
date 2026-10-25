@@ -1,8 +1,8 @@
 /**
- * @fileoverview Vista principal / Dashboard (/ ) para ciudadanos autenticados en UrbanPulse.
+ * @fileoverview Vista principal / Dashboard (/) para ciudadanos autenticados en UrbanPulse.
  * Muestra el perfil del ciudadano, información de la plataforma, avisos de acceso denegado
- * provenientes de redirecciones de autorización RBAC y permite el acceso directo a vistas
- * operativas para roles autorizados.
+ * provenientes de redirecciones de autorización RBAC y permite el acceso directo al mapa
+ * de incidencias (/map) y a vistas operativas para roles autorizados.
  */
 
 import { useState } from 'react';
@@ -71,6 +71,14 @@ export default function HomePage() {
           <span className="brand-badge">Portal Ciudadano</span>
         </div>
         <div className="home-header-actions">
+          <Link
+            to="/map"
+            className="home-map-nav-link"
+            onClick={handleNavClick}
+            title="Ir al mapa cartográfico interactivo"
+          >
+            Ver Mapa de Incidencias
+          </Link>
           {hasOperatorAccess && (
             <Link
               to="/operator-panel"
@@ -132,6 +140,23 @@ export default function HomePage() {
         </section>
 
         <section className="features-preview">
+          {/* Tarjeta destacada hacia el Mapa Cartográfico */}
+          <div className="feature-card map-feature-card">
+            <div className="map-feature-tag">Mapa Interactivo</div>
+            <h3>Mapa de Incidencias Urbanas</h3>
+            <p>
+              Explora las incidencias en el territorio de Málaga en tiempo real y reporta avisos asistidos
+              haciendo clic directamente sobre el mapa.
+            </p>
+            <Link
+              to="/map"
+              className="map-feature-btn"
+              onClick={handleNavClick}
+            >
+              Ver Mapa de Incidencias &rarr;
+            </Link>
+          </div>
+
           {hasOperatorAccess && (
             <div className="feature-card operator-feature-card">
               <div className="operator-feature-tag">Rol Operativo Activo</div>
@@ -149,12 +174,7 @@ export default function HomePage() {
               </Link>
             </div>
           )}
-          <div className="feature-card">
-            <h3>Reportar Incidencia</h3>
-            <p>
-              Próximamente podrás registrar averías de alumbrado, desperfectos en vías públicas y más.
-            </p>
-          </div>
+
           <div className="feature-card">
             <h3>Mis Reportes</h3>
             <p>

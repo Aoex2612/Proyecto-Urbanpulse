@@ -1,7 +1,8 @@
 /**
  * @fileoverview Vista del Panel de Operador y Gestión de Triaje de Incidencias en UrbanPulse.
  * Proporciona a los perfiles con rol `OPERATOR` y `ADMIN` una interfaz de supervisión,
- * priorización y actualización del estado de incidencias reportadas en la vía pública.
+ * priorización y actualización del estado de incidencias reportadas en la vía pública,
+ * así como acceso directo a la vista cartográfica (/map).
  */
 
 import { useState } from 'react';
@@ -97,6 +98,9 @@ export default function OperatorPanelPage() {
           <span className="operator-badge">Panel de Operador</span>
         </div>
         <div className="operator-header-actions">
+          <Link to="/map" className="operator-map-nav-link" title="Explorar incidencias en el mapa">
+            Ver Mapa de Incidencias
+          </Link>
           <Link to="/" className="back-to-home-link">
             &larr; Portal Ciudadano
           </Link>

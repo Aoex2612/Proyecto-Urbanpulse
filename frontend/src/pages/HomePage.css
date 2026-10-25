@@ -268,3 +268,60 @@
 .operator-feature-btn:hover {
   text-decoration: underline;
 }
+
+
+/* Navegación al Mapa de Incidencias desde la cabecera del portal ciudadano */
+.home-map-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--accent, #aa3bff);
+  color: #ffffff;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(170, 59, 255, 0.2);
+}
+
+.home-map-nav-link:hover {
+  background-color: #932ae6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(170, 59, 255, 0.3);
+}
+
+/* Tarjeta destacada de mapa en el panel del ciudadano */
+.map-feature-card {
+  border-color: var(--accent, #aa3bff);
+  background: linear-gradient(180deg, var(--accent-bg, rgba(170, 59, 255, 0.08)) 0%, var(--bg, #ffffff) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.map-feature-tag {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent, #aa3bff);
+  background-color: var(--accent-bg, rgba(170, 59, 255, 0.15));
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.map-feature-btn {
+  display: inline-block;
+  margin-top: auto;
+  padding-top: 14px;
+  color: var(--accent, #aa3bff);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.map-feature-btn:hover {
+  text-decoration: underline;
+}
