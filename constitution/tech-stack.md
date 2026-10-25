@@ -11,6 +11,7 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 - **Persistencia:** Spring Data JPA con Hibernate 6. Las enumeraciones se persisten como cadenas (`@Enumerated(EnumType.STRING)`) emparejadas con restricciones `CHECK` en el DDL (ADR-01).
 - **Tests:** JUnit 5, Mockito y Spring Security Test para backend; Vitest/Testing Library para frontend.
 - **Cliente HTTP:** Axios 1.x con interceptores para inyección automática de cabecera `Authorization: Bearer <token>` y captura de expiración de sesión (401).
+- **Cartografía / Mapas:** Leaflet 1.9.x y React-Leaflet con teselas abiertas OpenStreetMap para visualización interactiva de incidencias y captura geolocalizada de coordenadas en frontend.
 
 ## Archivos / módulos clave
 
@@ -21,8 +22,8 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
   - `src/main/java/org/bulbaseros/security/` — Filtro JWT (`JwtAuthenticationFilter`), servicio criptográfico y manejadores de error (401/403).
   - `src/main/java/org/bulbaseros/service/` — Servicios de lógica de negocio (registro con hash BCrypt, login, emisión de tokens).
 - `frontend/` — Aplicación web cliente SPA con React 19 y enrutamiento con React Router 7.
-  - `src/components/` — Componentes transversales de protección de rutas (`ProtectedRoute`, `RoleGuard`).
-  - `src/pages/` — Vistas de la aplicación (`LoginPage`, `RegisterPage`, `HomePage`, `OperatorPanelPage`).
+  - `src/components/` — Componentes transversales de protección de rutas (`ProtectedRoute`, `RoleGuard`), visualización cartográfica con Leaflet y trazabilidad (`Timeline`).
+  - `src/pages/` — Vistas de la aplicación (`LoginPage`, `RegisterPage`, `HomePage`, `OperatorPanelPage`, `MapPage`).
   - `src/services/` — Cliente Axios (`api.js`) y capa de servicio de autenticación y sesión (`authService.js`).
 - `database/` — Infraestructura de base de datos relacional.
   - `init/diagramUrbanPulse.sql` — Esquema DDL completo, claves foráneas, índices, trigger de auditoría y datos iniciales (seed).
