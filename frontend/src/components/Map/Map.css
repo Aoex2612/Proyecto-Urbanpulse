@@ -237,6 +237,44 @@
   line-height: 1;
 }
 
+/* Badges de Prioridad */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.priority-badge.priority-low {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.priority-badge.priority-medium {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.priority-badge.priority-high {
+  background-color: rgba(249, 115, 22, 0.12);
+  color: #c2410c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.priority-badge.priority-critical {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  font-weight: 800;
+}
+
 /* ==========================================================================
    Modal de Creación Asistida de Incidencias
    ========================================================================== */
@@ -480,6 +518,153 @@
 }
 
 /* ==========================================================================
+   Modal de Detalle Exhaustivo de Incidencias
+   ========================================================================== */
+
+.incident-detail-modal-card {
+  max-width: 640px;
+}
+
+.modal-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.modal-eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent, #aa3bff);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.incident-detail-body {
+  gap: 20px;
+}
+
+.incident-detail-header-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background-color: var(--code-bg, #f4f3ec);
+  border-radius: 10px;
+  border: 1px solid var(--border, #e5e4e7);
+  text-align: left;
+}
+
+.incident-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  line-height: 1.35;
+}
+
+.detail-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  text-align: left;
+}
+
+.detail-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detail-meta-span-2 {
+  grid-column: span 2;
+}
+
+.detail-meta-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text, #6b6375);
+}
+
+.detail-meta-value {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-h, #08060d);
+}
+
+.coordinates-font {
+  font-family: var(--mono, monospace);
+  font-size: 12.5px;
+}
+
+.incident-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.detail-section-heading {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-description-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text, #6b6375);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.incident-detail-audit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border, #e5e4e7);
+  text-align: left;
+}
+
+.audit-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.audit-header-icon {
+  font-size: 15px;
+}
+
+.audit-role-tag {
+  font-size: 11px;
+  font-weight: 700;
+  background-color: rgba(170, 59, 255, 0.12);
+  color: var(--accent, #aa3bff);
+  padding: 3px 9px;
+  border-radius: 9999px;
+  border: 1px solid rgba(170, 59, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ==========================================================================
    Animaciones
    ========================================================================== */
 
@@ -548,5 +733,14 @@
   .btn-secondary:hover:not(:disabled) {
     background-color: #1f2028;
     color: #f3f4f6;
+  }
+
+  .incident-detail-header-card {
+    background-color: #1f2028;
+    border-color: #2e303a;
+  }
+
+  .incident-detail-audit-section {
+    border-top-color: #2e303a;
   }
 }

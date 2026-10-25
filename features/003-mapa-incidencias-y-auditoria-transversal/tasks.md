@@ -31,10 +31,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 5.3 Implementar componente modal `CreateIncidentModal.jsx` con campos de título, descripción, selector desplegable de categoría predefinida (`Alumbrado`, `Vías Públicas`, `Limpieza`, `Parques y Jardines`, `Mobiliario Urbano`) y coordenadas capturadas, descartando el punto si se cancela.
 - [x] 5.4 Actualizar dinámicamente los marcadores del mapa al registrar una incidencia con éxito sin recargar la página.
 
-## [ ] Tarea 6: Modal de Detalle de Incidencia y Componente Modular `Timeline` de Auditoría - Depende de Tarea 4 - RF: RF-2, RF-3, RF-15, RF-18, RF-19, RF-20
-- [ ] 6.1 Implementar componente modular reutilizable `StatusTimeline.jsx` en `frontend/src/components/Timeline/` con JSDoc, renderizando cronológicamente autor, estados origen/destino, motivo justificado y fecha/hora.
-- [ ] 6.2 Implementar modal de detalle `IncidentDetailModal.jsx` que se abra al pulsar "Ver detalle completo" desde el Popup del marcador, mostrando la información de la incidencia.
-- [ ] 6.3 Renderizar condicionalmente `StatusTimeline` dentro de `IncidentDetailModal.jsx` exclusivamente cuando el usuario autenticado posea rol `ADMIN`, desacoplado para facilitar su futura extensión al rol `OPERATOR`.
+## [x] Tarea 6: Modal de Detalle de Incidencia y Componente Modular `Timeline` de Auditoría - Depende de Tarea 4 - RF: RF-2, RF-3, RF-15, RF-18, RF-19, RF-20
+- [x] 6.1 Implementar componente modular reutilizable `StatusTimeline.jsx` en `frontend/src/components/Timeline/` con JSDoc, renderizando cronológicamente autor, estados origen/destino, motivo justificado y fecha/hora.
+- [x] 6.2 Implementar modal de detalle `IncidentDetailModal.jsx` que se abra al pulsar "Ver detalle completo" desde el Popup del marcador, mostrando la información de la incidencia.
+- [x] 6.3 Renderizar condicionalmente `StatusTimeline` dentro de `IncidentDetailModal.jsx` exclusivamente cuando el usuario autenticado posea rol `ADMIN`, desacoplado para facilitar su futura extensión al rol `OPERATOR`.
 
 ## [ ] Tarea 7: Vista `/map`, Enrutamiento y Navegación en Frontend - Depende de Tareas 5 y 6 - RF: RF-1, RF-6, RF-7
 - [ ] 7.1 Crear vista de página `MapPage.jsx` y su hoja de estilos `MapPage.css` orquestando el mapa a pantalla completa, barra superior con botón "Crear incidencia" / "Cancelar selección" y modales asociados.

@@ -57,6 +57,27 @@ export const getStatusLabel = (status) => {
 };
 
 /**
+ * Mapea el nivel de prioridad técnica de una incidencia a su etiqueta legible en español.
+ *
+ * @param {string} priority - Nivel de prioridad técnico (LOW, MEDIUM, HIGH, CRITICAL).
+ * @returns {string} Etiqueta descriptiva en español para mostrar en la interfaz.
+ */
+export const getPriorityLabel = (priority) => {
+  switch (priority) {
+    case 'LOW':
+      return 'Baja';
+    case 'MEDIUM':
+      return 'Media';
+    case 'HIGH':
+      return 'Alta';
+    case 'CRITICAL':
+      return 'Crítica';
+    default:
+      return priority || 'Media';
+  }
+};
+
+/**
  * Obtiene el icono de marcador Leaflet apropiado en función del estado operativo de la incidencia.
  *
  * @param {string} status - Estado operativo de la incidencia.
@@ -77,4 +98,26 @@ export const getIncidentMarkerIcon = (status) => {
     default:
       return defaultIcon;
   }
+};
+
+/**
+ * Lista de roles de usuario autorizados para inspeccionar la sección de auditoría e historial.
+ * Configuración modular que permite extender la visibilidad a otros roles (como OPERATOR)
+ * sin requerir refactorizaciones en la lógica de presentación.
+ *
+ * @type {string[]}
+ */
+export const CAN_VIEW_AUDIT_ROLES = ['ADMIN'];
+
+/**
+ * Evalúa si el rol proporcionado cuenta con permisos para consultar y visualizar el historial de auditoría.
+ *
+ * @param {string|null|undefined} role - Rol del usuario a verificar.
+ * @returns {boolean} Verdadero si el rol está autorizado en CAN_VIEW_AUDIT_ROLES.
+ */
+export const canViewAuditHistory = (role) => {
+  if (!role || typeof role !== 'string') {
+    return false;
+  }
+  return CAN_VIEW_AUDIT_ROLES.includes(role.trim().toUpperCase());
 };
