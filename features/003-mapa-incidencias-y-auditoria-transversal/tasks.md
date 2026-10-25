@@ -46,6 +46,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 8.1 Ejecutar suite completa de tests de Backend (`mvn clean test`) comprobando 100% de tests en verde.
 - [x] 8.2 Validar cada uno de los criterios de aceptación y casos límite especificados en `spec.md`.
 
+## [x] Tarea 9: Integración del Panel de Operador y Máquina de Estados del Ciclo de Vida - RF: RF-13, RF-14, RF-15
+- [x] 9.1 Conectar `OperatorPanelPage.jsx` a `incidentService.getAllIncidents()` para sincronizar en tiempo real las incidencias de la base de datos PostgreSQL.
+- [x] 9.2 Autorizar en `SecurityConfig` y `JwtAuthenticationFilter` el método HTTP `PATCH` y las peticiones preflight CORS `OPTIONS /**`.
+- [x] 9.3 Implementar en backend (`IncidentService`) y frontend (`mapConstants.js`) la validación estricta de transiciones según el diagrama de ciclo de vida (`REPORTED` -> `VALIDATED`/`REJECTED`, `VALIDATED` -> `ASSIGNED`, `ASSIGNED` -> `IN_PROGRESS`, `IN_PROGRESS` -> `RESOLVED`, `RESOLVED` -> `CLOSED`/`REOPENED`, `REOPENED` -> `ASSIGNED`).
+- [x] 9.4 Restringir en el selector del panel de operador únicamente los estados siguientes permitidos e inhabilitar transiciones en estados finales (`REJECTED`, `CLOSED`).
+- [x] 9.5 Depuración y simplificación visual de la interfaz del panel de triaje de operador.
+
 ---
 ## Mantenimiento (checklist recurrente)
 

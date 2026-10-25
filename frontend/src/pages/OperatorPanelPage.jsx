@@ -179,9 +179,7 @@ export default function OperatorPanelPage() {
               >
                 🔄 Refrescar
               </button>
-              <span className="triage-tag-info">
-                Ruta protegida por RBAC: Operadores y Administradores
-              </span>
+              
             </div>
           </div>
 
@@ -299,15 +297,6 @@ export default function OperatorPanelPage() {
           )}
         </section>
 
-        <aside className="security-notice-card">
-          <h4>Control de Seguridad Perimetral y RBAC</h4>
-          <p>
-            Esta vista y sus operaciones asociadas están restringidas exclusivamente a usuarios
-            con roles <strong>OPERATOR</strong> o <strong>ADMIN</strong>. Las peticiones a
-            la API backend (<code>PATCH /api/incidents/:id/status</code>) son validadas
-            criptográficamente mediante JWT y denegadas con HTTP 403 Forbidden para cualquier otro rol.
-          </p>
-        </aside>
       </main>
     </div>
   );
