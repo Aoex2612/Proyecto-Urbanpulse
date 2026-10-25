@@ -1,5 +1,5 @@
 # Spec 003 — Mapa de Incidencias con Leaflet y Auditoría Transversal
-**Estado:** propuesta
+**Estado:** implementado ✅
 
 ## Contexto y objetivo
 Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva centrada en el territorio mediante un mapa basado en Leaflet, facilitando tanto la visualización de las incidencias no terminadas en la ciudad de Málaga como la captura geolocalizada precisa para dar de alta nuevos avisos. Asimismo, garantizar la trazabilidad transversal y rendición de cuentas del ciclo de vida de cada incidencia mediante el registro inmutable de sus transiciones de estado (`status_changes`) y la visualización de una línea temporal (Timeline) de auditoría accesible para el rol de administración, diseñada de forma modular para admitir futura extensión a otros roles operativos.
@@ -67,18 +67,18 @@ Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva cen
 - Pantalla global de volcado o exportación de auditoría completa para toda la base de datos.
 
 ## Criterios de aceptación
-- [ ] Endpoint `GET /api/incidents` implementado y protegido para devolver la lista de incidencias no terminadas (`status NOT IN ('CLOSED', 'REJECTED')`) para el mapa.
-- [ ] Endpoint `POST /api/incidents` implementado para dar de alta incidencias capturando el usuario desde el token JWT con estado inicial `REPORTED` y categoría de catálogo.
-- [ ] Endpoint `PATCH /api/incidents/{id}/status` actualizado para persistir atómicamente el registro en `status_changes` extrayendo el actor del JWT.
-- [ ] Endpoint `GET /api/incidents/{id}/history` implementado y protegido exclusivamente para el rol `ADMIN`, respondiendo 404 ante ids inexistentes.
-- [ ] Peticiones de usuarios sin rol `ADMIN` a `GET /api/incidents/{id}/history` son rechazadas con HTTP 403 Forbidden y DTO `ErrorResponse`.
-- [ ] Vista `/map` implementada con Leaflet en frontend, centrada en Málaga (`[36.7213, -4.4214]`, zoom 13), accesible para usuarios autenticados.
-- [ ] Marcadores interactivos en el mapa que despliegan Popup con datos básicos y botón "Ver detalle completo".
-- [ ] Modal de detalle que renderiza la información de la incidencia y, si el usuario es `ADMIN`, incorpora el componente `Timeline` con el historial cronológico.
-- [ ] Botón "Crear incidencia" / "Cancelar selección" que habilita/deshabilita el modo de captura geográfica con clic en el mapa.
-- [ ] Formulario de alta con selector desplegable de categoría predefinida y descarte limpio de coordenadas si se cancela.
-- [ ] Suite de pruebas unitarias y de integración de backend pasando satisfactoriamente (`mvn clean test`).
-- [ ] Verificación de estilo y sintaxis de frontend sin errores (`npm run lint`).
+- [x] Endpoint `GET /api/incidents` implementado y protegido para devolver la lista de incidencias no terminadas (`status NOT IN ('CLOSED', 'REJECTED')`) para el mapa.
+- [x] Endpoint `POST /api/incidents` implementado para dar de alta incidencias capturando el usuario desde el token JWT con estado inicial `REPORTED` y categoría de catálogo.
+- [x] Endpoint `PATCH /api/incidents/{id}/status` actualizado para persistir atómicamente el registro en `status_changes` extrayendo el actor del JWT.
+- [x] Endpoint `GET /api/incidents/{id}/history` implementado y protegido exclusivamente para el rol `ADMIN`, respondiendo 404 ante ids inexistentes.
+- [x] Peticiones de usuarios sin rol `ADMIN` a `GET /api/incidents/{id}/history` son rechazadas con HTTP 403 Forbidden y DTO `ErrorResponse`.
+- [x] Vista `/map` implementada con Leaflet en frontend, centrada en Málaga (`[36.7213, -4.4214]`, zoom 13), accesible para usuarios autenticados.
+- [x] Marcadores interactivos en el mapa que despliegan Popup con datos básicos y botón "Ver detalle completo".
+- [x] Modal de detalle que renderiza la información de la incidencia y, si el usuario es `ADMIN`, incorpora el componente `Timeline` con el historial cronológico.
+- [x] Botón "Crear incidencia" / "Cancelar selección" que habilita/deshabilita el modo de captura geográfica con clic en el mapa.
+- [x] Formulario de alta con selector desplegable de categoría predefinida y descarte limpio de coordenadas si se cancela.
+- [x] Suite de pruebas unitarias y de integración de backend pasando satisfactoriamente (`mvn clean test`).
+- [x] Verificación de estilo y sintaxis de frontend sin errores (`npm run lint`).
 
 ## Dudas abiertas
 _Todas las aclaraciones y ambigüedades detectadas por QA han sido resueltas y consensuadas._

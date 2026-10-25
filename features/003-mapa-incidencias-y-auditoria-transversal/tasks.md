@@ -42,9 +42,9 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 7.3 Añadir enlace de navegación visible al "Mapa" en la cabecera/navegación accesible para usuarios autenticados.
 - [x] 7.4 Ejecutar y validar `npm run lint` en frontend garantizando 0 errores y advertencias.
 
-## [ ] Tarea 8: Verificación Integral de Criterios de Aceptación y Pruebas - Depende de Tareas 3 y 7 - RF: Todos
-- [ ] 8.1 Ejecutar suite completa de tests de Backend (`mvn clean test`) comprobando 100% de tests en verde.
-- [ ] 8.2 Validar cada uno de los criterios de aceptación y casos límite especificados en `spec.md`.
+## [x] Tarea 8: Verificación Integral de Criterios de Aceptación y Pruebas - Depende de Tareas 3 y 7 - RF: Todos
+- [x] 8.1 Ejecutar suite completa de tests de Backend (`mvn clean test`) comprobando 100% de tests en verde.
+- [x] 8.2 Validar cada uno de los criterios de aceptación y casos límite especificados en `spec.md`.
 
 ---
 ## Mantenimiento (checklist recurrente)
