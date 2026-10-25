@@ -2,11 +2,11 @@
 
 _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas pequeñas y concretas; marca `[x]` al completarlas._
 
-## [ ] Tarea 1: Entidades, DTOs y Repositorios en Backend (Persistencia y Auditoría) - RF: RF-1, RF-10, RF-13, RF-15
-- [ ] 1.1 Verificar y completar los mapeos JPA de `Incidencia.java` y `CambiosEstado.java` con las tablas `incidents` y `status_changes`, asegurando tipos, relaciones `@ManyToOne` y anotaciones con Javadoc.
-- [ ] 1.2 Crear interfaz `IncidenciaRepository` (`JpaRepository<Incidencia, Long>`) en `org.bulbaseros.repository` con consulta para recuperar incidencias cuyo estado no esté en la lista de estados excluidos (`findByStatusNotIn(...)`).
-- [ ] 1.3 Crear interfaz `CambiosEstadoRepository` (`JpaRepository<CambiosEstado, Long>`) en `org.bulbaseros.repository` con el método de consulta `findByIncidentIdOrderByCreatedAtAsc(Long incidentId)`.
-- [ ] 1.4 Crear DTOs `CreateIncidentRequest` (con validaciones Jakarta `@NotBlank` para título, descripción y categoría de catálogo, y `@NotNull` para latitud y longitud), `IncidentResponse` y `StatusChangeResponse` documentados con Javadoc.
+## [x] Tarea 1: Entidades, DTOs y Repositorios en Backend (Persistencia y Auditoría) - RF: RF-1, RF-10, RF-13, RF-15
+- [x] 1.1 Verificar y completar los mapeos JPA de `Incidencia.java` y `CambiosEstado.java` con las tablas `incidents` y `status_changes`, asegurando tipos, relaciones `@ManyToOne` y anotaciones con Javadoc.
+- [x] 1.2 Crear interfaz `IncidenciaRepository` (`JpaRepository<Incidencia, Long>`) en `org.bulbaseros.repository` con consulta para recuperar incidencias cuyo estado no esté en la lista de estados excluidos (`findByStatusNotIn(...)`).
+- [x] 1.3 Crear interfaz `CambiosEstadoRepository` (`JpaRepository<CambiosEstado, Long>`) en `org.bulbaseros.repository` con el método de consulta `findByIncidentIdOrderByCreatedAtAsc(Long incidentId)`.
+- [x] 1.4 Crear DTOs `CreateIncidentRequest` (con validaciones Jakarta `@NotBlank` para título, descripción y categoría de catálogo, y `@NotNull` para latitud y longitud), `IncidentResponse` y `StatusChangeResponse` documentados con Javadoc.
 
 ## [ ] Tarea 2: Lógica de Negocio Transaccional en `IncidentService` - Depende de Tarea 1 - RF: RF-1, RF-10, RF-13, RF-14, RF-15, RF-16
 - [ ] 2.1 Implementar método `getActiveIncidents()` que consulte el repositorio excluyendo estados `CLOSED` y `REJECTED`, transformando a lista de `IncidentResponse`.
