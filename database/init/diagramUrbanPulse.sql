@@ -268,14 +268,14 @@ INSERT INTO "users" ("email", "password_hash", "full_name", "role") VALUES
 INSERT INTO "incidents" ("title", "description", "category", "latitude", "longitude",
                          "address", "district", "neighborhood", "status", "priority", "citizen_id")
 VALUES
-    ('Farola apagada en Calle Mayor',
+    ('Farola apagada en Calle Larios',
      'La farola situada frente al numero 42 de la Calle Mayor lleva tres dias sin funcionar, dejando la acera completamente a oscuras por la noche.',
      'Alumbrado',
-     39.4699,
-     -0.3763,
-     'Calle Mayor 42',
-     'Ciutat Vella',
-     'El Mercat',
+     36.7196,
+     -4.4200,
+     'Calle Marques de Larios 10',
+     'Distrito Centro',
+     'Centro Historico',
      'REPORTED',
      'MEDIUM',
      3);
