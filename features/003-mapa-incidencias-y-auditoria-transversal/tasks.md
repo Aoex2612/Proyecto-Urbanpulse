@@ -8,12 +8,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 1.3 Crear interfaz `CambiosEstadoRepository` (`JpaRepository<CambiosEstado, Long>`) en `org.bulbaseros.repository` con el método de consulta `findByIncidentIdOrderByCreatedAtAsc(Long incidentId)`.
 - [x] 1.4 Crear DTOs `CreateIncidentRequest` (con validaciones Jakarta `@NotBlank` para título, descripción y categoría de catálogo, y `@NotNull` para latitud y longitud), `IncidentResponse` y `StatusChangeResponse` documentados con Javadoc.
 
-## [ ] Tarea 2: Lógica de Negocio Transaccional en `IncidentService` - Depende de Tarea 1 - RF: RF-1, RF-10, RF-13, RF-14, RF-15, RF-16
-- [ ] 2.1 Implementar método `getActiveIncidents()` que consulte el repositorio excluyendo estados `CLOSED` y `REJECTED`, transformando a lista de `IncidentResponse`.
-- [ ] 2.2 Implementar método `createIncident(CreateIncidentRequest request, String userEmail)` que asocie el ciudadano emisor mediante búsqueda por email del token JWT, inicialice estado `REPORTED`, prioridad `MEDIUM`, persista y retorne `IncidentResponse`.
-- [ ] 2.3 Implementar método transaccional `@Transactional updateIncidentStatus(Long id, UpdateIncidentStatusRequest request, String userEmail)` que valide existencia (404), actualice el estado de `Incidencia` e inserte la transición en `CambiosEstado` con estado previo, nuevo estado, motivo y usuario actor.
-- [ ] 2.4 Implementar método `getIncidentHistory(Long id)` que verifique la existencia de la incidencia (lanzando 404 si no existe) y devuelva la lista cronológica de transiciones como `StatusChangeResponse`.
-- [ ] 2.5 Crear pruebas unitarias con Mockito en `IncidentServiceTest` para verificar filtrado de activas, creación con categoría válida, auditoría transaccional de estados, captura de 404 e historial ordenado.
+## [x] Tarea 2: Lógica de Negocio Transaccional en `IncidentService` - Depende de Tarea 1 - RF: RF-1, RF-10, RF-13, RF-14, RF-15, RF-16
+- [x] 2.1 Implementar método `getActiveIncidents()` que consulte el repositorio excluyendo estados `CLOSED` y `REJECTED`, transformando a lista de `IncidentResponse`.
+- [x] 2.2 Implementar método `createIncident(CreateIncidentRequest request, String userEmail)` que asocie el ciudadano emisor mediante búsqueda por email del token JWT, inicialice estado `REPORTED`, prioridad `MEDIUM`, persista y retorne `IncidentResponse`.
+- [x] 2.3 Implementar método transaccional `@Transactional updateIncidentStatus(Long id, UpdateIncidentStatusRequest request, String userEmail)` que valide existencia (404), actualice el estado de `Incidencia` e inserte la transición en `CambiosEstado` con estado previo, nuevo estado, motivo y usuario actor.
+- [x] 2.4 Implementar método `getIncidentHistory(Long id)` que verifique la existencia de la incidencia (lanzando 404 si no existe) y devuelva la lista cronológica de transiciones como `StatusChangeResponse`.
+- [x] 2.5 Crear pruebas unitarias con Mockito en `IncidentServiceTest` para verificar filtrado de activas, creación con categoría válida, auditoría transaccional de estados, captura de 404 e historial ordenado.
 
 ## [ ] Tarea 3: Endpoints REST y Reglas de Seguridad RBAC en Backend - Depende de Tarea 2 - RF: RF-1, RF-10, RF-13, RF-14, RF-15, RF-16, RF-17
 - [ ] 3.1 Actualizar `IncidentController` inyectando `IncidentService` y exponiendo `GET /api/incidents`, `POST /api/incidents` (HTTP 201), `PATCH /api/incidents/{id}/status` y `GET /api/incidents/{id}/history` (HTTP 200 / 404) documentados con Javadoc.
