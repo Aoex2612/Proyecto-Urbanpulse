@@ -21,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +54,30 @@ public class IncidentService {
      * Repositorio de datos JPA para la busqueda y verificacion de usuarios {@link Usuario}.
      */
     private final UserRepository userRepository;
+
+    /**
+     * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
+     * de incidencias en UrbanPulse:
+     * <ul>
+     *   <li>REPORTED -> VALIDATED, REJECTED</li>
+     *   <li>VALIDATED -> ASSIGNED</li>
+     *   <li>ASSIGNED -> IN_PROGRESS</li>
+     *   <li>IN_PROGRESS -> RESOLVED</li>
+     *   <li>RESOLVED -> CLOSED, REOPENED</li>
+     *   <li>REOPENED -> ASSIGNED</li>
+     *   <li>REJECTED, CLOSED -> terminales (sin transiciones posteriores)</li>
+     * </ul>
+     */
+    public static final Map<EstadoIncidencia, Set<EstadoIncidencia>> ALLOWED_TRANSITIONS = Map.of(
+            EstadoIncidencia.REPORTED, Set.of(EstadoIncidencia.VALIDATED, EstadoIncidencia.REJECTED),
+            EstadoIncidencia.VALIDATED, Set.of(EstadoIncidencia.ASSIGNED),
+            EstadoIncidencia.ASSIGNED, Set.of(EstadoIncidencia.IN_PROGRESS),
+            EstadoIncidencia.IN_PROGRESS, Set.of(EstadoIncidencia.RESOLVED),
+            EstadoIncidencia.RESOLVED, Set.of(EstadoIncidencia.CLOSED, EstadoIncidencia.REOPENED),
+            EstadoIncidencia.REOPENED, Set.of(EstadoIncidencia.ASSIGNED),
+            EstadoIncidencia.REJECTED, Set.of(),
+            EstadoIncidencia.CLOSED, Set.of()
+    );
 
     /**
      * Constructor con inyeccion de dependencias para el servicio de incidencias.
@@ -187,10 +213,21 @@ public class IncidentService {
         Usuario actor = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario actor no encontrado con email: " + userEmail));
 
-        String fromStatus = (incidencia.getStatus() != null)
-                ? incidencia.getStatus().name()
-                : EstadoIncidencia.REPORTED.name();
+        EstadoIncidencia currentStatus = (incidencia.getStatus() != null)
+                ? incidencia.getStatus()
+                : EstadoIncidencia.REPORTED;
         EstadoIncidencia toStatus = request.getStatus();
+
+        Set<EstadoIncidencia> allowedNextStates = ALLOWED_TRANSITIONS.getOrDefault(currentStatus, Set.of());
+        if (!allowedNextStates.contains(toStatus)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    String.format("Transición de estado no permitida: no se puede pasar de %s a %s en el ciclo de vida",
+                            currentStatus, toStatus)
+            );
+        }
+
+        String fromStatus = currentStatus.name();
 
         incidencia.setStatus(toStatus);
         incidencia.setUpdatedAt(OffsetDateTime.now());

@@ -10,24 +10,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import incidentService from '../services/incidentService';
 import { formatDateTime } from '../utils/dateUtils';
-import { getStatusLabel, getPriorityLabel } from '../components/Map/mapConstants';
+import { getStatusLabel, getPriorityLabel, getNextAllowedStatuses } from '../components/Map/mapConstants';
 import './OperatorPanelPage.css';
 
-/**
- * Catálogo de estados válidos en el flujo de triaje operativo según el modelo del dominio.
- *
- * @type {Array<{value: string, label: string}>}
- */
-const TRIAGE_STATUSES = [
-  { value: 'REPORTED', label: 'Reportada (REPORTED)' },
-  { value: 'VALIDATED', label: 'Validada (VALIDATED)' },
-  { value: 'ASSIGNED', label: 'Asignada (ASSIGNED)' },
-  { value: 'IN_PROGRESS', label: 'En proceso (IN_PROGRESS)' },
-  { value: 'RESOLVED', label: 'Resuelta (RESOLVED)' },
-  { value: 'REOPENED', label: 'Reabierta (REOPENED)' },
-  { value: 'CLOSED', label: 'Cerrada (CLOSED)' },
-  { value: 'REJECTED', label: 'Rechazada (REJECTED)' },
-];
+
 
 /**
  * Componente principal del Panel de Operador / Centro de Triaje.
@@ -262,21 +248,48 @@ export default function OperatorPanelPage() {
                       </td>
                       <td>{formatDateTime(incident.createdAt)}</td>
                       <td>
-                        <select
-                          aria-label={`Cambiar estado de #${incident.id}`}
-                          className="status-select"
-                          value={incident.status}
-                          disabled={updatingId === incident.id}
-                          onChange={(e) =>
-                            handleStatusChange(incident.id, e.target.value)
+                        {(() => {
+                          const allowedNext = getNextAllowedStatuses(incident.status);
+                          if (allowedNext.length === 0) {
+                            return (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  backgroundColor: incident.status === 'REJECTED' ? '#fee2e2' : '#f3f4f6',
+                                  color: incident.status === 'REJECTED' ? '#dc2626' : '#4b5563',
+                                }}
+                              >
+                                {getStatusLabel(incident.status)} (Final)
+                              </span>
+                            );
                           }
-                        >
-                          {TRIAGE_STATUSES.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                          return (
+                            <select
+                              aria-label={`Cambiar estado de #${incident.id}`}
+                              className="status-select"
+                              value=""
+                              disabled={updatingId === incident.id}
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleStatusChange(incident.id, e.target.value);
+                                }
+                              }}
+                            >
+                              <option value="" disabled>
+                                Actual: {getStatusLabel(incident.status)}
+                              </option>
+                              {allowedNext.map((nextStatus) => (
+                                <option key={nextStatus} value={nextStatus}>
+                                  Avanzar a: {getStatusLabel(nextStatus)}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}

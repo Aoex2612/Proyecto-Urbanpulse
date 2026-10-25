@@ -34,6 +34,39 @@ export const INCIDENT_CATEGORIES = [
 ];
 
 /**
+ * Transiciones válidas y permitidas según la máquina de estados del ciclo de vida de incidencias:
+ * REPORTED -> VALIDATED, REJECTED
+ * VALIDATED -> ASSIGNED
+ * ASSIGNED -> IN_PROGRESS
+ * IN_PROGRESS -> RESOLVED
+ * RESOLVED -> CLOSED, REOPENED
+ * REOPENED -> ASSIGNED
+ * REJECTED, CLOSED -> terminales (sin transiciones permitidas)
+ *
+ * @type {Record<string, string[]>}
+ */
+export const ALLOWED_TRANSITIONS = {
+  REPORTED: ['VALIDATED', 'REJECTED'],
+  VALIDATED: ['ASSIGNED'],
+  ASSIGNED: ['IN_PROGRESS'],
+  IN_PROGRESS: ['RESOLVED'],
+  RESOLVED: ['CLOSED', 'REOPENED'],
+  REOPENED: ['ASSIGNED'],
+  REJECTED: [],
+  CLOSED: [],
+};
+
+/**
+ * Obtiene los estados permitidos a los que puede transicionar una incidencia desde su estado actual.
+ *
+ * @param {string} currentStatus - Estado actual de la incidencia.
+ * @returns {string[]} Lista de códigos de estado destino válidos.
+ */
+export const getNextAllowedStatuses = (currentStatus) => {
+  return ALLOWED_TRANSITIONS[currentStatus] || [];
+};
+
+/**
  * Mapea el identificador técnico de estado de una incidencia a su etiqueta legible en español.
  *
  * @param {string} status - Código de estado técnico de la incidencia (REPORTED, IN_PROGRESS, etc.).

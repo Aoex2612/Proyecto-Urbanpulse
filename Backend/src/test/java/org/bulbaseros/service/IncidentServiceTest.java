@@ -33,6 +33,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -292,8 +293,8 @@ class IncidentServiceTest {
     @DisplayName("Debería actualizar estado de incidencia y registrar transición atómica en CambiosEstado")
     void shouldUpdateIncidentStatusAndCreateAuditChangeAtomically() {
         UpdateIncidentStatusRequest request = new UpdateIncidentStatusRequest(
-                EstadoIncidencia.IN_PROGRESS,
-                "Asignada cuadrilla de mantenimiento de alumbrado"
+                EstadoIncidencia.VALIDATED,
+                "Incidencia comprobada y validada para derivación"
         );
 
         when(incidenciaRepository.findById(1L)).thenReturn(Optional.of(testIncident));
@@ -307,15 +308,15 @@ class IncidentServiceTest {
 
         assertNotNull(response);
         assertEquals(1L, response.getId());
-        assertEquals(EstadoIncidencia.IN_PROGRESS, response.getStatus());
+        assertEquals(EstadoIncidencia.VALIDATED, response.getStatus());
         assertEquals("Estado de la incidencia actualizado exitosamente", response.getMessage());
 
         CambiosEstado capturedCambio = cambioCaptor.getValue();
         assertNotNull(capturedCambio);
         assertEquals(testIncident, capturedCambio.getIncident());
         assertEquals("REPORTED", capturedCambio.getFromStatus());
-        assertEquals("IN_PROGRESS", capturedCambio.getToStatus());
-        assertEquals("Asignada cuadrilla de mantenimiento de alumbrado", capturedCambio.getReason());
+        assertEquals("VALIDATED", capturedCambio.getToStatus());
+        assertEquals("Incidencia comprobada y validada para derivación", capturedCambio.getReason());
         assertEquals(testOperator, capturedCambio.getChangedByUser());
         assertNotNull(capturedCambio.getCreatedAt());
 
@@ -323,6 +324,32 @@ class IncidentServiceTest {
         verify(userRepository).findByEmail("operador@urbanpulse.es");
         verify(incidenciaRepository).save(any(Incidencia.class));
         verify(cambiosEstadoRepository).save(any(CambiosEstado.class));
+    }
+
+    /**
+     * Verifica que updateIncidentStatus lance ResponseStatusException (400 Bad Request)
+     * cuando se intente una transición prohibida por la máquina de estados.
+     */
+    @Test
+    @DisplayName("Debería lanzar ResponseStatusException 400 cuando la transición no esté permitida")
+    void shouldThrowBadRequestWhenTransitionIsNotAllowedInLifecycle() {
+        UpdateIncidentStatusRequest request = new UpdateIncidentStatusRequest(
+                EstadoIncidencia.RESOLVED,
+                "Intento de salto directo ilegal de REPORTED a RESOLVED"
+        );
+
+        when(incidenciaRepository.findById(1L)).thenReturn(Optional.of(testIncident));
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.updateIncidentStatus(1L, request, "operador@urbanpulse.es")
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Transición de estado no permitida"));
+        verify(incidenciaRepository, never()).save(any());
+        verify(cambiosEstadoRepository, never()).save(any());
     }
 
     /**
