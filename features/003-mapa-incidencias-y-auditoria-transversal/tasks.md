@@ -20,10 +20,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 3.2 Actualizar `SecurityConfig` declarando las reglas de autorización: `GET /api/incidents/{id}/history` restringido a `.hasRole("ADMIN")`, `PATCH /api/incidents/*/status` a `.hasAnyRole("OPERATOR", "ADMIN")`, y endpoints generales a `.authenticated()`.
 - [x] 3.3 Desarrollar suite de pruebas de integración y seguridad en `IncidentControllerSecurityTest` comprobando respuestas 200, 201, 401, 403 y 404 según roles (`ANONYMOUS`, `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ANALYST`, `ADMIN`).
 
-## [ ] Tarea 4: Dependencias Cartográficas y Capa de Servicio en Frontend - RF: RF-1, RF-10, RF-15
-- [ ] 4.1 Instalar e incorporar dependencias `leaflet` y `react-leaflet` en `frontend/package.json` e importar `leaflet/dist/leaflet.css`.
-- [ ] 4.2 Configurar la resolución correcta de iconos y assets de marcadores de Leaflet para el entorno de empaquetado de Vite.
-- [ ] 4.3 Crear módulo `incidentService.js` en `frontend/src/services/` con métodos `getAllIncidents()`, `getIncidentById(id)`, `createIncident(data)`, `updateStatus(id, data)` y `getIncidentHistory(id)` con JSDoc.
+## [x] Tarea 4: Dependencias Cartográficas y Capa de Servicio en Frontend - RF: RF-1, RF-10, RF-15
+- [x] 4.1 Instalar e incorporar dependencias `leaflet` y `react-leaflet` en `frontend/package.json` e importar `leaflet/dist/leaflet.css`.
+- [x] 4.2 Configurar la resolución correcta de iconos y assets de marcadores de Leaflet para el entorno de empaquetado de Vite.
+- [x] 4.3 Crear módulo `incidentService.js` en `frontend/src/services/` con métodos `getAllIncidents()`, `getIncidentById(id)`, `createIncident(data)`, `updateStatus(id, data)` y `getIncidentHistory(id)` con JSDoc.
 
 ## [ ] Tarea 5: Componente de Mapa Cartográfico con Leaflet y Modal de Creación - Depende de Tarea 4 - RF: RF-1, RF-2, RF-4, RF-5, RF-6, RF-7, RF-8, RF-9, RF-11, RF-12
 - [ ] 5.1 Implementar componente `IncidentsMap.jsx` centrado por defecto en Málaga (`[36.7213, -4.4214]`, zoom 13), integrando capas OpenStreetMap y marcadores interactivos con Popup nativo que muestre título, descripción, categoría, estado y botón "Ver detalle completo".
