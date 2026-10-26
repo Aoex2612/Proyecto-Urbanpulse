@@ -13,18 +13,18 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pruebas unitarias para el manejador global de excepciones {@link GlobalExceptionHandler}.
  * <p>
  * Valida la captura de excepciones, asignación correcta de códigos de estado HTTP
- * (400, 401, 409, 500) y estructuración del objeto de respuesta {@link ErrorResponse}.
+ * (400, 401, 404, 409, 500) y estructuración del objeto de respuesta {@link ErrorResponse}.
  * </p>
  *
  * @author UrbanPulse Team
@@ -127,6 +127,43 @@ class GlobalExceptionHandlerTest {
         assertEquals("Unauthorized", response.getBody().getError());
         assertEquals("Credenciales inválidas", response.getBody().getMessage());
         assertEquals("/api/auth/login", response.getBody().getPath());
+    }
+
+    /**
+     * Verifica que IncidentNotFoundException retorne HTTP 404 Not Found.
+     */
+    @Test
+    @DisplayName("Debería retornar HTTP 404 Not Found ante IncidentNotFoundException")
+    void shouldHandleIncidentNotFoundException() {
+        request.setRequestURI("/api/incidents/99");
+        IncidentNotFoundException ex = new IncidentNotFoundException(99L);
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleIncidentNotFound(ex, request);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(404, response.getBody().getStatus());
+        assertEquals("Not Found", response.getBody().getError());
+        assertEquals("Incidencia no encontrada con id: 99", response.getBody().getMessage());
+        assertEquals("/api/incidents/99", response.getBody().getPath());
+    }
+
+    /**
+     * Verifica que ResponseStatusException retorne el código HTTP adecuado.
+     */
+    @Test
+    @DisplayName("Debería retornar HTTP 404 ante ResponseStatusException NOT_FOUND")
+    void shouldHandleResponseStatusException() {
+        request.setRequestURI("/api/incidents/100");
+        ResponseStatusException ex = new ResponseStatusException(HttpStatus.NOT_FOUND, "Recurso no disponible");
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleResponseStatusException(ex, request);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(404, response.getBody().getStatus());
+        assertEquals("Recurso no disponible", response.getBody().getMessage());
+        assertEquals("/api/incidents/100", response.getBody().getPath());
     }
 
     /**

@@ -1,68 +1,65 @@
 /**
  * @fileoverview Vista del Panel de Operador y Gestión de Triaje de Incidencias en UrbanPulse.
  * Proporciona a los perfiles con rol `OPERATOR` y `ADMIN` una interfaz de supervisión,
- * priorización y actualización del estado de incidencias reportadas en la vía pública.
+ * priorización y actualización en tiempo real del estado de incidencias reportadas en la base de datos,
+ * así como acceso directo a la vista cartográfica (/map).
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
+import incidentService from '../services/incidentService';
+import { formatDateTime } from '../utils/dateUtils';
+import { getStatusLabel, getPriorityLabel, getNextAllowedStatuses } from '../components/Map/mapConstants';
 import './OperatorPanelPage.css';
 
-/**
- * Listado inicial simulado de incidencias pendientes de triaje operativo.
- *
- * @type {Array<{id: string, title: string, description: string, category: string, priority: 'ALTA'|'MEDIA'|'BAJA', status: string, reportedAt: string}>}
- */
-const INITIAL_INCIDENTS = [
-  {
-    id: 'INC-2026-001',
-    title: 'Avería en farolas de alumbrado público',
-    description: 'Tramo peatonal a oscuras entre Plaza Mayor y C/ Granada.',
-    category: 'Alumbrado',
-    priority: 'ALTA',
-    status: 'PENDIENTE',
-    reportedAt: '21/10/2026 14:30',
-  },
-  {
-    id: 'INC-2026-002',
-    title: 'Bache de gran profundidad en calzada',
-    description: 'Desperfecto en asfalto con riesgo para motoristas y ciclistas.',
-    category: 'Vía Pública',
-    priority: 'ALTA',
-    status: 'EN_PROCESO',
-    reportedAt: '21/10/2026 15:10',
-  },
-  {
-    id: 'INC-2026-003',
-    title: 'Contenedor de reciclaje desbordado',
-    description: 'Residuos acumulados en la acera impidiendo paso de personas.',
-    category: 'Limpieza',
-    priority: 'MEDIA',
-    status: 'PENDIENTE',
-    reportedAt: '21/10/2026 16:05',
-  },
-  {
-    id: 'INC-2026-004',
-    title: 'Semáforo intermitente fuera de sincronía',
-    description: 'Cruce semafórico en ámbar intermitente causando retenciones.',
-    category: 'Movilidad',
-    priority: 'ALTA',
-    status: 'PENDIENTE',
-    reportedAt: '21/10/2026 16:45',
-  },
-];
+
 
 /**
  * Componente principal del Panel de Operador / Centro de Triaje.
  *
- * @returns {import('react').JSX.Element} Vista del panel de operador protegida por RBAC.
+ * @returns {import('react').JSX.Element} Vista del panel de operador protegida por RBAC conectada a PostgreSQL.
  */
 export default function OperatorPanelPage() {
   const navigate = useNavigate();
   const user = authService.getUser();
-  const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
+
+  /**
+   * Carga el listado de incidencias activas desde la API backend.
+   *
+   * @returns {Promise<void>}
+   */
+  const fetchIncidents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await incidentService.getAllIncidents();
+      setIncidents(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Error al conectar con la base de datos de incidencias.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.resolve().then(() => {
+      if (isMounted) {
+        fetchIncidents();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchIncidents]);
 
   /**
    * Manejador para el cierre de sesión seguro del operador.
@@ -76,17 +73,28 @@ export default function OperatorPanelPage() {
   };
 
   /**
-   * Actualiza el estado de una incidencia en la interfaz informativa de triaje.
+   * Actualiza el estado de una incidencia en el backend con registro de auditoría.
    *
-   * @param {string} id - Identificador de la incidencia.
-   * @param {string} newStatus - Nuevo estado asignado (PENDIENTE, EN_PROCESO, RESUELTA, DESCARTADA).
-   * @returns {void}
+   * @param {number|string} id - Identificador numérico de la incidencia.
+   * @param {string} newStatus - Nuevo estado asignado.
+   * @returns {Promise<void>}
    */
-  const handleStatusChange = (id, newStatus) => {
-    setIncidents((prev) =>
-      prev.map((inc) => (inc.id === id ? { ...inc, status: newStatus } : inc))
-    );
-    setFeedbackMessage(`Incidencia ${id} actualizada con éxito al estado '${newStatus}'.`);
+  const handleStatusChange = async (id, newStatus) => {
+    setUpdatingId(id);
+    try {
+      await incidentService.updateIncidentStatus(id, {
+        status: newStatus,
+        comment: `Transición a ${newStatus} realizada desde el Centro de Triaje por ${user?.fullName || user?.email}`,
+      });
+      setIncidents((prev) =>
+        prev.map((inc) => (inc.id === id ? { ...inc, status: newStatus } : inc))
+      );
+      setFeedbackMessage(`Incidencia #${id} actualizada exitosamente al estado '${getStatusLabel(newStatus)}'. Transición registrada en auditoría.`);
+    } catch (err) {
+      setFeedbackMessage(`Error al actualizar la incidencia #${id}: ${err?.response?.data?.message || 'Operación denegada o error de red.'}`);
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   return (
@@ -97,6 +105,9 @@ export default function OperatorPanelPage() {
           <span className="operator-badge">Panel de Operador</span>
         </div>
         <div className="operator-header-actions">
+          <Link to="/map" className="operator-map-nav-link" title="Explorar incidencias en el mapa">
+            Ver Mapa de Incidencias
+          </Link>
           <Link to="/" className="back-to-home-link">
             &larr; Portal Ciudadano
           </Link>
@@ -116,7 +127,7 @@ export default function OperatorPanelPage() {
             <div className="overview-title-group">
               <h2>Centro de Triaje y Operaciones Urbanas</h2>
               <p className="overview-subtitle">
-                Supervisión de actuaciones técnicas, validación y priorización de reportes municipales.
+                Supervisión de actuaciones técnicas, validación y priorización de reportes municipales conectados en tiempo real a PostgreSQL.
               </p>
             </div>
             <div className="user-badge-info">
@@ -129,38 +140,47 @@ export default function OperatorPanelPage() {
             <div className="stat-card">
               <span className="stat-label">Pendientes de Triaje</span>
               <span className="stat-number">
-                {incidents.filter((i) => i.status === 'PENDIENTE').length}
+                {incidents.filter((i) => i.status === 'REPORTED').length}
               </span>
-              <span className="stat-help">Requieren revisión técnica</span>
+              <span className="stat-help">Reportadas sin validar</span>
             </div>
             <div className="stat-card">
               <span className="stat-label">En Tramitación</span>
               <span className="stat-number">
-                {incidents.filter((i) => i.status === 'EN_PROCESO').length}
+                {incidents.filter((i) => ['VALIDATED', 'ASSIGNED', 'IN_PROGRESS'].includes(i.status)).length}
               </span>
               <span className="stat-help">Equipos de campo asignados</span>
             </div>
             <div className="stat-card">
-              <span className="stat-label">Resueltas Hoy</span>
+              <span className="stat-label">Resueltas / Cerradas</span>
               <span className="stat-number">
-                {incidents.filter((i) => i.status === 'RESUELTA').length}
+                {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
               </span>
               <span className="stat-help">Validaciones completadas</span>
             </div>
             <div className="stat-card">
-              <span className="stat-label">Control RBAC</span>
-              <span className="stat-number">Activo</span>
-              <span className="stat-help">OPERATOR / ADMIN</span>
+              <span className="stat-label">Total en BD</span>
+              <span className="stat-number">{incidents.length}</span>
+              <span className="stat-help">Incidencias registradas</span>
             </div>
           </div>
         </section>
 
         <section className="triage-section">
           <div className="section-header">
-            <h3>Cola de Incidencias para Triaje</h3>
-            <span className="triage-tag-info">
-              Ruta protegida por RBAC: Operadores y Administradores
-            </span>
+            <h3>Cola de Incidencias en Base de Datos</h3>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={fetchIncidents}
+                className="back-to-home-link"
+                style={{ cursor: 'pointer', padding: '4px 10px', fontSize: '13px' }}
+                title="Refrescar listado desde PostgreSQL"
+              >
+                🔄 Refrescar
+              </button>
+              
+            </div>
           </div>
 
           {feedbackMessage && (
@@ -177,66 +197,106 @@ export default function OperatorPanelPage() {
             </div>
           )}
 
-          <div className="incidents-table-wrapper">
-            <table className="incidents-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Incidencia</th>
-                  <th>Categoría</th>
-                  <th>Prioridad</th>
-                  <th>Fecha</th>
-                  <th>Estado de Triaje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {incidents.map((incident) => (
-                  <tr key={incident.id}>
-                    <td className="incident-id">{incident.id}</td>
-                    <td className="incident-title-cell">
-                      <div className="incident-title">{incident.title}</div>
-                      <p className="incident-desc">{incident.description}</p>
-                    </td>
-                    <td>{incident.category}</td>
-                    <td>
-                      <span
-                        className={`badge-priority ${incident.priority.toLowerCase()}`}
-                      >
-                        {incident.priority}
-                      </span>
-                    </td>
-                    <td>{incident.reportedAt}</td>
-                    <td>
-                      <select
-                        aria-label={`Cambiar estado de ${incident.id}`}
-                        className="status-select"
-                        value={incident.status}
-                        onChange={(e) =>
-                          handleStatusChange(incident.id, e.target.value)
-                        }
-                      >
-                        <option value="PENDIENTE">PENDIENTE</option>
-                        <option value="EN_PROCESO">EN PROCESO</option>
-                        <option value="RESUELTA">RESUELTA</option>
-                        <option value="DESCARTADA">DESCARTADA</option>
-                      </select>
-                    </td>
+          {loading ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
+              <p>Cargando incidencias desde PostgreSQL...</p>
+            </div>
+          ) : error ? (
+            <div style={{ padding: '24px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c' }}>
+              <p><strong>Error:</strong> {error}</p>
+              <button type="button" onClick={fetchIncidents} style={{ marginTop: '8px', padding: '6px 12px', cursor: 'pointer' }}>
+                Reintentar
+              </button>
+            </div>
+          ) : incidents.length === 0 ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
+              <p>No hay incidencias registradas en la base de datos en este momento.</p>
+              <Link to="/map" style={{ color: '#0284c7', textDecoration: 'underline' }}>
+                Ir al mapa para registrar una nueva incidencia
+              </Link>
+            </div>
+          ) : (
+            <div className="incidents-table-wrapper">
+              <table className="incidents-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Incidencia</th>
+                    <th>Categoría</th>
+                    <th>Prioridad</th>
+                    <th>Fecha</th>
+                    <th>Estado de Triaje</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {incidents.map((incident) => (
+                    <tr key={incident.id}>
+                      <td className="incident-id">#{incident.id}</td>
+                      <td className="incident-title-cell">
+                        <div className="incident-title">{incident.title}</div>
+                        <p className="incident-desc">{incident.description}</p>
+                      </td>
+                      <td>{incident.category}</td>
+                      <td>
+                        <span
+                          className={`badge-priority ${(incident.priority || 'medium').toLowerCase()}`}
+                        >
+                          {getPriorityLabel(incident.priority)}
+                        </span>
+                      </td>
+                      <td>{formatDateTime(incident.createdAt)}</td>
+                      <td>
+                        {(() => {
+                          const allowedNext = getNextAllowedStatuses(incident.status);
+                          if (allowedNext.length === 0) {
+                            return (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  backgroundColor: incident.status === 'REJECTED' ? '#fee2e2' : '#f3f4f6',
+                                  color: incident.status === 'REJECTED' ? '#dc2626' : '#4b5563',
+                                }}
+                              >
+                                {getStatusLabel(incident.status)} (Final)
+                              </span>
+                            );
+                          }
+                          return (
+                            <select
+                              aria-label={`Cambiar estado de #${incident.id}`}
+                              className="status-select"
+                              value=""
+                              disabled={updatingId === incident.id}
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleStatusChange(incident.id, e.target.value);
+                                }
+                              }}
+                            >
+                              <option value="" disabled>
+                                Actual: {getStatusLabel(incident.status)}
+                              </option>
+                              {allowedNext.map((nextStatus) => (
+                                <option key={nextStatus} value={nextStatus}>
+                                  Avanzar a: {getStatusLabel(nextStatus)}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
-        <aside className="security-notice-card">
-          <h4>Control de Seguridad Perimetral y RBAC</h4>
-          <p>
-            Esta vista y sus operaciones asociadas están restringidas exclusivamente a usuarios
-            con roles <strong>OPERATOR</strong> o <strong>ADMIN</strong>. Las peticiones a
-            la API backend (<code>PATCH /api/incidents/:id/status</code>) son validadas
-            criptográficamente mediante JWT y denegadas con HTTP 403 Forbidden para cualquier otro rol.
-          </p>
-        </aside>
       </main>
     </div>
   );

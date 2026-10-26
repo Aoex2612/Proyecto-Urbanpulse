@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -107,6 +108,57 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    /**
+     * Maneja excepciones de entidad de incidencia no encontrada en el sistema.
+     * <p>
+     * Retorna HTTP 404 Not Found acompañado del mensaje explicativo de la excepción.
+     * </p>
+     *
+     * @param ex      Excepción {@link IncidentNotFoundException} capturada.
+     * @param request Petición HTTP recibida.
+     * @return {@link ResponseEntity} con estado 404 y el DTO {@link ErrorResponse}.
+     */
+    @ExceptionHandler(IncidentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleIncidentNotFound(
+            IncidentNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    /**
+     * Maneja excepciones del tipo {@link ResponseStatusException}.
+     * <p>
+     * Extrae el código de estado HTTP y la justificación asociada para retornar una respuesta estructurada.
+     * </p>
+     *
+     * @param ex      Excepción {@link ResponseStatusException} capturada.
+     * @param request Petición HTTP recibida.
+     * @return {@link ResponseEntity} con el estado HTTP de la excepción y el DTO {@link ErrorResponse}.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(
+            ResponseStatusException ex,
+            HttpServletRequest request
+    ) {
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getStatusCode().toString();
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getStatusCode().value(),
+                ex.getStatusCode().toString(),
+                reason,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
     }
 
     /**

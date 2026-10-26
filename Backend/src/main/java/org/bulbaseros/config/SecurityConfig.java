@@ -33,7 +33,7 @@ import java.util.List;
  * integración con el cliente frontend y el codificador de contraseñas mediante BCrypt.</p>
  *
  * @author UrbanPulse Team
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSecurity
@@ -83,7 +83,9 @@ public class SecurityConfig {
      * de CORS y define las siguientes reglas de autorización:</p>
      * <ul>
      *   <li>Rutas públicas {@code /api/auth/**} y {@code /h2-console/**}: permitidas sin autenticación ({@code permitAll()}).</li>
+     *   <li>Consulta cronológica de auditoría {@code GET /api/incidents/{id}/history}: restringida a usuarios con rol {@code ADMIN}.</li>
      *   <li>Operaciones de triaje y estado {@code PATCH /api/incidents/{id}/status}: restringidas a usuarios con rol {@code OPERATOR} o {@code ADMIN}.</li>
+     *   <li>Rutas generales de incidencias {@code /api/incidents/**}: requiere autenticación previa ({@code authenticated()}).</li>
      *   <li>Cualquier otra petición: requiere autenticación previa ({@code authenticated()}).</li>
      * </ul>
      * <p>Asimismo, asocia {@link JwtAuthenticationEntryPoint} para el manejo de fallos 401,
@@ -105,8 +107,11 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/incidents/*/history").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
+                        .requestMatchers("/api/incidents/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
@@ -128,8 +133,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

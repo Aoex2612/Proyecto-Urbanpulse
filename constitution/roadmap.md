@@ -10,12 +10,12 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 ## Siguiente 🔜
 
-- **003 · Reporte de incidencias urbanas geolocalizadas** (`HU03`) — Creación de incidencias con latitud, longitud, dirección y categoría por parte de ciudadanos (`features/003-reporte-de-incidencias-urbanas-geolocalizadas/`).
+- **003 · Mapa interactivo de incidencias con Leaflet, reporte geolocalizado y auditoría transversal** (`HU03`) — Visualización cartográfica con Leaflet de incidencias urbanas, creación ágil de incidencias marcando coordenadas en el mapa y registro inmutable de auditoría de cambios de estado (`status_changes`) con visualización de línea temporal (`features/003-mapa-incidencias-y-auditoria-transversal/`).
 
 ## Backlog / ideas 💡
 
 - **Adjuntos multimedia en incidencias** — Subida y asociación de fotos/vídeos a las incidencias reportadas.
-- **Auditoría y transición de estados** — Registro inmutable de cambios de estado (`status_changes`) según flujo de validación y resolución.
+- **Validación asistida e inferencia de duplicados** — Sugerencia automática de incidencias similares y detección de proximidad espaciotemporal.
 - **Asignación departamental y gestión de técnicos** — Panel para operadores para asignar incidencias a departamentos y técnicos.
 - **Gestión e inventario de activos urbanos** — Consulta, alta y vinculación de elementos de mobiliario e infraestructura urbana con incidencias.
 - **Enriquecimiento contextual externo** — Integración de observaciones ambientales, climáticas o de tráfico asociadas a la zona de la incidencia.

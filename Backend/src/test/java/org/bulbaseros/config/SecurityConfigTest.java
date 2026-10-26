@@ -92,7 +92,7 @@ class SecurityConfigTest {
         assertNotNull(config, "La configuración CORS no debe ser nula para la ruta evaluada");
 
         assertEquals(List.of("http://localhost:5173"), config.getAllowedOrigins());
-        assertTrue(config.getAllowedMethods().containsAll(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")));
+        assertTrue(config.getAllowedMethods().containsAll(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")));
         assertTrue(config.getAllowedHeaders().containsAll(List.of("Authorization", "Content-Type")));
         assertEquals(Boolean.TRUE, config.getAllowCredentials());
     }

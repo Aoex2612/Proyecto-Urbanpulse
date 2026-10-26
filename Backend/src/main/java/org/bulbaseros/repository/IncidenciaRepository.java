@@ -1,0 +1,50 @@
+package org.bulbaseros.repository;
+
+import org.bulbaseros.entity.EstadoIncidencia;
+import org.bulbaseros.entity.Incidencia;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * Repositorio Spring Data JPA para la gestion de persistencia y consultas de la entidad {@link Incidencia}.
+ * <p>
+ * Proporciona operaciones CRUD estandar heredadas de {@link JpaRepository} y consultas especializadas
+ * para la recuperacion de incidencias activas en el mapa mediante la exclusion de estados terminados.
+ * </p>
+ *
+ * @author UrbanPulse Team
+ * @version 1.0
+ */
+@Repository
+public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
+
+    /**
+     * Recupera todas las incidencias cuyo estado no se encuentre dentro de la coleccion de estados especificada.
+     * <p>
+     * Utilizado para obtener incidencias activas en el mapa cartografico (por ejemplo, excluyendo
+     * los estados {@link EstadoIncidencia#CLOSED} y {@link EstadoIncidencia#REJECTED}).
+     * </p>
+     *
+     * @param statuses Coleccion de estados {@link EstadoIncidencia} que deben ser excluidos del resultado.
+     * @return Lista de entidades {@link Incidencia} que no poseen ninguno de los estados excluidos.
+     */
+    List<Incidencia> findByStatusNotIn(Collection<EstadoIncidencia> statuses);
+
+    /**
+     * Recupera todas las incidencias cuyo estado expresado como cadena de texto no se encuentre
+     * en la lista de estados proporcionada.
+     * <p>
+     * Consulta JPQL alternativa que permite evaluar estados como literales {@link String}.
+     * </p>
+     *
+     * @param statuses Coleccion de nombres textuales de estados a excluir.
+     * @return Lista de entidades {@link Incidencia} activas.
+     */
+    @Query("SELECT i FROM Incidencia i WHERE CAST(i.status AS string) NOT IN :statuses")
+    List<Incidencia> findByStatusNotInStrings(@Param("statuses") Collection<String> statuses);
+}
