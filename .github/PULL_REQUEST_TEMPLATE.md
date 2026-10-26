@@ -1,32 +1,24 @@
-## Descripcion
-
-<!--- Describe de manera concisa el proposito de este Pull Request -->
+## Descripción
+<Añade una descripción concisa de los cambios introducidos y qué problema resuelven.>
 
 ## Tipo de cambio
+_Selecciona las opciones que apliquen marcando con una `[x]`._
+- [ ] Corrección de error (Bug fix)
+- [ ] Nueva funcionalidad (Feature)
+- [ ] Refactorización / Optimización
+- [ ] Mejora de documentación
+- [ ] Mantenimiento / Tareas de configuración (Chore)
 
-- [ ] `feat`: Nueva funcionalidad
-- [ ] `fix`: Correccion de error
-- [ ] `docs`: Documentacion
-- [ ] `test`: Anadir o corregir pruebas
-- [ ] `refactor`: Refactorizacion de codigo sin cambio funcional
-- [ ] `chore`: Tareas de mantenimiento o dependencias
+## Issue relacionado
+Closes #<número-de-issue>
 
-## Tareas realizadas / Cambios implementados
+## Cambios realizados
+- <Detalle del cambio 1>
+- <Detalle del cambio 2>
+- <Detalle del cambio 3>
 
-- [ ] Tarea 1
-- [ ] Tarea 2
-
-## Motivacion y contexto
-
-<!--- Explica por que se realiza este cambio o referencia el Issue correspondiente: Fixes #ID -->
-
-## Como probar los cambios
-
-1. Paso 1
-2. Paso 2
-
-## Checklist de calidad
-
-- [ ] Los tests pasan correctamente (`mvn clean test`, `npm run lint`).
-- [ ] Documentacion actualizada (Javadoc, JSDoc o markdown si aplica).
-- [ ] Convencion de nombres y commits en espanol respetada.
+## Checklist de validación
+- [ ] He probado los cambios localmente.
+- [ ] He añadido o actualizado las pruebas correspondientes.
+- [ ] Todos los tests pasan correctamente.
+- [ ] La documentación se ha actualizado si aplica.

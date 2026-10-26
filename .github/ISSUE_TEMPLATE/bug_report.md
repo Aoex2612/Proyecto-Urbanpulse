@@ -1,30 +1,29 @@
 ---
-name: Reporte de Error / Bug Report
-about: Reportar un comportamiento inesperado o fallo en UrbanPulse
-title: "fix: "
+name: Bug report
+about: Reportar un error
+title: "[Bug]: "
 labels: bug
-assignees: ''
 ---
 
-## Descripcion del bug
-
-<!--- Explicacion clara del fallo detectado -->
+## Descripción
+<Descripción clara y concisa de lo que ocurre.>
 
 ## Pasos para reproducir
+1. <Primer paso>
+2. <Segundo paso>
+3. <Tercer paso>
 
-1. Ir a '...'
-2. Hacer clic en '....'
-3. Ver el error
+## Resultado esperado
+<Qué esperabas que ocurriera.>
 
-## Comportamiento esperado
+## Resultado actual
+<Qué ocurrió en realidad.>
 
-<!--- Lo que deberia haber ocurrido normalmente -->
-
-## Capturas o logs
-
-<!--- Adjuntar capturas de pantalla, trazas de backend o mensajes de consola si aplica -->
+## Evidencias
+<Capturas de pantalla, trazas de la consola, logs de error o código mínimo de reproducción.>
 
 ## Entorno
-
-- **Modulo afectado:** Backend / Frontend / Base de datos
-- **Navegador / Version de Node/Java:**
+- **Sistema Operativo:** <ej. Windows 11 / Ubuntu 22.04 / macOS 14>
+- **Versión del lenguaje/runtime:** <ej. Node 20.x / Python 3.11 / Rust 1.75>
+- **Versión del proyecto:** <ej. v1.0.0 o commit hash>
+- **Navegador (si aplica):** <ej. Chrome 120 / Firefox 122>

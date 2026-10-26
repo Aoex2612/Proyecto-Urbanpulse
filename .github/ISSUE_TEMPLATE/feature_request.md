@@ -1,24 +1,18 @@
 ---
-name: Funcionalidad / Feature Request
-about: Proponer una nueva funcionalidad para UrbanPulse
-title: "feat: "
+name: Feature request
+about: Proponer una nueva funcionalidad
+title: "[Feature]: "
 labels: enhancement
-assignees: ''
 ---
 
-## Descripcion de la funcionalidad
+## Descripción
+<Descripción concisa de la nueva funcionalidad propuesta.>
 
-<!--- Descripcion clara y detallada de la propuesta -->
+## Motivación
+<¿Por qué es necesario este cambio? ¿Qué problema resuelve o qué valor aporta a los usuarios?>
 
-## Justificacion / Caso de uso
+## Propuesta
+<Descripción detallada de la solución propuesta, comportamiento esperado y posibles casos de uso.>
 
-<!--- Por que es necesario este cambio y que valor anade a ciudadanos u operarios -->
-
-## Alcance y requerimientos tecnicos
-
-- [ ] Requerimiento 1
-- [ ] Requerimiento 2
-
-## Posibles alternativas consideradas
-
-<!--- Describir si se consideraron otras opciones de diseno -->
+## Alternativas consideradas
+<Otras soluciones o enfoques alternativos que se hayan considerado y por qué se descartaron.>
