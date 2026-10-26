@@ -48,6 +48,7 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 ## Gestión de Git y Commits
 
 - **Herramientas:** Realizar las operaciones de Git (crear ramas, commits y pull requests) preferentemente mediante el **MCP de GitHub**. Si no se encuentra disponible o falla, ejecutar directamente los comandos de terminal (`git`).
+- **Plantillas de PR e Issues:** Respetar y completar siempre la plantilla correspondiente ubicada en `.github/PULL_REQUEST_TEMPLATE.md` para Pull Requests y en `.github/ISSUE_TEMPLATE/` para Issues.
 - **Flujo de ramas:** Toda nueva rama debe partir obligatoriamente desde `develop` y su correspondiente Pull Request debe apuntar hacia `develop`.
 - **Idioma y caracteres:** 
   - Redactar mensajes de commit, nombres de ramas y PRs en **español**.
