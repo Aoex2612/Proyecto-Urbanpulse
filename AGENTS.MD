@@ -21,7 +21,7 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 
 ## Estilo y convenciones
 
-- Lenguaje: Java 17/21 para backend; JavaScript/React para frontend.
+- Lenguaje: Java 21 para backend; JavaScript/React para frontend.
 - Código y nombres: Clases en PascalCase, métodos/variables en camelCase, constantes en UPPER_CASE.
 - **Mensajes de commit:** Obligatorio seguir el estándar de **Conventional Commits** con el **mensaje en español** (ejemplos: `feat: carpeta creada`, `fix: corrección de validación de token`, `test: pruebas unitarias de filtro de seguridad`, `docs: actualización de especificación`).
 - **Documentación de código:** Comentar obligatoriamente con **Javadoc** en el backend (clases, métodos, parámetros `@param`, retornos `@return` y excepciones `@throws`) y de forma análoga con **JSDoc** en el frontend (componentes, hooks, funciones utilitarias y servicios, indicando parámetros `@param` y retornos `@returns`).
