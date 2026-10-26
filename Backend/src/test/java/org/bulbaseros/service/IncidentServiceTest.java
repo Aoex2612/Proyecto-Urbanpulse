@@ -12,6 +12,8 @@ import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.IncidentNotFoundException;
+import org.bulbaseros.mappers.IncidentMapper;
+import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.repository.UserRepository;
@@ -72,6 +74,18 @@ class IncidentServiceTest {
      */
     @Mock
     private UserRepository userRepository;
+
+    /**
+     * Instancia real del mapeador de incidencias.
+     */
+    @org.mockito.Spy
+    private IncidentMapper incidentMapper = new IncidentMapper();
+
+    /**
+     * Instancia real del mapeador de cambios de estado.
+     */
+    @org.mockito.Spy
+    private StatusChangeMapper statusChangeMapper = new StatusChangeMapper();
 
     /**
      * Instancia bajo prueba del servicio de logica de incidencias con mocks inyectados.

@@ -11,6 +11,8 @@ import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.IncidentNotFoundException;
+import org.bulbaseros.mappers.IncidentMapper;
+import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.repository.UserRepository;
@@ -56,6 +58,16 @@ public class IncidentService {
     private final UserRepository userRepository;
 
     /**
+     * Mapeador para transformar entidades {@link Incidencia} en DTOs {@link IncidentResponse}.
+     */
+    private final IncidentMapper incidentMapper;
+
+    /**
+     * Mapeador para transformar entidades {@link CambiosEstado} en DTOs {@link StatusChangeResponse}.
+     */
+    private final StatusChangeMapper statusChangeMapper;
+
+    /**
      * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
      * de incidencias en UrbanPulse:
      * <ul>
@@ -85,13 +97,19 @@ public class IncidentService {
      * @param incidenciaRepository    Repositorio JPA de incidencias urbanas.
      * @param cambiosEstadoRepository Repositorio JPA de transiciones de estado de auditoria.
      * @param userRepository          Repositorio JPA de usuarios del sistema.
+     * @param incidentMapper          Mapeador de incidencias a DTOs.
+     * @param statusChangeMapper      Mapeador de cambios de estado a DTOs.
      */
     public IncidentService(IncidenciaRepository incidenciaRepository,
                            CambiosEstadoRepository cambiosEstadoRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           IncidentMapper incidentMapper,
+                           StatusChangeMapper statusChangeMapper) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
+        this.incidentMapper = incidentMapper;
+        this.statusChangeMapper = statusChangeMapper;
     }
 
     /**
@@ -108,9 +126,7 @@ public class IncidentService {
         List<Incidencia> activeIncidents = incidenciaRepository.findByStatusNotIn(
                 List.of(EstadoIncidencia.CLOSED, EstadoIncidencia.REJECTED)
         );
-        return activeIncidents.stream()
-                .map(IncidentResponse::fromEntity)
-                .collect(Collectors.toList());
+        return incidentMapper.toDtoList(activeIncidents);
     }
 
     /**
@@ -127,7 +143,7 @@ public class IncidentService {
             throw new IllegalArgumentException("El identificador de la incidencia no puede ser nulo");
         }
         return incidenciaRepository.findById(id)
-                .map(IncidentResponse::fromEntity)
+                .map(incidentMapper::toDto)
                 .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con id: " + id));
     }
 
@@ -175,7 +191,7 @@ public class IncidentService {
         incidencia.setUpdatedAt(OffsetDateTime.now());
 
         Incidencia savedIncident = incidenciaRepository.save(incidencia);
-        return IncidentResponse.fromEntity(savedIncident);
+        return incidentMapper.toDto(savedIncident);
     }
 
     /**
@@ -274,8 +290,6 @@ public class IncidentService {
         }
 
         List<CambiosEstado> statusChanges = cambiosEstadoRepository.findByIncidentIdOrderByCreatedAtAsc(id);
-        return statusChanges.stream()
-                .map(StatusChangeResponse::fromEntity)
-                .collect(Collectors.toList());
+        return statusChangeMapper.toDtoList(statusChanges);
     }
 }
