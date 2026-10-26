@@ -36,7 +36,7 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 
 ## Al terminar cualquier tarea
 
-- Verificar que los tests unitarios y de integración pasen (`mvn test`, `npm run lint`).
+- Verificar que los tests unitarios y de integración pasen (`mvn test`, `npm run lint`). Los tests de integración reales con PostgreSQL (`@EnabledIfPostgresAvailable`) se omiten limpiamente si la BD no está levantada y no penalizan la tasa de éxito ni el qa-note.
 - Documentar los cambios realizados e indicar el siguiente paso.
 
 ## Documentación

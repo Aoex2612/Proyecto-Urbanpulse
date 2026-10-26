@@ -9,7 +9,7 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 - **Seguridad:** Spring Security 6 con autenticación perimetral sin estado (Stateless) mediante JWT (JJWT 0.12.6, algoritmo HMAC-SHA256) y codificación de contraseñas con BCrypt.
 - **Base de datos:** PostgreSQL 16 (Alpine) orquestada con Docker Compose para desarrollo/producción local; H2 Database en modo compatibilidad PostgreSQL para ejecución ágil de pruebas unitarias y de integración.
 - **Persistencia:** Spring Data JPA con Hibernate 6. Las enumeraciones se persisten como cadenas (`@Enumerated(EnumType.STRING)`) emparejadas con restricciones `CHECK` en el DDL (ADR-01).
-- **Tests:** JUnit 5, Mockito y Spring Security Test para backend; Vitest/Testing Library para frontend.
+- **Tests:** JUnit 5, Mockito y Spring Security Test para pruebas unitarias de backend (con mocks) y pruebas en memoria H2; soporte para tests de integración reales contra PostgreSQL anotados con `@EnabledIfPostgresAvailable` (que se omiten de forma limpia sin penalizar la validación si el contenedor no está activo); Vitest/Testing Library para frontend.
 - **Cliente HTTP:** Axios 1.x con interceptores para inyección automática de cabecera `Authorization: Bearer <token>` y captura de expiración de sesión (401).
 - **Cartografía / Mapas:** Leaflet 1.9.x y React-Leaflet con teselas abiertas OpenStreetMap para visualización interactiva de incidencias y captura geolocalizada de coordenadas en frontend.
 

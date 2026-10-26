@@ -22,6 +22,7 @@ Validación exhaustiva de una feature/spec revisando los tests, que cumpla los r
 2. Si algún RF no está cubierto o falla, dilo claramente, apúntalo en `repare.md`, da la validación por fallada y continúa.
 3. Revisa los requisitos no funcionales, y en caso de que uno no se cumpla, apúntalo en `repare.md` y da por fallida la validación.
 4. Revisa todo el código relacionado con la implementación y ejecuta los tests. Si falla algo, apúntalo en `repare.md` y da la validación por fallada.
+   - **Nota sobre tests de integración contra PostgreSQL real:** Los tests marcados con `@EnabledIfPostgresAvailable` (o etiqueta `postgres-integration`) que resulten omitidos (`skipped`) por estar el contenedor de base de datos apagado **NO penalizan el porcentaje de validación ni se consideran un fallo** para la emisión del veredicto o generación de `qa-note.md`.
 5. Después comprueba los criterios de finalización y emite un veredicto: ¿la spec está cumplida?
 6. Si no se cumplen, desmarca las tareas que fallan en `tasks.md`, documéntalas en `repare.md` y da la validación por fallada.
 7. **Comunica el veredicto en el chat y DETENTE:**
