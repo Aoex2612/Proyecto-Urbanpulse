@@ -18,9 +18,12 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 - `Backend/` — Servidor de API REST desacoplado, lógica de negocio y persistencia en Spring Boot.
   - `src/main/java/org/bulbaseros/config/` — Configuración de seguridad perimetral, CORS y beans de infraestructura.
   - `src/main/java/org/bulbaseros/controller/` — Controladores REST con endpoints públicos y protegidos con RBAC.
+  - `src/main/java/org/bulbaseros/dto/` — Objetos de transferencia de datos (DTOs) para peticiones y respuestas.
   - `src/main/java/org/bulbaseros/entity/` — Entidades JPA que mapean el modelo de dominio relacional.
+  - `src/main/java/org/bulbaseros/mappers/` — Componentes de mapeo desacoplados para transformar entidades a DTOs y viceversa, inyectados y utilizados en la capa de servicio (`service`).
+  - `src/main/java/org/bulbaseros/repository/` — Interfaces de acceso a datos (Spring Data JPA).
   - `src/main/java/org/bulbaseros/security/` — Filtro JWT (`JwtAuthenticationFilter`), servicio criptográfico y manejadores de error (401/403).
-  - `src/main/java/org/bulbaseros/service/` — Servicios de lógica de negocio (registro con hash BCrypt, login, emisión de tokens).
+  - `src/main/java/org/bulbaseros/service/` — Servicios de lógica de negocio (registro con hash BCrypt, login, emisión de tokens, orquestación de mappers).
 - `frontend/` — Aplicación web cliente SPA con React 19 y enrutamiento con React Router 7.
   - `src/components/` — Componentes transversales de protección de rutas (`ProtectedRoute`, `RoleGuard`), visualización cartográfica con Leaflet y trazabilidad (`Timeline`).
   - `src/pages/` — Vistas de la aplicación (`LoginPage`, `RegisterPage`, `HomePage`, `OperatorPanelPage`, `MapPage`).
@@ -51,8 +54,9 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 
 ## Convenciones
 
-- **Código:** Clases en `PascalCase`, métodos y variables en `camelCase`, constantes y valores enum en `UPPER_CASE`.
-- **Documentación de código:** Obligatorio comentar con **Javadoc** en clases, métodos públicos, parámetros (`@param`), retornos (`@return`) y excepciones (`@throws`) en backend; y **JSDoc** equivalente en frontend.
+- **Código y boilerplate:** Clases en `PascalCase`, métodos y variables en `camelCase`, constantes y valores enum en `UPPER_CASE`. Se debe priorizar el uso de anotaciones de **Lombok** (`@Data`, `@Getter`, `@Setter`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Builder`, etc.) para reducir código repetitivo y evitar la escritura manual de getters, setters y constructores triviales.
+- **Documentación de código (Javadoc/JSDoc):** Obligatorio documentar con **Javadoc** las clases, métodos públicos de lógica de negocio, mapeos en `mappers`, parámetros (`@param`), retornos (`@return`) y excepciones (`@throws`) en backend; y **JSDoc** equivalente en frontend. En entidades y DTOs donde se utilicen anotaciones de Lombok (`@Data`, `@AllArgsConstructor`, etc.), se documentará la clase a nivel global y campos especiales; **no es necesario generar Javadoc manual para getters/setters o constructores autogenerados por Lombok**, prevaleciendo el uso de anotaciones sobre el código boilerplate comentado a mano.
+- **Transformación de datos (Mappers):** La conversión entre entidades JPA y DTOs debe encapsularse obligatoriamente en clases dedicadas dentro del paquete `org.bulbaseros.mappers`. La capa de servicio (`service`) es la responsable de invocar e inyectar estos mappers, impidiendo que entidades del dominio se expongan directamente a la capa de presentación (`controller`).
 - **Git y ramas:** Flujo partiendo desde `develop` con formato `<tipo>/<descripcion-kebab-case>` (ej. `feature/...`, `fix/...`, `docs/...`).
 - **Commits:** Obligatorio seguir el estándar **Conventional Commits** redactado en **español** (`feat: ...`, `fix: ...`, `docs: ...`, `test: ...`, `refactor: ...`, `chore: ...`). Sustituir siempre `ñ` por `n` y prescindir de tildes en ramas y commits.
 - **Manejo de errores:** Códigos HTTP semánticos (200, 201, 400, 401, 403, 404, 409, 500) con respuestas JSON estructuradas (`ErrorResponse`). Las denegaciones de login responden con 401 genérico para mitigar enumeración de usuarios.
@@ -61,5 +65,5 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 
 - **Seguridad:** Nunca versionar ficheros `.env` con secretos reales ni registrar contraseñas en texto plano en logs (`Usuario.toString()` omite deliberadamente `passwordHash`).
 - **Persistencia:** No utilizar tipos específicos de base de datos no soportados por el estándar JPA sin un ADR que lo justifique expresamente.
-- **Desacoplamiento:** El frontend jamás accede directamente a la base de datos; toda interacción se realiza a través de la API REST protegida por JWT.
+- **Desacoplamiento:** El frontend jamás accede directamente a la base de datos; toda interacción se realiza a través de la API REST protegida por JWT. Asimismo, los controladores nunca manejan entidades JPA directamente: los servicios deben transformar entidades a DTOs mediante mappers antes de responder.
 - **Flujo SDD:** Ninguna funcionalidad se implementa sin su correspondiente especificación (`spec.md`) aprobada y desglosada en tareas.

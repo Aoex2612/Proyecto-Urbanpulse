@@ -24,7 +24,8 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 - Lenguaje: Java 21 para backend; JavaScript/React para frontend.
 - Código y nombres: Clases en PascalCase, métodos/variables en camelCase, constantes en UPPER_CASE.
 - **Mensajes de commit:** Obligatorio seguir el estándar de **Conventional Commits** con el **mensaje en español** (ejemplos: `feat: carpeta creada`, `fix: corrección de validación de token`, `test: pruebas unitarias de filtro de seguridad`, `docs: actualización de especificación`).
-- **Documentación de código:** Comentar obligatoriamente con **Javadoc** en el backend (clases, métodos, parámetros `@param`, retornos `@return` y excepciones `@throws`) y de forma análoga con **JSDoc** en el frontend (componentes, hooks, funciones utilitarias y servicios, indicando parámetros `@param` y retornos `@returns`).
+- **Documentación de código y Lombok:** Comentar obligatoriamente con **Javadoc** en el backend (clases, interfaces, métodos de servicio, mappers, parámetros `@param`, retornos `@return` y excepciones `@throws`) y de forma análoga con **JSDoc** en el frontend. En clases de modelo o DTOs donde se utilicen anotaciones de **Lombok** (`@Data`, `@AllArgsConstructor`, `@NoArgsConstructor`, etc.), **prevalecen las anotaciones frente al código boilerplate hecho a mano**; se documentará la clase a nivel global y sus campos clave, sin requerir Javadoc en getters/setters/constructores autogenerados por Lombok.
+- **Capa de Mappers y DTOs:** Toda transformación entre entidades de base de datos y DTOs debe realizarse mediante componentes en `Backend/src/main/java/org/bulbaseros/mappers` e invocarse en la capa de servicios (`service`). Los controladores nunca deben recibir o exponer entidades JPA de dominio directamente.
 
 ## Flujo de trabajo (SDD)
 
