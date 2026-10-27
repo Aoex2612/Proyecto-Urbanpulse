@@ -1,9 +1,9 @@
 /**
  * @fileoverview Modal de detalle exhaustivo de incidencia urbana para UrbanPulse.
  * Despliega la información completa de la incidencia seleccionada (título, categoría,
- * descripción, estado, prioridad, coordenadas y fecha de reporte) y, si el usuario en sesión
- * dispone de rol administrativo (ADMIN), consulta e integra de forma condicional la línea
- * temporal de auditoría (StatusTimeline) con las transiciones históricas de estado.
+ * descripción, estado, prioridad, coordenadas, fecha de reporte y galería de fotografías adjuntas)
+ * y, si el usuario en sesión dispone de rol administrativo (ADMIN), consulta e integra de forma condicional
+ * la línea temporal de auditoría (StatusTimeline) con las transiciones históricas de estado.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -37,6 +37,8 @@ export default function IncidentDetailModal({
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState(null);
+
+  const [attachments, setAttachments] = useState([]);
 
   const closeButtonRef = useRef(null);
 
@@ -89,6 +91,33 @@ export default function IncidentDetailModal({
       };
     }
   }, [isOpen, incident, handleDismiss]);
+
+  // Consulta asíncrona de archivos multimedia adjuntos
+  useEffect(() => {
+    if (!isOpen || !incident?.id) {
+      return;
+    }
+
+    let isMounted = true;
+
+    incidentService
+      .getIncidentAttachments(incident.id)
+      .then((data) => {
+        if (isMounted) {
+          setAttachments(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch((err) => {
+        console.error('Error al recuperar adjuntos de la incidencia:', err);
+        if (isMounted) {
+          setAttachments([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, incident?.id]);
 
   // Consulta asíncrona del historial de auditoría restringida a usuarios con rol autorizado
   useEffect(() => {
@@ -152,6 +181,8 @@ export default function IncidentDetailModal({
   const reporterName =
     incident.citizenName || incident.citizenEmail || 'Ciudadano de UrbanPulse';
 
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
   return (
     <div
       className="modal-backdrop"
@@ -168,10 +199,10 @@ export default function IncidentDetailModal({
         <header className="modal-header">
           <div className="modal-header-text">
             <span className="modal-eyebrow">
-              Incidencia #{incident.id ?? '---'}
+              Detalle de Incidencia Urbana #{incident.id}
             </span>
             <h2 id="incident-detail-modal-title" className="modal-title">
-              Detalle de Incidencia
+              Información del Reporte
             </h2>
           </div>
           <button
@@ -185,7 +216,7 @@ export default function IncidentDetailModal({
           </button>
         </header>
 
-        {/* Cuerpo del Modal con Información y Auditoría */}
+        {/* Cuerpo del Modal con Información, Adjuntos y Auditoría */}
         <div className="modal-body incident-detail-body">
           {/* Título y Badges Principales */}
           <section className="incident-detail-header-card">
@@ -238,6 +269,41 @@ export default function IncidentDetailModal({
               {incident.description || 'Sin descripción detallada proporcionada.'}
             </p>
           </section>
+
+          {/* Galería de Fotografías Multimedia Adjuntas */}
+          {attachments && attachments.length > 0 && (
+            <section className="incident-detail-section">
+              <h4 className="detail-section-heading">
+                Fotografías Adjuntas ({attachments.length})
+              </h4>
+              <div className="detail-attachments-grid">
+                {attachments.map((att) => {
+                  const imageUrl = att.fileUrl?.startsWith('http')
+                    ? att.fileUrl
+                    : `${baseUrl}${att.fileUrl}`;
+                  return (
+                    <a
+                      key={att.id}
+                      href={imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="detail-attachment-item"
+                      title={att.fileName}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={att.fileName || 'Fotografía de la incidencia'}
+                        className="detail-attachment-thumb"
+                      />
+                      <span className="detail-attachment-caption">
+                        {att.fileName}
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Sección de Auditoría Transversal (Visualización Condicional por Rol) */}
           {isAuditAllowed && (

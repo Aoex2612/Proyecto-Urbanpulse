@@ -1,13 +1,17 @@
 package org.bulbaseros.controller;
 
 import jakarta.validation.Valid;
+import org.bulbaseros.dto.AttachmentResponse;
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
+import org.bulbaseros.service.AttachmentService;
 import org.bulbaseros.service.IncidentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,20 +20,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 /**
- * Controlador REST que gestiona las operaciones del ciclo de vida y auditoria de incidencias en UrbanPulse.
+ * Controlador REST que gestiona las operaciones del ciclo de vida, auditoria y adjuntos multimedia de incidencias en UrbanPulse.
  * <p>
  * Expone endpoints protegidos mediante RBAC (Role-Based Access Control) para la consulta cartografica
  * de incidencias activas, obtencion del detalle individual, alta de reportes ciudadanos, triaje operativo
- * de estados con auditoria inmutable e inspeccion cronologica de transiciones para administradores.
+ * de estados con auditoria inmutable, inspeccion cronologica de transiciones para administradores
+ * y subida/consulta de archivos multimedia adjuntos (imágenes JPEG y PNG).
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/api/incidents")
@@ -41,12 +48,29 @@ public class IncidentController {
     private final IncidentService incidentService;
 
     /**
-     * Constructor con inyeccion de dependencias para el controlador de incidencias.
+     * Servicio de logica de negocio para la gestion y almacenamiento de archivos adjuntos.
+     */
+    private final AttachmentService attachmentService;
+
+    /**
+     * Constructor para compatibilidad con pruebas unitarias que no requieran servicio de adjuntos.
      *
      * @param incidentService Servicio de logica de negocio transaccional de incidencias.
      */
     public IncidentController(IncidentService incidentService) {
+        this(incidentService, null);
+    }
+
+    /**
+     * Constructor principal con inyeccion de dependencias para el controlador de incidencias.
+     *
+     * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
+     * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
+     */
+    @Autowired
+    public IncidentController(IncidentService incidentService, @Autowired(required = false) AttachmentService attachmentService) {
         this.incidentService = incidentService;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -138,5 +162,39 @@ public class IncidentController {
     public ResponseEntity<List<StatusChangeResponse>> getIncidentHistory(@PathVariable Long id) {
         List<StatusChangeResponse> history = incidentService.getIncidentHistory(id);
         return ResponseEntity.ok(history);
+    }
+
+    /**
+     * Sube y asocia un archivo multimedia (imagen JPEG o PNG) a una incidencia urbana existente.
+     * <p>
+     * Endpoint protegido que requiere autenticación previa. Valida el tipo MIME permitido,
+     * el límite de tamaño máximo de 5MB y almacena físicamente el fichero en el servidor.
+     * </p>
+     *
+     * @param id             Identificador numérico único de la incidencia.
+     * @param file           Fichero multimedia recibido en formato multipart (parámetro "file").
+     * @param authentication Objeto de autenticación de Spring Security del usuario emisor.
+     * @return {@link ResponseEntity} con código HTTP 201 Created y el cuerpo {@link AttachmentResponse}.
+     */
+    @PostMapping(value = "/{id}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AttachmentResponse> uploadAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        AttachmentResponse response = attachmentService.uploadAttachment(id, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Recupera todos los archivos multimedia adjuntos vinculados a una incidencia.
+     *
+     * @param id Identificador numérico único de la incidencia.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y la lista de {@link AttachmentResponse}.
+     */
+    @GetMapping("/{id}/attachments")
+    public ResponseEntity<List<AttachmentResponse>> getAttachments(@PathVariable Long id) {
+        List<AttachmentResponse> attachments = attachmentService.getAttachmentsByIncidentId(id);
+        return ResponseEntity.ok(attachments);
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
@@ -23,7 +24,7 @@ import java.util.Map;
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.0
+ * @version 1.1
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -159,6 +160,56 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
+    }
+
+    /**
+     * Maneja excepciones de superación del tamaño máximo configurado para archivos multipart.
+     * <p>
+     * Retorna HTTP 400 Bad Request indicando que el fichero excede el límite permitido.
+     * </p>
+     *
+     * @param ex      Excepción {@link MaxUploadSizeExceededException} capturada.
+     * @param request Petición HTTP recibida.
+     * @return {@link ResponseEntity} con estado 400 y el DTO {@link ErrorResponse}.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "El archivo supera el tamaño máximo permitido de 5MB",
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * Maneja excepciones de argumentos ilegales o no válidos.
+     * <p>
+     * Retorna HTTP 400 Bad Request acompañado del mensaje descriptivo del fallo.
+     * </p>
+     *
+     * @param ex      Excepción {@link IllegalArgumentException} capturada.
+     * @param request Petición HTTP recibida.
+     * @return {@link ResponseEntity} con estado 400 y el DTO {@link ErrorResponse}.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     /**
