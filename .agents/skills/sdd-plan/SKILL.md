@@ -19,10 +19,12 @@ Creación del plan a seguir para implementar una feature en el ciclo sdd.
 ## Proceso
 1. Lee la información de la feature.
 2. Identifica: Archivos que se crean/modifican y su responsabilidad, funciones a crear y requisitos relacionados, cómo se pinta en la interfaz, decisiones técnicas justificadas (con su alternativa descartada) y estrategia de tests.
-3. Rellena la plantilla en `./assets` según la información que tienes.
+3. Si alguna decisión técnica implica una elección arquitectónica estructural o transversal (patrones, librerías centrales, persistencia, seguridad), redacta un ADR en `docs/ADR/` siguiendo `docs/ADR/ADR-NN.md` e inclúyelo referenciado en la sección de Decisiones de `plan.md`.
+4. Rellena la plantilla en `./assets` según la información que tienes.
 
 ## Reglas
 - Si la spec no está aprobada o tiene dudas abiertas, para y avísame.
 - No escribas código
+- Crea ADRs cuando se tomen decisiones arquitectónicas no triviales.
 - Usa la skill sdd.
 - Debe cubrir todos los requisitos.

@@ -24,10 +24,11 @@ Implementación de las tareas de una feature en el ciclo sdd.
     1. PROHIBICIÓN: No invoques ni llames a otros subagentes bajo ninguna circunstancia. Realiza todo el trabajo asignado tú directamente.
     2. Escribe los tests necesarios para comprobar lo que se va a implementar (unitarios con mocks y, cuando aplique persistencia, tests de integración con `@EnabledIfPostgresAvailable`).
     3. Escribe el código hasta que pasen los tests y envía el resultado de su ejecución al agente principal.
-    4. Realiza commits siguiendo la norma de commits del proyecto indicando lo que se ha hecho cada vez que sea necesario.
-    5. Marca la tarea (o subtareas si no se completó toda la tarea) como hecha en `tasks.md` e indica qué RF cubre.
-    6. Redacta la documentación necesaria en `/docs/NNN-feature/NN-tarea.md`.
-    7. Avisa de tareas incompletas o errores al agente principal.
+    4. Si durante la implementación surge una decisión arquitectónica o de diseño no prevista que cambie el enfoque o añada componentes transversales, documenta o actualiza el ADR pertinente en `docs/ADR/` según la plantilla `docs/ADR/ADR-NN.md`.
+    5. Realiza commits siguiendo la norma de commits del proyecto indicando lo que se ha hecho cada vez que sea necesario.
+    6. Marca la tarea (o subtareas si no se completó toda la tarea) como hecha en `tasks.md` e indica qué RF cubre.
+    7. Redacta la documentación necesaria en `/docs/NNN-feature/NN-tarea.md`.
+    8. Avisa de tareas incompletas o errores al agente principal.
 4. Con las tareas desbloqueadas, vuelve a invocar a los subagentes necesarios con las indicaciones anteriores.
 5. Finalmente, resume las tareas completas e incompletas, los errores encontrados y si es necesaria la intervención del usuario.
 

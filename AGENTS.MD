@@ -36,6 +36,7 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 - Una tarea a la vez; al terminar, dime qué cambiaste para que lo revise.
 - Si no estás seguro al 80%, pregunta. No inventes.
 - Ninguna feature se implementa sin su correspondiente especificación (`spec.md`) aprobada.
+- **Architectural Decision Records (ADRs):** Siempre que se deba tomar una decisión técnica o de diseño de arquitectura significativa (elección de librerías, cambios en el modelo de persistencia o seguridad, patrones de comunicación, etc.), es obligatorio documentarla creando un nuevo ADR en `docs/ADR/` siguiendo la plantilla `docs/ADR/ADR-NN.md`. El plan técnico (`plan.md`) debe referenciar el ADR correspondiente.
 
 ## Al terminar cualquier tarea
 
