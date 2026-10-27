@@ -1,9 +1,10 @@
 /**
  * @fileoverview Modal de creación asistida de incidencias para UrbanPulse.
  * Despliega un formulario modal con validación en frontend para capturar el título,
- * descripción y categoría de la incidencia, mostrando las coordenadas geográficas
- * seleccionadas sobre el mapa en modo de solo lectura. Persiste la nueva incidencia
- * a través de incidentService y notifica al componente padre para actualizar el mapa.
+ * descripción, categoría y archivo multimedia adjunto (imagen JPEG/PNG opcional)
+ * de la incidencia, mostrando las coordenadas geográficas seleccionadas sobre el mapa
+ * en modo de solo lectura. Persiste la nueva incidencia a través de incidentService
+ * y sube el archivo adjunto si fue provisto, notificando al componente padre para actualizar el mapa.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,7 +13,7 @@ import { INCIDENT_CATEGORIES } from './mapConstants';
 import './Map.css';
 
 /**
- * Componente modal para dar de alta una nueva incidencia geolocalizada.
+ * Componente modal para dar de alta una nueva incidencia geolocalizada con soporte para adjunto multimedia.
  *
  * @param {Object} props - Propiedades del componente.
  * @param {boolean} [props.isOpen=true] - Controla la visibilidad del modal.
@@ -37,11 +38,15 @@ export default function CreateIncidentModal({
     category: '',
   });
 
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
 
   const titleInputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Manejador unificado de cierre y cancelación memorizado
   const handleDismiss = useCallback(() => {
@@ -52,6 +57,14 @@ export default function CreateIncidentModal({
       description: '',
       category: '',
     });
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     setErrors({});
     setServerError(null);
 
@@ -60,7 +73,7 @@ export default function CreateIncidentModal({
     } else if (onCancel) {
       onCancel();
     }
-  }, [isSubmitting, onClose, onCancel]);
+  }, [isSubmitting, onClose, onCancel, previewUrl]);
 
   // Foco automático en el primer campo al abrirse el modal y escucha de tecla Escape
   useEffect(() => {
@@ -119,6 +132,63 @@ export default function CreateIncidentModal({
   };
 
   /**
+   * Maneja el cambio en el selector de archivos multimedia.
+   * Valida formato (JPEG/PNG) y tamaño máximo (5MB) en el cliente y genera la previsualización.
+   *
+   * @param {import('react').ChangeEvent<HTMLInputElement>} e - Evento de selección de archivo.
+   * @returns {void}
+   */
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      setErrors((prev) => ({
+        ...prev,
+        file: 'Formato no permitido. Solo se aceptan imágenes JPEG y PNG.',
+      }));
+      return;
+    }
+
+    const maxSizeBytes = 5 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      setErrors((prev) => ({
+        ...prev,
+        file: 'El tamaño de la imagen no puede superar los 5MB.',
+      }));
+      return;
+    }
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setErrors((prev) => ({ ...prev, file: null }));
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  /**
+   * Descarta el archivo multimedia seleccionado y limpia la vista previa asociada.
+   *
+   * @returns {void}
+   */
+  const handleRemoveFile = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setErrors((prev) => ({ ...prev, file: null }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  /**
    * Valida exhaustivamente los campos requeridos en el cliente antes de emitir la petición HTTP.
    *
    * @returns {boolean} True si el formulario es válido, False en caso contrario.
@@ -159,12 +229,16 @@ export default function CreateIncidentModal({
       newErrors.coordinates = 'Las coordenadas geográficas capturadas no son válidas.';
     }
 
+    if (errors.file) {
+      newErrors.file = errors.file;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   /**
-   * Procesa el envío del formulario de creación y notifica al contenedor padre.
+   * Procesa el envío del formulario de creación, adjunta la imagen si fue suministrada y notifica al contenedor.
    *
    * @param {import('react').FormEvent<HTMLFormElement>} e - Evento de envío del formulario.
    * @returns {Promise<void>}
@@ -195,12 +269,29 @@ export default function CreateIncidentModal({
         createdIncident = await incidentService.createIncident(incidentPayload);
       }
 
+      // Si el usuario proporcionó un archivo multimedia, se sube y asocia a la incidencia
+      if (selectedFile && createdIncident?.id) {
+        try {
+          await incidentService.uploadIncidentAttachment(createdIncident.id, selectedFile);
+        } catch (uploadErr) {
+          console.error('Error al subir la imagen adjunta a la incidencia:', uploadErr);
+        }
+      }
+
       // Limpieza de estado local tras éxito
       setFormData({
         title: '',
         description: '',
         category: '',
       });
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       setErrors({});
 
       if (onCreated) {
@@ -327,6 +418,61 @@ export default function CreateIncidentModal({
                 <span className="input-error-msg" role="alert">
                   {errors.description}
                 </span>
+              )}
+            </div>
+
+            {/* Campo Adjunto Multimedia (Opcional) */}
+            <div className="form-group">
+              <label htmlFor="incident-attachment" className="form-label">
+                Fotografía o imagen adjunta <span className="optional-tag">(Opcional · JPEG o PNG, máx. 5MB)</span>
+              </label>
+              <div className="file-upload-control">
+                <input
+                  ref={fileInputRef}
+                  id="incident-attachment"
+                  name="attachment"
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  className={`form-input-file ${errors.file ? 'is-invalid' : ''}`}
+                  onChange={handleFileChange}
+                  disabled={isSubmitting}
+                  aria-label="Seleccionar imagen adjunta"
+                />
+              </div>
+
+              {errors.file && (
+                <span className="input-error-msg" role="alert">
+                  {errors.file}
+                </span>
+              )}
+
+              {/* Vista previa de imagen seleccionada */}
+              {previewUrl && (
+                <div className="image-preview-card">
+                  <div className="image-preview-thumbnail-wrapper">
+                    <img
+                      src={previewUrl}
+                      alt="Vista previa de la fotografía adjunta"
+                      className="image-preview-thumbnail"
+                    />
+                    <button
+                      type="button"
+                      className="image-preview-remove-btn"
+                      onClick={handleRemoveFile}
+                      disabled={isSubmitting}
+                      title="Quitar imagen"
+                      aria-label="Quitar fotografía adjunta"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <div className="image-preview-meta">
+                    <span className="image-preview-name">{selectedFile?.name}</span>
+                    <span className="image-preview-size">
+                      {selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
 

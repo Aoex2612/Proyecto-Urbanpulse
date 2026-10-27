@@ -108,7 +108,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/h2-console/**", "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/incidents/*/history").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
                         .requestMatchers("/api/incidents/**").authenticated()
