@@ -1,8 +1,8 @@
 /**
- * @fileoverview Componente cartográfico interactivo de incidencias basado en React Leaflet.
- * Renderiza el mapa urbano centrado por defecto en Málaga, posiciona los marcadores de las
+ * @fileoverview Componente cartografico interactivo de incidencias basado en React Leaflet.
+ * Renderiza el mapa urbano centrado por defecto en Malaga, posiciona los marcadores de las
  * incidencias activas con popups nativos detallados y gestiona la captura asistida de
- * coordenadas geográficas mediante eventos de clic sobre el lienzo cartográfico.
+ * coordenadas geograficas mediante eventos de clic sobre el lienzo cartografico.
  */
 
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
@@ -16,13 +16,13 @@ import {
 import './Map.css';
 
 /**
- * Subcomponente interno para capturar eventos de interacción y pulsación sobre el lienzo de Leaflet.
- * Se encuentra activo exclusivamente cuando el modo de selección geográfica (`isSelectingLocation`)
- * está habilitado.
+ * Subcomponente interno para capturar eventos de interaccion y pulsacion sobre el lienzo de Leaflet.
+ * Se encuentra activo exclusivamente cuando el modo de seleccion geografica (`isSelectingLocation`)
+ * esta habilitado.
  *
- * @param {Object} props - Propiedades del manejador de eventos cartográficos.
- * @param {boolean} props.isSelectingLocation - Bandera que activa la escucha de selección de ubicación.
- * @param {Function} [props.onLocationSelected] - Función callback invocada con las coordenadas seleccionadas `{ latitude, longitude }`.
+ * @param {Object} props - Propiedades del manejador de eventos cartograficos.
+ * @param {boolean} props.isSelectingLocation - Bandera que activa la escucha de seleccion de ubicacion.
+ * @param {Function} [props.onLocationSelected] - Funcion callback invocada con las coordenadas seleccionadas `{ latitude, longitude }`.
  * @returns {null} No renderiza contenido en el DOM.
  */
 function MapEventsHandler({ isSelectingLocation, onLocationSelected }) {
@@ -41,15 +41,15 @@ function MapEventsHandler({ isSelectingLocation, onLocationSelected }) {
 }
 
 /**
- * Componente principal de visualización cartográfica de incidencias con Leaflet.
+ * Componente principal de visualizacion cartografica de incidencias con Leaflet.
  *
- * @param {Object} props - Propiedades del componente cartográfico.
+ * @param {Object} props - Propiedades del componente cartografico.
  * @param {Array<Object>} [props.incidents=[]] - Lista de incidencias activas a geoposicionar en el mapa.
  * @param {Function} [props.onSelectIncident] - Callback ejecutado al pulsar "Ver detalle completo" en un marcador.
- * @param {boolean} [props.isSelectingLocation=false] - Indica si el mapa está en modo de captura de coordenadas.
- * @param {Function} [props.onLocationSelected] - Callback notificado al hacer clic sobre el mapa en modo selección.
- * @param {Object} [props.selectedLocation=null] - Ubicación geográfica temporal seleccionada `{ latitude, longitude }`.
- * @param {[number, number]} [props.center=DEFAULT_MAP_CENTER] - Coordenadas iniciales del centro cartográfico.
+ * @param {boolean} [props.isSelectingLocation=false] - Indica si el mapa esta en modo de captura de coordenadas.
+ * @param {Function} [props.onLocationSelected] - Callback notificado al hacer clic sobre el mapa en modo seleccion.
+ * @param {Object} [props.selectedLocation=null] - Ubicacion geografica temporal seleccionada `{ latitude, longitude }`.
+ * @param {[number, number]} [props.center=DEFAULT_MAP_CENTER] - Coordenadas iniciales del centro cartografico.
  * @param {number} [props.zoom=DEFAULT_MAP_ZOOM] - Nivel inicial de zoom.
  * @param {string} [props.className=''] - Clases CSS adicionales para el contenedor.
  * @returns {import('react').JSX.Element} Vista del mapa interactivo con OpenStreetMap.
@@ -64,7 +64,7 @@ export default function IncidentsMap({
   zoom = DEFAULT_MAP_ZOOM,
   className = '',
 }) {
-  // Filtrar únicamente aquellas incidencias que presenten coordenadas geográficas numéricas válidas
+  // Filtrar unicamente aquellas incidencias que presenten coordenadas geograficas numericas validas
   const validIncidents = incidents.filter(
     (incident) =>
       incident &&
@@ -85,7 +85,16 @@ export default function IncidentsMap({
           <span className="map-selection-banner-icon" aria-hidden="true">
             🎯
           </span>
-          <span>Modo de selección activo: Haz clic en el mapa para ubicar la incidencia</span>
+          <span>Modo de seleccion activo: Haz clic en el mapa para ubicar la incidencia</span>
+        </div>
+      )}
+
+      {validIncidents.length === 0 && !isSelectingLocation && (
+        <div className="map-empty-filter-banner" role="status" aria-live="polite">
+          <span className="map-empty-filter-icon" aria-hidden="true">
+            ℹ️
+          </span>
+          <span>No hay incidencias para el rango de fechas seleccionado</span>
         </div>
       )}
 
@@ -93,6 +102,7 @@ export default function IncidentsMap({
         center={center}
         zoom={zoom}
         scrollWheelZoom={true}
+        preferCanvas={true}
         className="incidents-map-container"
       >
         <TileLayer
@@ -116,11 +126,7 @@ export default function IncidentsMap({
             : 'status-reported';
 
           return (
-            <Marker
-              key={incident.id}
-              position={[lat, lng]}
-              icon={markerIcon}
-            >
+            <Marker key={incident.id} position={[lat, lng]} icon={markerIcon}>
               <Popup className="incident-popup">
                 <div className="incident-popup-card">
                   <div className="incident-popup-header">
@@ -135,9 +141,7 @@ export default function IncidentsMap({
                   <h3 className="incident-popup-title">{incident.title}</h3>
 
                   {incident.description && (
-                    <p className="incident-popup-description">
-                      {incident.description}
-                    </p>
+                    <p className="incident-popup-description">{incident.description}</p>
                   )}
 
                   <div className="incident-popup-actions">
@@ -162,18 +166,13 @@ export default function IncidentsMap({
           !Number.isNaN(Number(selectedLocation.latitude)) &&
           !Number.isNaN(Number(selectedLocation.longitude)) && (
             <Marker
-              position={[
-                Number(selectedLocation.latitude),
-                Number(selectedLocation.longitude),
-              ]}
+              position={[Number(selectedLocation.latitude), Number(selectedLocation.longitude)]}
               icon={createColoredMarkerIcon('#aa3bff')}
             >
               <Popup className="incident-popup">
                 <div className="incident-popup-card">
                   <div className="incident-popup-header">
-                    <span className="status-badge status-draft">
-                      Ubicación Seleccionada
-                    </span>
+                    <span className="status-badge status-draft">Ubicacion Seleccionada</span>
                   </div>
                   <p className="incident-popup-description">
                     Coordenadas preparadas para el formulario de alta.

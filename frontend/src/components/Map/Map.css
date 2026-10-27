@@ -744,3 +744,35 @@
     border-top-color: #2e303a;
   }
 }
+
+
+/* ==========================================================================
+   Banner Informativo de Filtro Vacio
+   ========================================================================== */
+
+.map-empty-filter-banner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(15, 23, 42, 0.88);
+  color: #f8fafc;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  animation: fadeInFilter 0.3s ease-out;
+  user-select: none;
+}
+
+.map-empty-filter-icon {
+  font-size: 14px;
+}
