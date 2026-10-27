@@ -22,7 +22,7 @@ Implementación de las tareas de una feature en el ciclo sdd.
 3. Invoca los subagentes para las tareas de implementación que se pueden realizar con las siguientes indicaciones:
     0. Ten en cuenta la skill sdd.
     1. PROHIBICIÓN: No invoques ni llames a otros subagentes bajo ninguna circunstancia. Realiza todo el trabajo asignado tú directamente.
-    2. Escribe los tests necesarios para comprobar lo que se va a implementar.
+    2. Escribe los tests necesarios para comprobar lo que se va a implementar (unitarios con mocks y, cuando aplique persistencia, tests de integración con `@EnabledIfPostgresAvailable`).
     3. Escribe el código hasta que pasen los tests y envía el resultado de su ejecución al agente principal.
     4. Realiza commits siguiendo la norma de commits del proyecto indicando lo que se ha hecho cada vez que sea necesario.
     5. Marca la tarea (o subtareas si no se completó toda la tarea) como hecha en `tasks.md` e indica qué RF cubre.

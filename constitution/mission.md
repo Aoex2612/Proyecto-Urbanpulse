@@ -8,7 +8,7 @@ UrbanPulse es una plataforma centralizada para la gestión, monitorización y re
 
 Piezas principales:
 1. **Portal Ciudadano (Frontend React):** Permite a los ciudadanos registrarse, autenticarse, reportar incidencias geolocalizadas con contenido multimedia y consultar su estado de resolución.
-2. **Servicio Backend (API REST en Java/Spring Boot):** Gestión de usuarios, autenticación JWT, lógica de negocio de incidencias y activos, validación y control de acceso basado en roles (RBAC).
+2. **Servicio Backend (API REST en Java/Spring Boot):** Gestión de usuarios, autenticación JWT, lógica de negocio de incidencias y activos, validación, desacoplamiento estricto de entidades mediante mappers y DTOs, y control de acceso basado en roles (RBAC).
 3. **Persistencia y Auditoría (PostgreSQL):** Registro relacional de datos urbanos con historial inmutable de transiciones de estado, asociaciones a activos municipales y asignaciones departamentales.
 4. **Catálogo y Monitorización de Activos Urbanos:** Identificación e inventario de infraestructura y mobiliario urbano (luminarias, papeleras, semáforos, etc.) vinculables a incidencias para optimizar las rutas y tareas de mantenimiento.
 
@@ -24,7 +24,7 @@ Piezas principales:
 - **Trazabilidad inmutable:** Todo cambio de estado de una incidencia queda registrado de forma auditable (quién, cuándo, estado anterior, estado nuevo y motivo).
 - **Geolocalización como eje central:** Toda incidencia y activo municipal cuenta con coordenadas precisas (latitud y longitud) para su correcta atención física.
 - **Vinculación con activos de infraestructura:** Facilidad para asociar incidencias a activos urbanos específicos (`urban_assets`), permitiendo trazabilidad del ciclo de vida y desgaste del equipamiento municipal.
-- **Seguridad y desacoplamiento:** Separación estricta entre capa cliente y API REST, autenticación vía tokens JWT y control de acceso estricto según roles (RBAC).
+- **Seguridad y desacoplamiento:** Separación estricta entre capa cliente y API REST, encapsulación de datos de dominio (entidades JPA nunca expuestas directamente gracias a DTOs y mappers en servicios), autenticación vía tokens JWT y control de acceso estricto según roles (RBAC).
 - **Validación rigurosa en origen:** Las entradas deben validarse tanto en frontend (UX inmediata) como en backend (integridad y seguridad).
 
 ## Qué NO es

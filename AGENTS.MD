@@ -15,16 +15,20 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 
 - BD Local: `docker compose up -d`
 - Backend Tests: `cd Backend && mvn clean test`
+- Backend Cobertura: Se genera automáticamente al pasar los tests en `Backend/target/site/jacoco/index.html`
 - Backend Dev: `cd Backend && mvn spring-boot:run`
+- Frontend Tests: `cd frontend && npm test`
+- Frontend Cobertura: `cd frontend && npm run test:coverage` (reporte en consola y en `frontend/coverage/index.html`)
 - Frontend Dev: `cd frontend && npm run dev`
 - Frontend Lint: `cd frontend && npm run lint`
 
 ## Estilo y convenciones
 
-- Lenguaje: Java 17/21 para backend; JavaScript/React para frontend.
+- Lenguaje: Java 21 para backend; JavaScript/React para frontend.
 - Código y nombres: Clases en PascalCase, métodos/variables en camelCase, constantes en UPPER_CASE.
 - **Mensajes de commit:** Obligatorio seguir el estándar de **Conventional Commits** con el **mensaje en español** (ejemplos: `feat: carpeta creada`, `fix: corrección de validación de token`, `test: pruebas unitarias de filtro de seguridad`, `docs: actualización de especificación`).
-- **Documentación de código:** Comentar obligatoriamente con **Javadoc** en el backend (clases, métodos, parámetros `@param`, retornos `@return` y excepciones `@throws`) y de forma análoga con **JSDoc** en el frontend (componentes, hooks, funciones utilitarias y servicios, indicando parámetros `@param` y retornos `@returns`).
+- **Documentación de código y Lombok:** Comentar obligatoriamente con **Javadoc** en el backend (clases, interfaces, métodos de servicio, mappers, parámetros `@param`, retornos `@return` y excepciones `@throws`) y de forma análoga con **JSDoc** en el frontend. En clases de modelo o DTOs donde se utilicen anotaciones de **Lombok** (`@Data`, `@AllArgsConstructor`, `@NoArgsConstructor`, etc.), **prevalecen las anotaciones frente al código boilerplate hecho a mano**; se documentará la clase a nivel global y sus campos clave, sin requerir Javadoc en getters/setters/constructores autogenerados por Lombok.
+- **Capa de Mappers y DTOs:** Toda transformación entre entidades de base de datos y DTOs debe realizarse mediante componentes en `Backend/src/main/java/org/bulbaseros/mappers` e invocarse en la capa de servicios (`service`). Los controladores nunca deben recibir o exponer entidades JPA de dominio directamente.
 
 ## Flujo de trabajo (SDD)
 
@@ -35,7 +39,7 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 
 ## Al terminar cualquier tarea
 
-- Verificar que los tests unitarios y de integración pasen (`mvn test`, `npm run lint`).
+- Verificar que los tests unitarios y de integración pasen (`mvn test`, `npm run lint`). Los tests de integración reales con PostgreSQL (`@EnabledIfPostgresAvailable`) se omiten limpiamente si la BD no está levantada y no penalizan la tasa de éxito ni el qa-note.
 - Documentar los cambios realizados e indicar el siguiente paso.
 
 ## Documentación
@@ -48,6 +52,7 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 ## Gestión de Git y Commits
 
 - **Herramientas:** Realizar las operaciones de Git (crear ramas, commits y pull requests) preferentemente mediante el **MCP de GitHub**. Si no se encuentra disponible o falla, ejecutar directamente los comandos de terminal (`git`).
+- **Plantillas de PR e Issues:** Respetar y completar siempre la plantilla correspondiente ubicada en `.github/PULL_REQUEST_TEMPLATE.md` para Pull Requests y en `.github/ISSUE_TEMPLATE/` para Issues.
 - **Flujo de ramas:** Toda nueva rama debe partir obligatoriamente desde `develop` y su correspondiente Pull Request debe apuntar hacia `develop`.
 - **Idioma y caracteres:** 
   - Redactar mensajes de commit, nombres de ramas y PRs en **español**.

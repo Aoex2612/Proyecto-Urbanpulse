@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "89496d5dd00f4810205f351759594fc2742bf8eea85a2f2b2d1de59f4bd91576"
+    },
+    "trello-use": {
+      "source": "atlassian/trello-mcp-server",
+      "sourceType": "github",
+      "skillPath": "skills/trello-use/SKILL.md",
+      "computedHash": "b06278d882b47dfe2561b9ff0efa76afe7e34c1fdb147a20cd0d58fcf8002fc2"
     }
   }
 }

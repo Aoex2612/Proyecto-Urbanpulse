@@ -42,6 +42,8 @@ El proyecto sigue una arquitectura desacoplada basada en microservicios/monolito
 - **Backend:**
   - Lenguaje: Java 21
   - Framework: Spring Boot 3.4.3 (Spring Security 6, Spring Data JPA)
+  - Desacoplamiento y mapeo: Mappers desacoplados (`org.bulbaseros.mappers`) para transformar entidades a DTOs en la capa de servicios (`service`), evitando exponer el modelo de dominio directamente
+  - Productividad y boilerplate: Uso de anotaciones Lombok (`@Data`, `@AllArgsConstructor`, `@NoArgsConstructor`, etc.)
   - Autenticación: Tokens JWT (HMAC-SHA256, JJWT 0.12.6) y cifrado de contraseñas con BCrypt
   - Gestor de dependencias: Apache Maven
   - Directorio principal: `Backend/` (paquete base `org.bulbaseros`)
@@ -68,7 +70,7 @@ El proyecto sigue una arquitectura desacoplada basada en microservicios/monolito
 .
 ├── Backend/                 # Servidor de API REST y lógica de negocio (Java 21 / Spring Boot)
 │   ├── pom.xml              # Fichero de configuración y dependencias Maven
-│   └── src/                 # Código fuente (config, controller, entity, security, service) y tests
+│   └── src/                 # Código fuente (config, controller, dto, entity, mappers, security, service) y tests
 ├── frontend/                # Aplicación cliente web SPA (React 19 / Vite)
 │   ├── package.json         # Dependencias y scripts de Node.js
 │   ├── vite.config.js       # Configuración de Vite
@@ -155,7 +157,16 @@ docker exec -it db_postgres psql -U admin -d urban_pulse_db -c "SELECT email, ro
    ```
    La aplicación web estará disponible en `http://localhost:5173`.
 
-4. Validar el código con el linter:
+4. Ejecutar la suite de pruebas del frontend:
+   ```bash
+   npm test
+   ```
+   Para generar el reporte de cobertura en consola y HTML:
+   ```bash
+   npm run test:coverage
+   ```
+
+5. Validar el código con el linter:
    ```bash
    npm run lint
    ```
