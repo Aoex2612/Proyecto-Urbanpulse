@@ -1,8 +1,9 @@
 /**
- * @fileoverview Vista principal del mapa cartográfico interactivo (/map) en UrbanPulse.
- * Orquesta la visualización de incidencias geolocalizadas sobre Leaflet con OpenStreetMap,
- * la barra superior de mandos con resumen de incidencias no terminadas, el botón toggle de
- * captura geográfica asistida, el modal de alta de incidencia y el modal de detalle con auditoría.
+ * @fileoverview Vista principal del mapa cartografico interactivo (/map) en UrbanPulse.
+ * Orquesta la visualizacion de incidencias geolocalizadas sobre Leaflet con OpenStreetMap,
+ * la barra superior de mandos con resumen de incidencias no terminadas, la barra de filtrado
+ * temporal con preset semanal por defecto, el boton toggle de captura geografica asistida,
+ * el modal de alta de incidencia y el modal de detalle con auditoria.
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -13,13 +14,15 @@ import {
   IncidentsMap,
   CreateIncidentModal,
   IncidentDetailModal,
+  MapDateFilter,
 } from '../components/Map';
+import { filterIncidentsByDate, DATE_FILTER_PRESETS } from '../utils/dateUtils';
 import './MapPage.css';
 
 /**
- * Componente principal de la página del Mapa de Incidencias Urbanas.
+ * Componente principal de la pagina del Mapa de Incidencias Urbanas.
  *
- * @returns {import('react').JSX.Element} Vista del mapa cartográfico interactivo.
+ * @returns {import('react').JSX.Element} Vista del mapa cartografico interactivo.
  */
 export default function MapPage() {
   const [incidents, setIncidents] = useState([]);
@@ -27,18 +30,25 @@ export default function MapPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  // Estados de flujo de creación asistida
+  // Estado del filtro temporal (preset predeterminado: 'week' - ultimos 7 dias)
+  const [dateFilter, setDateFilter] = useState({
+    preset: DATE_FILTER_PRESETS.WEEK,
+    startDate: '',
+    endDate: '',
+  });
+
+  // Estados de flujo de creacion asistida
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Estados de flujo de inspección de detalle
+  // Estados de flujo de inspeccion de detalle
   const [selectedIncident, setSelectedIncident] = useState(null);
 
-  // Mensaje temporal de éxito / feedback tras alta
+  // Mensaje temporal de exito / feedback tras alta
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Obtener usuario autenticado en sesión
+  // Obtener usuario autenticado en sesion
   const currentUser = useMemo(() => {
     return typeof authService.getCurrentUser === 'function'
       ? authService.getCurrentUser()
@@ -50,7 +60,7 @@ export default function MapPage() {
   /**
    * Carga desde el backend la lista de incidencias urbanas activas.
    *
-   * @param {boolean} [isManualRefresh=false] - Indica si la petición proviene de un refresco manual.
+   * @param {boolean} [isManualRefresh=false] - Indica si la peticion proviene de un refresco manual.
    * @returns {Promise<void>}
    */
   const loadIncidents = useCallback(async (isManualRefresh = false) => {
@@ -65,7 +75,7 @@ export default function MapPage() {
     } catch (err) {
       const errorMsg =
         err?.response?.data?.message ||
-        'No se pudieron cargar las incidencias en el mapa. Por favor, inténtalo de nuevo.';
+        'No se pudieron cargar las incidencias en el mapa. Por favor, intentalo de nuevo.';
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -73,7 +83,7 @@ export default function MapPage() {
     }
   }, []);
 
-  // Carga inicial asíncrona al montar la página
+  // Carga inicial asincrona al montar la pagina
   useEffect(() => {
     let isMounted = true;
 
@@ -89,18 +99,18 @@ export default function MapPage() {
   }, [loadIncidents]);
 
   /**
-   * Conmuta el modo de selección geográfica en el mapa (RF-6 y RF-7).
+   * Conmuta el modo de seleccion geografica en el mapa (RF-6 y RF-7).
    * Al cancelarse, descarta cualquier coordenada provisional previa.
    *
    * @returns {void}
    */
   const handleToggleSelectionMode = () => {
     if (isSelectingLocation) {
-      // Cancelar selección (RF-7)
+      // Cancelar seleccion (RF-7)
       setIsSelectingLocation(false);
       setSelectedLocation(null);
     } else {
-      // Activar modo selección (RF-6)
+      // Activar modo seleccion (RF-6)
       setIsSelectingLocation(true);
       setSelectedLocation(null);
     }
@@ -108,9 +118,9 @@ export default function MapPage() {
 
   /**
    * Captura las coordenadas seleccionadas mediante un clic en el mapa de Leaflet (RF-8).
-   * Desactiva el modo de selección y despliega el modal de alta con las coordenadas prefijadas.
+   * Desactiva el modo de seleccion y despliega el modal de alta con las coordenadas prefijadas.
    *
-   * @param {{latitude: number, longitude: number}} location - Coordenadas geográficas seleccionadas.
+   * @param {{latitude: number, longitude: number}} location - Coordenadas geograficas seleccionadas.
    * @returns {void}
    */
   const handleLocationSelected = (location) => {
@@ -120,7 +130,7 @@ export default function MapPage() {
   };
 
   /**
-   * Descarta la selección de coordenadas y cierra el modal de alta sin persistir datos (RF-9).
+   * Descarta la seleccion de coordenadas y cierra el modal de alta sin persistir datos (RF-9).
    *
    * @returns {void}
    */
@@ -130,9 +140,9 @@ export default function MapPage() {
   };
 
   /**
-   * Callback invocado tras la creación exitosa de una nueva incidencia (RF-11).
+   * Callback invocado tras la creacion exitosa de una nueva incidencia (RF-11).
    * Incorpora inmediatamente la nueva incidencia al estado para reflejar su marcador
-   * en el mapa y despliega una notificación de confirmación.
+   * en el mapa y despliega una notificacion de confirmacion.
    *
    * @param {Object} newIncident - Incidencia devuelta por la API con HTTP 201.
    * @returns {void}
@@ -146,7 +156,7 @@ export default function MapPage() {
     }
     setIsCreateModalOpen(false);
     setSelectedLocation(null);
-    setToastMessage('¡Incidencia registrada con éxito y posicionada en el mapa!');
+    setToastMessage('¡Incidencia registrada con exito y posicionada en el mapa!');
   };
 
   /**
@@ -160,7 +170,7 @@ export default function MapPage() {
   };
 
   /**
-   * Cierra el modal de inspección detallada de incidencia.
+   * Cierra el modal de inspeccion detallada de incidencia.
    *
    * @returns {void}
    */
@@ -168,12 +178,24 @@ export default function MapPage() {
     setSelectedIncident(null);
   };
 
-  // Cálculo de incidencias activas no finalizadas
-  const activeCount = useMemo(() => {
+  // Filtrado temporal memoizado de incidencias segun el preset o rango configurado
+  const filteredIncidents = useMemo(() => {
+    return filterIncidentsByDate(incidents, dateFilter);
+  }, [incidents, dateFilter]);
+
+  // Recuento de incidencias activas globales en la plataforma
+  const totalActiveCount = useMemo(() => {
     return incidents.filter(
       (inc) => inc.status !== 'CLOSED' && inc.status !== 'REJECTED'
     ).length;
   }, [incidents]);
+
+  // Recuento de incidencias activas que cumplen el filtro temporal actual
+  const filteredActiveCount = useMemo(() => {
+    return filteredIncidents.filter(
+      (inc) => inc.status !== 'CLOSED' && inc.status !== 'REJECTED'
+    ).length;
+  }, [filteredIncidents]);
 
   return (
     <div className="map-page-container">
@@ -185,19 +207,25 @@ export default function MapPage() {
           </Link>
           <div className="map-title-group">
             <h1 className="map-main-title">Mapa de Incidencias Urbanas</h1>
-            <span className="map-badge-city">Málaga</span>
+            <span className="map-badge-city">Malaga</span>
           </div>
         </div>
 
         <div className="map-header-center">
           <div
             className="map-counter-chip"
-            aria-label={`Total de incidencias activas: ${activeCount}`}
+            aria-label={`Incidencias activas visibles: ${filteredActiveCount} de ${totalActiveCount}`}
           >
-            <span className="counter-icon" aria-hidden="true">📍</span>
-            <span className="counter-number">{activeCount}</span>
+            <span className="counter-icon" aria-hidden="true">
+              📍
+            </span>
+            <span className="counter-number">{filteredActiveCount}</span>
             <span className="counter-text">
-              {activeCount === 1 ? 'incidencia activa' : 'incidencias activas'}
+              {dateFilter.preset === DATE_FILTER_PRESETS.ALL
+                ? totalActiveCount === 1
+                  ? 'incidencia activa'
+                  : 'incidencias activas'
+                : `de ${totalActiveCount} activas`}
             </span>
           </div>
         </div>
@@ -213,7 +241,7 @@ export default function MapPage() {
             </Link>
           )}
 
-          {/* Botón de refresco manual */}
+          {/* Boton de refresco manual */}
           <button
             type="button"
             className={`map-btn-refresh ${refreshing ? 'is-spinning' : ''}`}
@@ -225,11 +253,13 @@ export default function MapPage() {
             title="Actualizar listado de incidencias"
             aria-label="Actualizar incidencias"
           >
-            <span className="refresh-icon" aria-hidden="true">🔄</span>
+            <span className="refresh-icon" aria-hidden="true">
+              🔄
+            </span>
             <span className="refresh-label">{refreshing ? 'Cargando...' : 'Actualizar'}</span>
           </button>
 
-          {/* Botón toggle de creación / cancelación de selección (RF-6 y RF-7) */}
+          {/* Boton toggle de creacion / cancelacion de seleccion (RF-6 y RF-7) */}
           <button
             type="button"
             className={`map-btn-toggle-create ${
@@ -240,12 +270,16 @@ export default function MapPage() {
           >
             {isSelectingLocation ? (
               <>
-                <span className="toggle-btn-icon" aria-hidden="true">✖</span>
-                <span>Cancelar selección</span>
+                <span className="toggle-btn-icon" aria-hidden="true">
+                  ✖
+                </span>
+                <span>Cancelar seleccion</span>
               </>
             ) : (
               <>
-                <span className="toggle-btn-icon" aria-hidden="true">➕</span>
+                <span className="toggle-btn-icon" aria-hidden="true">
+                  ➕
+                </span>
                 <span>Crear incidencia</span>
               </>
             )}
@@ -253,29 +287,43 @@ export default function MapPage() {
         </div>
       </header>
 
-      {/* Banner / Toast de confirmación tras crear una incidencia */}
+      {/* Barra interactiva de filtrado temporal de incidencias */}
+      {!loading && !error && (
+        <MapDateFilter
+          filter={dateFilter}
+          onFilterChange={setDateFilter}
+          totalCount={totalActiveCount}
+          filteredCount={filteredActiveCount}
+        />
+      )}
+
+      {/* Banner / Toast de confirmacion tras crear una incidencia */}
       {toastMessage && (
         <aside className="map-toast-banner" role="status" aria-live="polite">
           <div className="toast-content">
-            <span className="toast-icon" aria-hidden="true">✅</span>
+            <span className="toast-icon" aria-hidden="true">
+              ✅
+            </span>
             <span className="toast-text">{toastMessage}</span>
           </div>
           <button
             type="button"
             className="toast-close-btn"
             onClick={() => setToastMessage(null)}
-            aria-label="Cerrar notificación"
+            aria-label="Cerrar notificacion"
           >
             ×
           </button>
         </aside>
       )}
 
-      {/* Alerta de error en la consulta de incidencias con opción de reintento */}
+      {/* Alerta de error en la consulta de incidencias con opcion de reintento */}
       {error && (
         <div className="map-error-alert" role="alert" aria-live="assertive">
           <div className="error-alert-content">
-            <span className="error-alert-icon" aria-hidden="true">⚠️</span>
+            <span className="error-alert-icon" aria-hidden="true">
+              ⚠️
+            </span>
             <span className="error-alert-text">{error}</span>
           </div>
           <button
@@ -291,16 +339,16 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Contenedor principal del mapa cartográfico */}
+      {/* Contenedor principal del mapa cartografico */}
       <main className="map-page-main">
         {loading ? (
           <div className="map-loading-overlay" role="status" aria-live="polite">
             <div className="map-spinner" aria-hidden="true" />
-            <p className="map-loading-text">Cargando mapa cartográfico de Málaga...</p>
+            <p className="map-loading-text">Cargando mapa cartografico de Malaga...</p>
           </div>
         ) : (
           <IncidentsMap
-            incidents={incidents}
+            incidents={filteredIncidents}
             isSelectingLocation={isSelectingLocation}
             onLocationSelected={handleLocationSelected}
             onSelectIncident={handleSelectIncident}
@@ -321,7 +369,7 @@ export default function MapPage() {
         />
       )}
 
-      {/* Modal de detalle completo y auditoría transversal (RF-2, RF-3, RF-18, RF-19) */}
+      {/* Modal de detalle completo y auditoria transversal (RF-2, RF-3, RF-18, RF-19) */}
       {selectedIncident && (
         <IncidentDetailModal
           isOpen={Boolean(selectedIncident)}

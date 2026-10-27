@@ -65,5 +65,6 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 
 - **Seguridad:** Nunca versionar ficheros `.env` con secretos reales ni registrar contraseñas en texto plano en logs (`Usuario.toString()` omite deliberadamente `passwordHash`).
 - **Persistencia:** No utilizar tipos específicos de base de datos no soportados por el estándar JPA sin un ADR que lo justifique expresamente.
+- **Decisiones de Arquitectura (ADR):** Cualquier decisión técnica transversal o de impacto arquitectónico (mecanismos de persistencia, autenticación, contratos de comunicación, librerías centrales o cambios estructurales de dominio) debe quedar formalizada mediante un ADR en `docs/ADR/` respetando la plantilla `docs/ADR/ADR-NN.md`.
 - **Desacoplamiento:** El frontend jamás accede directamente a la base de datos; toda interacción se realiza a través de la API REST protegida por JWT. Asimismo, los controladores nunca manejan entidades JPA directamente: los servicios deben transformar entidades a DTOs mediante mappers antes de responder.
 - **Flujo SDD:** Ninguna funcionalidad se implementa sin su correspondiente especificación (`spec.md`) aprobada y desglosada en tareas.
