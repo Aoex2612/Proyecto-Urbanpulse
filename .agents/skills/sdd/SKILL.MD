@@ -11,6 +11,7 @@ Cambio.
 - Lee los archivos en `/constitution` y cada spec en `/features/NNN-nombre/spec.md` antes de empezar a trabajar en una feature, si no la has leido ya y las tienes en el contexto.
 - Si necesitas aclarar algo, en `/docs/NNN-feature/` estará la documentación de la implementación de la feature, separadas por tareas. Si no está, pregunta al usuario antes de asumir nada.
 - En `docs/NNN-feature/repare.md` se encuentran los problemas encontrados durante la validación de la feature. Debe eliminarse tras su uso en una implementación posterior. Si existe, debes tenerlo en cuenta antes de implementar de nuevo la feature.
+- Decisiones de Arquitectura (ADR): Cuando surjan decisiones técnicas estructurales, cambios de protocolo, librerías centrales o diseño de persistencia/seguridad, redacta obligatoriamente un nuevo Architectural Decision Record en `docs/ADR/` respetando `docs/ADR/ADR-NN.md` y referéncialo en `plan.md`.
 - Nunca pases a la siguiente fase sin la aprobación explícita del usuario.
 - Un cambio de requisitos se hace primero en la spec, luego en el plan y las tareas, y por último en el código.
 - Cada spec vive en su carpeta: `/features/NNN-nombre` con `spec.md`, `plan.md` y `tasks.md`.
