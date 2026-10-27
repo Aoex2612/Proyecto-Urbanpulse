@@ -157,7 +157,16 @@ docker exec -it db_postgres psql -U admin -d urban_pulse_db -c "SELECT email, ro
    ```
    La aplicación web estará disponible en `http://localhost:5173`.
 
-4. Validar el código con el linter:
+4. Ejecutar la suite de pruebas del frontend:
+   ```bash
+   npm test
+   ```
+   Para generar el reporte de cobertura en consola y HTML:
+   ```bash
+   npm run test:coverage
+   ```
+
+5. Validar el código con el linter:
    ```bash
    npm run lint
    ```

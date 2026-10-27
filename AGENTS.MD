@@ -15,7 +15,10 @@ Plataforma integral para la gestión, monitorización y resolución de incidenci
 
 - BD Local: `docker compose up -d`
 - Backend Tests: `cd Backend && mvn clean test`
+- Backend Cobertura: Se genera automáticamente al pasar los tests en `Backend/target/site/jacoco/index.html`
 - Backend Dev: `cd Backend && mvn spring-boot:run`
+- Frontend Tests: `cd frontend && npm test`
+- Frontend Cobertura: `cd frontend && npm run test:coverage` (reporte en consola y en `frontend/coverage/index.html`)
 - Frontend Dev: `cd frontend && npm run dev`
 - Frontend Lint: `cd frontend && npm run lint`
 
