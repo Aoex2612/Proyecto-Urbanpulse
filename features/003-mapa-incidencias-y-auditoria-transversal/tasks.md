@@ -58,9 +58,9 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 10.2 Implementar en `geolocationUtils.js` el formateo de coordenadas a 6 decimales y el mapeo de errores nativos (`PERMISSION_DENIED`, `POSITION_UNAVAILABLE`, `TIMEOUT`) a mensajes explicativos claros para el ciudadano, documentando con JSDoc.
 - [x] 10.3 Desarrollar suite de pruebas unitarias en `frontend/src/utils/geolocationUtils.test.js` validando detección de soporte, resolución exitosa con 6 decimales y cobertura de todos los códigos de error.
 
-## [ ] Tarea 11: Diseño visual y estilos CSS del control de geolocalización (HU14.4) - Depende de Tarea 10 - RF: RF-21, RF-23, RF-24, RF-27, RF-29, RF-33
-- [ ] 11.1 Añadir estilos en `frontend/src/components/Map/Map.css` para el botón `.btn-current-location` con icono SVG de geoposicionamiento, estados `:hover`, `:focus-visible`, `:disabled` y animación de giro `.is-locating`.
-- [ ] 11.2 Diseñar clases para el distintivo de confirmación `.geo-status-badge` en verde esmeralda y la alerta de error en línea `.geo-error-banner` con semántica accesible y contraste WCAG 2.1 AA.
+## [x] Tarea 11: Diseño visual y estilos CSS del control de geolocalización (HU14.4) - Depende de Tarea 10 - RF: RF-21, RF-23, RF-24, RF-27, RF-29, RF-33
+- [x] 11.1 Añadir estilos en `frontend/src/components/Map/Map.css` para el botón `.btn-current-location` con icono SVG de geoposicionamiento, estados `:hover`, `:focus-visible`, `:disabled` y animación de giro `.is-locating`.
+- [x] 11.2 Diseñar clases para el distintivo de confirmación `.geo-status-badge` en verde esmeralda y la alerta de error en línea `.geo-error-banner` con semántica accesible y contraste WCAG 2.1 AA.
 
 ## [ ] Tarea 12: Integración del botón y máquina de estados en el modal de alta (HU14.4) - Depende de Tareas 10 y 11 - RF: RF-21 a RF-33, RF-35
 - [ ] 12.1 Declarar estados en `CreateIncidentModal.jsx` (`isLocating`, `geoError`, `isLocationOverridden`, `isGeoSupported`, `currentCoords`) y salvaguarda contra desmontado asíncrono con `isMountedRef`.
