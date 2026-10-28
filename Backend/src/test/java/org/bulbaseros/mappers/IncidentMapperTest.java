@@ -53,6 +53,10 @@ class IncidentMapperTest {
         entity.setCitizen(citizen);
         entity.setCreatedAt(now);
         entity.setUpdatedAt(now);
+        entity.setAccuracyMeters(5.5);
+        entity.setAddress("Calle Larios, 1");
+        entity.setDistrict("Centro");
+        entity.setNeighborhood("Centro Historico");
 
         IncidentResponse dto = mapper.toDto(entity);
 
@@ -69,6 +73,42 @@ class IncidentMapperTest {
         assertEquals("Juan Perez", dto.getCitizenName());
         assertEquals(now, dto.getCreatedAt());
         assertEquals(now, dto.getUpdatedAt());
+        assertEquals(5.5, dto.getAccuracyMeters());
+        assertEquals("Calle Larios, 1", dto.getAddress());
+        assertEquals("Centro", dto.getDistrict());
+        assertEquals("Centro Historico", dto.getNeighborhood());
+    }
+
+    @Test
+    @DisplayName("Debe convertir Page de entidades a PageResponse de DTOs correctamente")
+    void shouldMapPageToPageResponseCorrectly() {
+        assertNotNull(mapper.toPageResponse(null));
+        assertTrue(mapper.toPageResponse(null).getContent().isEmpty());
+
+        Incidencia inc1 = new Incidencia();
+        inc1.setId(101L);
+        inc1.setTitle("Incidencia 1");
+
+        Incidencia inc2 = new Incidencia();
+        inc2.setId(102L);
+        inc2.setTitle("Incidencia 2");
+
+        org.springframework.data.domain.Page<Incidencia> page = new org.springframework.data.domain.PageImpl<>(
+                List.of(inc1, inc2),
+                org.springframework.data.domain.PageRequest.of(0, 10),
+                2
+        );
+
+        org.bulbaseros.dto.PageResponse<IncidentResponse> pageResponse = mapper.toPageResponse(page);
+
+        assertNotNull(pageResponse);
+        assertEquals(2, pageResponse.getTotalElements());
+        assertEquals(1, pageResponse.getTotalPages());
+        assertEquals(0, pageResponse.getPage());
+        assertEquals(10, pageResponse.getSize());
+        assertEquals(2, pageResponse.getContent().size());
+        assertEquals(101L, pageResponse.getContent().get(0).getId());
+        assertEquals(102L, pageResponse.getContent().get(1).getId());
     }
 
     @Test

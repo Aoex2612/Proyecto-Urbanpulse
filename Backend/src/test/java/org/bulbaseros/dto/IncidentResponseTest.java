@@ -110,6 +110,10 @@ class IncidentResponseTest {
         OffsetDateTime updated = OffsetDateTime.now();
         incidencia.setCreatedAt(created);
         incidencia.setUpdatedAt(updated);
+        incidencia.setAccuracyMeters(3.2);
+        incidencia.setAddress("Calle Larios, 5");
+        incidencia.setDistrict("Centro");
+        incidencia.setNeighborhood("Centro Historico");
 
         IncidentResponse response = IncidentResponse.fromEntity(incidencia);
 
@@ -126,6 +130,10 @@ class IncidentResponseTest {
         assertEquals("Ana Morales", response.getCitizenName());
         assertEquals(created, response.getCreatedAt());
         assertEquals(updated, response.getUpdatedAt());
+        assertEquals(3.2, response.getAccuracyMeters());
+        assertEquals("Calle Larios, 5", response.getAddress());
+        assertEquals("Centro", response.getDistrict());
+        assertEquals("Centro Historico", response.getNeighborhood());
     }
 
     @Test

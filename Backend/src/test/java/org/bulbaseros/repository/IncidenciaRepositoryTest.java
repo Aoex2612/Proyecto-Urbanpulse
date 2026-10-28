@@ -117,4 +117,75 @@ class IncidenciaRepositoryTest {
         assertEquals(1, result.size());
         assertEquals(EstadoIncidencia.VALIDATED, result.get(0).getStatus());
     }
+
+    @Test
+    @DisplayName("Deberia recuperar incidencias paginadas de un ciudadano ordenadas descendentemente por fecha")
+    void shouldFindPagedIncidentsByCitizenIdOrderedByCreatedAtDesc() {
+        Usuario otherCitizen = new Usuario("otro.ciudadano@urbanpulse.es", "$2a$10$hashedPass", "Otro Ciudadano");
+        entityManager.persist(otherCitizen);
+
+        Incidencia inc1 = new Incidencia("Aviso Antiguo", "Desc 1", "Alumbrado", 36.72, -4.42, citizen);
+        inc1.setCreatedAt(OffsetDateTime.now().minusDays(3));
+        entityManager.persist(inc1);
+
+        Incidencia inc2 = new Incidencia("Aviso Medio", "Desc 2", "Limpieza", 36.73, -4.43, citizen);
+        inc2.setCreatedAt(OffsetDateTime.now().minusDays(1));
+        entityManager.persist(inc2);
+
+        Incidencia inc3 = new Incidencia("Aviso Reciente", "Desc 3", "Parques", 36.74, -4.44, citizen);
+        inc3.setCreatedAt(OffsetDateTime.now());
+        entityManager.persist(inc3);
+
+        Incidencia incOther = new Incidencia("Aviso Ajeno", "Desc otro", "Vias", 36.75, -4.45, otherCitizen);
+        entityManager.persist(incOther);
+
+        entityManager.flush();
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                0, 2, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+        );
+
+        org.springframework.data.domain.Page<Incidencia> pageResult = incidenciaRepository.findByCitizenId(citizen.getId(), pageable);
+
+        assertNotNull(pageResult);
+        assertEquals(3, pageResult.getTotalElements(), "El ciudadano debe tener un total de 3 incidencias");
+        assertEquals(2, pageResult.getTotalPages(), "Con tamano 2 y 3 incidencias debe haber 2 paginas");
+        assertEquals(2, pageResult.getContent().size(), "La primera pagina debe contener 2 elementos");
+        assertEquals("Aviso Reciente", pageResult.getContent().get(0).getTitle(), "El primer elemento debe ser el mas reciente");
+        assertEquals("Aviso Medio", pageResult.getContent().get(1).getTitle());
+    }
+
+    @Test
+    @DisplayName("Deberia recuperar incidencias paginadas de un ciudadano filtradas por estado")
+    void shouldFindPagedIncidentsByCitizenIdAndStatus() {
+        Incidencia inc1 = new Incidencia("Aviso Reportado 1", "Desc", "Alumbrado", 36.72, -4.42, citizen);
+        inc1.setStatus(EstadoIncidencia.REPORTED);
+        entityManager.persist(inc1);
+
+        Incidencia inc2 = new Incidencia("Aviso Reportado 2", "Desc", "Limpieza", 36.73, -4.43, citizen);
+        inc2.setStatus(EstadoIncidencia.REPORTED);
+        entityManager.persist(inc2);
+
+        Incidencia inc3 = new Incidencia("Aviso Resuelto", "Desc", "Parques", 36.74, -4.44, citizen);
+        inc3.setStatus(EstadoIncidencia.RESOLVED);
+        entityManager.persist(inc3);
+
+        entityManager.flush();
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+
+        org.springframework.data.domain.Page<Incidencia> reportedPage = incidenciaRepository.findByCitizenIdAndStatus(
+                citizen.getId(), EstadoIncidencia.REPORTED, pageable
+        );
+
+        assertEquals(2, reportedPage.getTotalElements());
+        assertEquals(2, reportedPage.getContent().size());
+        assertTrue(reportedPage.getContent().stream().allMatch(i -> i.getStatus() == EstadoIncidencia.REPORTED));
+
+        org.springframework.data.domain.Page<Incidencia> inProgressPage = incidenciaRepository.findByCitizenIdAndStatus(
+                citizen.getId(), EstadoIncidencia.IN_PROGRESS, pageable
+        );
+        assertEquals(0, reportedPage.getTotalElements() > 0 ? inProgressPage.getTotalElements() : 0);
+        assertTrue(inProgressPage.getContent().isEmpty());
+    }
 }
