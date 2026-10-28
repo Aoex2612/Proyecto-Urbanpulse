@@ -12,6 +12,7 @@ import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import OperatorPanelPage from './pages/OperatorPanelPage';
 import MapPage from './pages/MapPage';
+import MyIncidentsPage from './pages/MyIncidentsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -36,6 +37,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MapPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-incidents"
+          element={
+            <ProtectedRoute>
+              <MyIncidentsPage />
             </ProtectedRoute>
           }
         />

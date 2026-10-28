@@ -79,6 +79,14 @@ export default function HomePage() {
           >
             Ver Mapa de Incidencias
           </Link>
+          <Link
+            to="/my-incidents"
+            className="home-my-incidents-nav-link"
+            onClick={handleNavClick}
+            title="Ver mis incidencias reportadas"
+          >
+            Mis Incidencias
+          </Link>
           {hasOperatorAccess && (
             <Link
               to="/operator-panel"
@@ -180,6 +188,13 @@ export default function HomePage() {
             <p>
               Seguimiento en tiempo real del estado de tus solicitudes y actuaciones técnicas.
             </p>
+            <Link
+              to="/my-incidents"
+              className="my-incidents-feature-btn"
+              onClick={handleNavClick}
+            >
+              Ver Mis Incidencias &rarr;
+            </Link>
           </div>
         </section>
       </main>

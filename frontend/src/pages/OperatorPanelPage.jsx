@@ -108,6 +108,9 @@ export default function OperatorPanelPage() {
           <Link to="/map" className="operator-map-nav-link" title="Explorar incidencias en el mapa">
             Ver Mapa de Incidencias
           </Link>
+          <Link to="/my-incidents" className="operator-my-incidents-nav-link" title="Ver mis incidencias">
+            Mis Incidencias
+          </Link>
           <Link to="/" className="back-to-home-link">
             &larr; Portal Ciudadano
           </Link>

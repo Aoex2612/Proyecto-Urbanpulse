@@ -132,6 +132,23 @@
   flex-wrap: wrap;
 }
 
+.map-header-my-incidents-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent, #aa3bff);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.map-header-my-incidents-link:hover {
+  background-color: #932ae6;
+}
+
 .map-header-operator-link {
   display: inline-flex;
   align-items: center;

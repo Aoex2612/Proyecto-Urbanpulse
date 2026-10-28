@@ -231,6 +231,13 @@ export default function MapPage() {
         </div>
 
         <div className="map-header-actions">
+          <Link
+            to="/my-incidents"
+            className="map-header-my-incidents-link"
+            title="Ver mis incidencias reportadas"
+          >
+            Mis Incidencias
+          </Link>
           {hasOperatorAccess && (
             <Link
               to="/operator-panel"

@@ -34,6 +34,22 @@ export const INCIDENT_CATEGORIES = [
 ];
 
 /**
+ * Catálogo exhaustivo de estados del ciclo de vida de incidencias urbanas en UrbanPulse.
+ *
+ * @type {string[]}
+ */
+export const INCIDENT_STATUSES = [
+  'REPORTED',
+  'VALIDATED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REOPENED',
+  'CLOSED',
+  'REJECTED',
+];
+
+/**
  * Transiciones válidas y permitidas según la máquina de estados del ciclo de vida de incidencias:
  * REPORTED -> VALIDATED, REJECTED
  * VALIDATED -> ASSIGNED

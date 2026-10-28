@@ -14,7 +14,7 @@ import {
   getPriorityLabel,
   canViewAuditHistory,
 } from './mapConstants';
-import { formatDateTime } from '../../utils/dateUtils';
+import { formatDate } from '../../utils/dateUtils';
 import StatusTimeline from '../Timeline/StatusTimeline';
 import './Map.css';
 
@@ -245,8 +245,25 @@ export default function IncidentDetailModal({
             <div className="detail-meta-item">
               <span className="detail-meta-label">Fecha de Reporte</span>
               <span className="detail-meta-value">
-                {formatDateTime(incident.createdAt)}
+                {formatDate(incident.createdAt)}
               </span>
+            </div>
+
+            <div className="detail-meta-item">
+              <span className="detail-meta-label">Última Actualización</span>
+              <span className="detail-meta-value">
+                {formatDate(incident.updatedAt || incident.createdAt)}
+              </span>
+            </div>
+
+            <div className="detail-meta-item">
+              <span className="detail-meta-label">Dirección</span>
+              <span className="detail-meta-value">{incident.address || 'Sin asignar'}</span>
+            </div>
+
+            <div className="detail-meta-item">
+              <span className="detail-meta-label">Distrito</span>
+              <span className="detail-meta-value">{incident.district || 'Sin asignar'}</span>
             </div>
 
             <div className="detail-meta-item">

@@ -38,6 +38,13 @@ export default function CreateIncidentModal({
     category: '',
   });
 
+  const [locationInfo, setLocationInfo] = useState({
+    address: null,
+    district: null,
+    neighborhood: null,
+  });
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -65,6 +72,12 @@ export default function CreateIncidentModal({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    setLocationInfo({
+      address: null,
+      district: null,
+      neighborhood: null,
+    });
+    setIsLoadingLocation(false);
     setErrors({});
     setServerError(null);
 
@@ -74,6 +87,69 @@ export default function CreateIncidentModal({
       onCancel();
     }
   }, [isSubmitting, onClose, onCancel, previewUrl]);
+
+  // Resolución territorial automática (geocodificación inversa) al recibir coordenadas
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isOpen && selectedLocation) {
+      const lat = Number(selectedLocation.latitude);
+      const lng = Number(selectedLocation.longitude);
+
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+        Promise.resolve().then(() => {
+          if (!isMounted) return;
+          setIsLoadingLocation(true);
+          incidentService
+            .reverseGeocode(lat, lng)
+            .then((result) => {
+              if (isMounted) {
+                setLocationInfo({
+                  address: result?.address || null,
+                  district: result?.district || null,
+                  neighborhood: result?.neighborhood || null,
+                });
+                setIsLoadingLocation(false);
+              }
+            })
+            .catch(() => {
+              if (isMounted) {
+                setLocationInfo({
+                  address: null,
+                  district: null,
+                  neighborhood: null,
+                });
+                setIsLoadingLocation(false);
+              }
+            });
+        });
+      } else {
+        Promise.resolve().then(() => {
+          if (!isMounted) return;
+          setLocationInfo({
+            address: null,
+            district: null,
+            neighborhood: null,
+          });
+          setIsLoadingLocation(false);
+        });
+      }
+    } else {
+      Promise.resolve().then(() => {
+        if (!isMounted) return;
+        setLocationInfo({
+          address: null,
+          district: null,
+          neighborhood: null,
+        });
+        setIsLoadingLocation(false);
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, selectedLocation]);
 
   // Foco automático en el primer campo al abrirse el modal y escucha de tecla Escape
   useEffect(() => {
@@ -259,6 +335,9 @@ export default function CreateIncidentModal({
       category: formData.category,
       latitude: latNumber,
       longitude: lngNumber,
+      ...(locationInfo.address ? { address: locationInfo.address } : {}),
+      ...(locationInfo.district ? { district: locationInfo.district } : {}),
+      ...(locationInfo.neighborhood ? { neighborhood: locationInfo.neighborhood } : {}),
     };
 
     try {
@@ -292,6 +371,12 @@ export default function CreateIncidentModal({
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setLocationInfo({
+        address: null,
+        district: null,
+        neighborhood: null,
+      });
+      setIsLoadingLocation(false);
       setErrors({});
 
       if (onCreated) {
@@ -476,41 +561,131 @@ export default function CreateIncidentModal({
               )}
             </div>
 
-            {/* Coordenadas en sólo lectura */}
-            <div className="form-group">
-              <label className="form-label">
-                Ubicación geolocalizada (Sólo lectura)
-              </label>
-              <div className="coordinates-grid">
-                <div>
+            {/* Sección Territorial: Dirección postal, Barrio, Distrito y Coordenadas en Sólo Lectura */}
+            <div className="territorial-section">
+              {/* Indicador de resolución territorial */}
+              {isLoadingLocation && (
+                <div className="location-resolving-indicator" role="status" aria-live="polite">
+                  <span className="location-resolving-spinner" aria-hidden="true">📍</span>
+                  <span>Resolviendo dirección...</span>
+                </div>
+              )}
+
+              {/* Campo Dirección postal */}
+              <div className="form-group">
+                <div className="form-label-row">
+                  <label htmlFor="incident-address" className="form-label">
+                    Dirección postal
+                  </label>
+                  {!isLoadingLocation && !locationInfo.address && (
+                    <span className="unassigned-badge">Sin asignar</span>
+                  )}
+                </div>
+                <input
+                  id="incident-address"
+                  name="address"
+                  type="text"
+                  className="form-input form-input-readonly"
+                  value={
+                    isLoadingLocation
+                      ? 'Resolviendo dirección...'
+                      : locationInfo.address || 'Sin asignar'
+                  }
+                  readOnly
+                  disabled={isSubmitting}
+                  aria-readonly="true"
+                />
+              </div>
+
+              {/* Rejilla de Barrio y Distrito */}
+              <div className="territorial-grid">
+                <div className="form-group">
+                  <div className="form-label-row">
+                    <label htmlFor="incident-neighborhood" className="form-label">
+                      Barrio
+                    </label>
+                    {!isLoadingLocation && !locationInfo.neighborhood && (
+                      <span className="unassigned-badge">Sin asignar</span>
+                    )}
+                  </div>
                   <input
+                    id="incident-neighborhood"
+                    name="neighborhood"
                     type="text"
-                    id="incident-latitude"
-                    aria-label="Latitud"
                     className="form-input form-input-readonly"
-                    value={formattedLatitude ? `Lat: ${formattedLatitude}` : ''}
+                    value={
+                      isLoadingLocation
+                        ? 'Resolviendo dirección...'
+                        : locationInfo.neighborhood || 'Sin asignar'
+                    }
                     readOnly
+                    disabled={isSubmitting}
+                    aria-readonly="true"
                   />
                 </div>
-                <div>
+
+                <div className="form-group">
+                  <div className="form-label-row">
+                    <label htmlFor="incident-district" className="form-label">
+                      Distrito
+                    </label>
+                    {!isLoadingLocation && !locationInfo.district && (
+                      <span className="unassigned-badge">Sin asignar</span>
+                    )}
+                  </div>
                   <input
+                    id="incident-district"
+                    name="district"
                     type="text"
-                    id="incident-longitude"
-                    aria-label="Longitud"
                     className="form-input form-input-readonly"
-                    value={formattedLongitude ? `Lng: ${formattedLongitude}` : ''}
+                    value={
+                      isLoadingLocation
+                        ? 'Resolviendo dirección...'
+                        : locationInfo.district || 'Sin asignar'
+                    }
                     readOnly
+                    disabled={isSubmitting}
+                    aria-readonly="true"
                   />
                 </div>
               </div>
-              <p className="coordinates-hint">
-                Punto geográfico fijado por pulsación sobre el mapa interactivo.
-              </p>
-              {errors.coordinates && (
-                <span className="input-error-msg" role="alert">
-                  {errors.coordinates}
-                </span>
-              )}
+
+              {/* Coordenadas en sólo lectura */}
+              <div className="form-group">
+                <label className="form-label">
+                  Ubicación geolocalizada (Sólo lectura)
+                </label>
+                <div className="coordinates-grid">
+                  <div>
+                    <input
+                      type="text"
+                      id="incident-latitude"
+                      aria-label="Latitud"
+                      className="form-input form-input-readonly"
+                      value={formattedLatitude ? `Lat: ${formattedLatitude}` : ''}
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      id="incident-longitude"
+                      aria-label="Longitud"
+                      className="form-input form-input-readonly"
+                      value={formattedLongitude ? `Lng: ${formattedLongitude}` : ''}
+                      readOnly
+                    />
+                  </div>
+                </div>
+                <p className="coordinates-hint">
+                  Punto geográfico fijado por pulsación sobre el mapa interactivo.
+                </p>
+                {errors.coordinates && (
+                  <span className="input-error-msg" role="alert">
+                    {errors.coordinates}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

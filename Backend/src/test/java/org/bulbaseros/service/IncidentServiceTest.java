@@ -3,6 +3,8 @@ package org.bulbaseros.service;
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
+import org.bulbaseros.dto.PageResponse;
+import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.CambiosEstado;
@@ -25,6 +27,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -34,10 +41,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,6 +83,12 @@ class IncidentServiceTest {
      */
     @Mock
     private UserRepository userRepository;
+
+    /**
+     * Mock del servicio de integracion con datos abiertos de Malaga.
+     */
+    @Mock
+    private MalagaOpenDataService malagaOpenDataService;
 
     /**
      * Instancia real del mapeador de incidencias.
@@ -132,6 +147,17 @@ class IncidentServiceTest {
         testIncident.setPriority(PrioridadIncidencia.MEDIUM);
         testIncident.setCreatedAt(OffsetDateTime.now());
         testIncident.setUpdatedAt(OffsetDateTime.now());
+
+        org.mockito.Mockito.lenient().when(malagaOpenDataService.isWithinMalagaBounds(any(), any()))
+                .thenAnswer(invocation -> {
+                    Double lat = invocation.getArgument(0);
+                    Double lon = invocation.getArgument(1);
+                    if (lat == null || lon == null) {
+                        return false;
+                    }
+                    return lat >= MalagaOpenDataService.MIN_LATITUDE && lat <= MalagaOpenDataService.MAX_LATITUDE
+                            && lon >= MalagaOpenDataService.MIN_LONGITUDE && lon <= MalagaOpenDataService.MAX_LONGITUDE;
+                });
     }
 
     /**
@@ -488,5 +514,335 @@ class IncidentServiceTest {
         assertThrows(IllegalArgumentException.class, () -> incidentService.getIncidentHistory(null));
         verify(incidenciaRepository, never()).existsById(any());
         verify(cambiosEstadoRepository, never()).findByIncidentIdOrderByCreatedAtAsc(any());
+    }
+
+    /**
+     * Verifica que createIncident autocompleta direccion, barrio y distrito consultando
+     * MalagaOpenDataService cuando no se suministran en la peticion de creacion.
+     */
+    @Test
+    @DisplayName("Debería crear incidencia autocompletando dirección, barrio y distrito desde MalagaOpenDataService")
+    void shouldCreateIncidentAutocompletingTerritorialDataFromOpenDataService() {
+        CreateIncidentRequest request = new CreateIncidentRequest(
+                "Semáforo averiado",
+                "Semáforo parpadea en ámbar continuamente",
+                "Tráfico",
+                36.7213,
+                -4.4214
+        );
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(malagaOpenDataService.resolveLocation(36.7213, -4.4214))
+                .thenReturn(new ReverseGeocodeResponse("Calle Marqués de Larios, 4", "Centro", "Centro Histórico"));
+
+        ArgumentCaptor<Incidencia> captor = ArgumentCaptor.forClass(Incidencia.class);
+        when(incidenciaRepository.save(captor.capture())).thenAnswer(inv -> {
+            Incidencia inc = inv.getArgument(0);
+            inc.setId(101L);
+            return inc;
+        });
+
+        IncidentResponse response = incidentService.createIncident(request, "ciudadano@urbanpulse.es");
+
+        assertNotNull(response);
+        assertEquals(101L, response.getId());
+        assertEquals("Calle Marqués de Larios, 4", response.getAddress());
+        assertEquals("Centro", response.getDistrict());
+        assertEquals("Centro Histórico", response.getNeighborhood());
+        assertEquals(EstadoIncidencia.REPORTED, response.getStatus());
+        assertEquals(PrioridadIncidencia.MEDIUM, response.getPriority());
+
+        Incidencia captured = captor.getValue();
+        assertEquals("Calle Marqués de Larios, 4", captured.getAddress());
+        assertEquals("Centro", captured.getDistrict());
+        assertEquals("Centro Histórico", captured.getNeighborhood());
+        assertEquals(EstadoIncidencia.REPORTED, captured.getStatus());
+        assertEquals(PrioridadIncidencia.MEDIUM, captured.getPriority());
+        assertEquals(testCitizen, captured.getCitizen());
+
+        verify(malagaOpenDataService).resolveLocation(36.7213, -4.4214);
+        verify(incidenciaRepository).save(any(Incidencia.class));
+    }
+
+    /**
+     * Verifica que createIncident aplique degradacion controlada manteniendo nulos los datos
+     * territoriales cuando MalagaOpenDataService retorna campos nulos.
+     */
+    @Test
+    @DisplayName("Debería crear incidencia exitosamente ante degradación controlada de MalagaOpenDataService")
+    void shouldCreateIncidentSuccessfullyWithControlledDegradationWhenOpenDataReturnsNullFields() {
+        CreateIncidentRequest request = new CreateIncidentRequest(
+                "Papelera rota",
+                "Papelera arrancada en acera",
+                "Limpieza",
+                36.7213,
+                -4.4214
+        );
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(malagaOpenDataService.resolveLocation(36.7213, -4.4214))
+                .thenReturn(new ReverseGeocodeResponse(null, null, null));
+
+        ArgumentCaptor<Incidencia> captor = ArgumentCaptor.forClass(Incidencia.class);
+        when(incidenciaRepository.save(captor.capture())).thenAnswer(inv -> {
+            Incidencia inc = inv.getArgument(0);
+            inc.setId(102L);
+            return inc;
+        });
+
+        IncidentResponse response = incidentService.createIncident(request, "ciudadano@urbanpulse.es");
+
+        assertNotNull(response);
+        assertEquals(102L, response.getId());
+        assertNull(response.getAddress());
+        assertNull(response.getDistrict());
+        assertNull(response.getNeighborhood());
+        assertEquals(EstadoIncidencia.REPORTED, response.getStatus());
+        assertEquals(PrioridadIncidencia.MEDIUM, response.getPriority());
+
+        Incidencia captured = captor.getValue();
+        assertNull(captured.getAddress());
+        assertNull(captured.getDistrict());
+        assertNull(captured.getNeighborhood());
+
+        verify(malagaOpenDataService).resolveLocation(36.7213, -4.4214);
+        verify(incidenciaRepository).save(any(Incidencia.class));
+    }
+
+    /**
+     * Verifica que createIncident rechace peticiones con HTTP 400 Bad Request si las coordenadas
+     * aportadas se situan fuera de los limites del termino municipal de Malaga.
+     */
+    @Test
+    @DisplayName("Debería rechazar createIncident con 400 Bad Request si las coordenadas están fuera de Málaga")
+    void shouldRejectCreateIncidentWhenCoordinatesAreOutsideMalagaBounds() {
+        // Coordenadas en Madrid (fuera del termino municipal de Malaga)
+        CreateIncidentRequest request = new CreateIncidentRequest(
+                "Bache en carretera",
+                "Bache pronunciado",
+                "Vías Públicas",
+                40.4168,
+                -3.7038
+        );
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.createIncident(request, "ciudadano@urbanpulse.es")
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("fuera del término municipal de Málaga"));
+        verify(userRepository, never()).findByEmail(any());
+        verify(incidenciaRepository, never()).save(any());
+    }
+
+    /**
+     * Verifica que createIncident rechace peticiones con HTTP 400 Bad Request si alguna coordenada es nula.
+     */
+    @Test
+    @DisplayName("Debería rechazar createIncident con 400 Bad Request si alguna coordenada es nula")
+    void shouldRejectCreateIncidentWhenCoordinatesAreNull() {
+        CreateIncidentRequest requestWithNullLat = new CreateIncidentRequest(
+                "Aviso", "Desc", "Alumbrado", null, -4.4214
+        );
+        CreateIncidentRequest requestWithNullLon = new CreateIncidentRequest(
+                "Aviso", "Desc", "Alumbrado", 36.7213, null
+        );
+
+        ResponseStatusException ex1 = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.createIncident(requestWithNullLat, "ciudadano@urbanpulse.es")
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex1.getStatusCode());
+
+        ResponseStatusException ex2 = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.createIncident(requestWithNullLon, "ciudadano@urbanpulse.es")
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
+
+        verify(incidenciaRepository, never()).save(any());
+    }
+
+    /**
+     * Verifica que getMyIncidents sin filtro de estado consulte findByCitizenId aplicando
+     * por defecto ordenacion descendente por createdAt y retorne el PageResponse correspondiente.
+     */
+    @Test
+    @DisplayName("Debería retornar lista paginada de mis incidencias sin filtro de estado con ordenación createdAt DESC")
+    void shouldGetMyIncidentsWithoutStatusFilter() {
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+
+        Pageable requestPageable = PageRequest.of(0, 10);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+        Page<Incidencia> pageMock = new PageImpl<>(List.of(testIncident), PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt")), 1);
+        when(incidenciaRepository.findByCitizenId(eq(10L), pageableCaptor.capture())).thenReturn(pageMock);
+
+        PageResponse<IncidentResponse> response = incidentService.getMyIncidents("ciudadano@urbanpulse.es", null, requestPageable);
+
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+        assertEquals(1L, response.getTotalElements());
+        assertEquals(1, response.getTotalPages());
+        assertEquals(0, response.getPage());
+        assertEquals(10, response.getSize());
+        assertEquals(testIncident.getId(), response.getContent().get(0).getId());
+
+        Pageable capturedPageable = pageableCaptor.getValue();
+        Sort.Order order = capturedPageable.getSort().getOrderFor("createdAt");
+        assertNotNull(order);
+        assertEquals(Sort.Direction.DESC, order.getDirection());
+
+        verify(incidenciaRepository).findByCitizenId(eq(10L), any(Pageable.class));
+        verify(incidenciaRepository, never()).findByCitizenIdAndStatus(any(), any(), any());
+    }
+
+    /**
+     * Verifica que getMyIncidents con filtro de estado consulte findByCitizenIdAndStatus
+     * retornando unicamente las incidencias que coincidan con dicho estado.
+     */
+    @Test
+    @DisplayName("Debería retornar lista paginada de mis incidencias filtrando por estado específico")
+    void shouldGetMyIncidentsWithStatusFilter() {
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+
+        Pageable requestPageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Incidencia> pageMock = new PageImpl<>(List.of(testIncident), requestPageable, 1);
+
+        when(incidenciaRepository.findByCitizenIdAndStatus(eq(10L), eq(EstadoIncidencia.REPORTED), any(Pageable.class)))
+                .thenReturn(pageMock);
+
+        PageResponse<IncidentResponse> response = incidentService.getMyIncidents(
+                "ciudadano@urbanpulse.es",
+                EstadoIncidencia.REPORTED,
+                requestPageable
+        );
+
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+        assertEquals(EstadoIncidencia.REPORTED, response.getContent().get(0).getStatus());
+
+        verify(incidenciaRepository).findByCitizenIdAndStatus(eq(10L), eq(EstadoIncidencia.REPORTED), any(Pageable.class));
+        verify(incidenciaRepository, never()).findByCitizenId(any(), any());
+    }
+
+    /**
+     * Verifica que getMyIncidents lance ResponseStatusException 404 cuando el correo electronico
+     * suministrado no corresponde a ningun usuario en el repositorio.
+     */
+    @Test
+    @DisplayName("Debería lanzar ResponseStatusException 404 en getMyIncidents cuando el usuario no existe")
+    void shouldThrowNotFoundWhenUserDoesNotExistInGetMyIncidents() {
+        when(userRepository.findByEmail("inexistente@urbanpulse.es")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.getMyIncidents("inexistente@urbanpulse.es", null, PageRequest.of(0, 10))
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Usuario no encontrado", ex.getReason());
+        verify(incidenciaRepository, never()).findByCitizenId(any(), any());
+        verify(incidenciaRepository, never()).findByCitizenIdAndStatus(any(), any(), any());
+    }
+
+    /**
+     * Verifica que getMyIncidents lance IllegalArgumentException cuando el correo del usuario es nulo o vacio.
+     */
+    @Test
+    @DisplayName("Debería lanzar IllegalArgumentException en getMyIncidents con email nulo o vacío")
+    void shouldThrowIllegalArgumentExceptionWhenUserEmailIsBlankInGetMyIncidents() {
+        assertThrows(IllegalArgumentException.class,
+                () -> incidentService.getMyIncidents(null, null, PageRequest.of(0, 10)));
+        assertThrows(IllegalArgumentException.class,
+                () -> incidentService.getMyIncidents("   ", null, PageRequest.of(0, 10)));
+        verify(userRepository, never()).findByEmail(any());
+    }
+
+    /**
+     * Verifica que getMyIncidents aplique paginacion y ordenacion por defecto (createdAt DESC) si pageable es nulo.
+     */
+    @Test
+    @DisplayName("Debería aplicar paginación por defecto si pageable es nulo en getMyIncidents")
+    void shouldApplyDefaultPaginationWhenPageableIsNullInGetMyIncidents() {
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        Page<Incidencia> pageMock = new PageImpl<>(List.of(testIncident));
+        when(incidenciaRepository.findByCitizenId(eq(10L), captor.capture())).thenReturn(pageMock);
+
+        PageResponse<IncidentResponse> response = incidentService.getMyIncidents("ciudadano@urbanpulse.es", null, null);
+
+        assertNotNull(response);
+        Pageable effective = captor.getValue();
+        assertEquals(0, effective.getPageNumber());
+        assertEquals(10, effective.getPageSize());
+        Sort.Order order = effective.getSort().getOrderFor("createdAt");
+        assertNotNull(order);
+        assertEquals(Sort.Direction.DESC, order.getDirection());
+    }
+
+    /**
+     * Verifica que reverseGeocode delegue en MalagaOpenDataService y retorne el DTO territorial
+     * cuando las coordenadas se encuentran dentro del termino municipal de Malaga.
+     */
+    @Test
+    @DisplayName("Debería resolver geocodificación inversa exitosamente para coordenadas válidas en Málaga")
+    void shouldReverseGeocodeSuccessfullyForValidCoordinates() {
+        Double lat = 36.7213;
+        Double lon = -4.4214;
+        ReverseGeocodeResponse mockResponse = new ReverseGeocodeResponse("Calle Marqués de Larios, 4", "Centro", "Centro Histórico");
+
+        when(malagaOpenDataService.resolveLocation(lat, lon)).thenReturn(mockResponse);
+
+        ReverseGeocodeResponse response = incidentService.reverseGeocode(lat, lon);
+
+        assertNotNull(response);
+        assertEquals("Calle Marqués de Larios, 4", response.getAddress());
+        assertEquals("Centro", response.getDistrict());
+        assertEquals("Centro Histórico", response.getNeighborhood());
+        verify(malagaOpenDataService).resolveLocation(lat, lon);
+    }
+
+    /**
+     * Verifica que reverseGeocode rechace con HTTP 400 Bad Request cuando las coordenadas
+     * se encuentran fuera del termino municipal de Malaga.
+     */
+    @Test
+    @DisplayName("Debería rechazar reverseGeocode con 400 Bad Request si las coordenadas están fuera de Málaga")
+    void shouldRejectReverseGeocodeWhenCoordinatesAreOutsideMalagaBounds() {
+        Double lat = 40.4168;
+        Double lon = -3.7038;
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.reverseGeocode(lat, lon)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Las coordenadas están fuera de Málaga", ex.getReason());
+        verify(malagaOpenDataService, never()).resolveLocation(any(), any());
+    }
+
+    /**
+     * Verifica que reverseGeocode rechace con HTTP 400 Bad Request si alguna coordenada es nula.
+     */
+    @Test
+    @DisplayName("Debería rechazar reverseGeocode con 400 Bad Request si alguna coordenada es nula")
+    void shouldRejectReverseGeocodeWhenCoordinatesAreNull() {
+        ResponseStatusException ex1 = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.reverseGeocode(null, -4.4214)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex1.getStatusCode());
+
+        ResponseStatusException ex2 = assertThrows(
+                ResponseStatusException.class,
+                () -> incidentService.reverseGeocode(36.7213, null)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
+
+        verify(malagaOpenDataService, never()).resolveLocation(any(), any());
     }
 }
