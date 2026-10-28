@@ -9,11 +9,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 1.4 Actualizar `IncidentMapper` para añadir método de conversión a `PageResponse<IncidentResponse>`.
 - [x] 1.5 Crear pruebas `@DataJpaTest` en `IncidenciaRepositoryTest` verificando ordenación descendente por fecha, paginación y filtrado por estado.
 
-## [ ] Tarea 2: Servicio de Integración con Datos Abiertos de Málaga y Degradación Controlada en Backend - RF: RF-2, RF-6, RF-7, RF-8, RF-10, RF-11 - RNF: Tolerancia a fallos, timeout 3s
-- [ ] 2.1 Crear servicio `MalagaOpenDataService` en `org.bulbaseros.service` configurando cliente HTTP con `ConnectTimeout` y `ReadTimeout` de 3000 ms.
-- [ ] 2.2 Implementar método de resolución territorial consultando los recursos del callejero y delimitaciones oficiales del portal de Datos Abiertos del Ayuntamiento de Málaga.
-- [ ] 2.3 Implementar degradación controlada: ante excepciones de timeout, fallos de red o ausencia de correspondencia espacial, capturar el error y devolver campos nulos (`null`).
-- [ ] 2.4 Crear pruebas unitarias en `MalagaOpenDataServiceTest` con simulación de respuesta válida, respuesta sin coincidencias, timeout y error HTTP 500.
+## [x] Tarea 2: Servicio de Integración con Datos Abiertos de Málaga y Degradación Controlada en Backend - RF: RF-2, RF-6, RF-7, RF-8, RF-10, RF-11 - RNF: Tolerancia a fallos, timeout 3s
+- [x] 2.1 Crear servicio `MalagaOpenDataService` en `org.bulbaseros.service` configurando cliente HTTP con `ConnectTimeout` y `ReadTimeout` de 3000 ms.
+- [x] 2.2 Implementar método de resolución territorial consultando los recursos del callejero y delimitaciones oficiales del portal de Datos Abiertos del Ayuntamiento de Málaga.
+- [x] 2.3 Implementar degradación controlada: ante excepciones de timeout, fallos de red o ausencia de correspondencia espacial, capturar el error y devolver campos nulos (`null`).
+- [x] 2.4 Crear pruebas unitarias en `MalagaOpenDataServiceTest` con simulación de respuesta válida, respuesta sin coincidencias, timeout y error HTTP 500.
 
 ## [ ] Tarea 3: Lógica de Negocio de Creación Enriquecida y Consulta Paginada en `IncidentService` - Depende de Tarea 1, Tarea 2 - RF: RF-1, RF-4, RF-5, RF-6, RF-7, RF-8, RF-10, RF-12, RF-13, RF-14, RF-15, RF-18
 - [ ] 3.1 Actualizar método `createIncident` en `IncidentService` para validar que las coordenadas pertenezcan al término municipal de Málaga (`[36.5000, 36.9000]`, `[-4.7000, -4.2000]`), arrojando excepción 400 si están fuera de rango.
