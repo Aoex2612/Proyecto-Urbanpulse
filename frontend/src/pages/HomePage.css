@@ -292,6 +292,42 @@
   box-shadow: 0 4px 8px rgba(170, 59, 255, 0.3);
 }
 
+/* Enlace a Mis Incidencias en la cabecera */
+.home-my-incidents-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: transparent;
+  color: var(--text-h, #08060d);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border, #e5e4e7);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.home-my-incidents-nav-link:hover {
+  background-color: var(--code-bg, #f4f3ec);
+  border-color: var(--accent, #aa3bff);
+  color: var(--accent, #aa3bff);
+}
+
+.my-incidents-feature-btn {
+  display: inline-block;
+  margin-top: auto;
+  padding-top: 14px;
+  color: var(--accent, #aa3bff);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.my-incidents-feature-btn:hover {
+  text-decoration: underline;
+}
+
 /* Tarjeta destacada de mapa en el panel del ciudadano */
 .map-feature-card {
   border-color: var(--accent, #aa3bff);

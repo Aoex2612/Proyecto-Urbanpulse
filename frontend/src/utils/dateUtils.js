@@ -15,11 +15,13 @@ export const DATE_FILTER_PRESETS = Object.freeze({
 
 /**
  * Formatea una marca temporal ISO 8601 o fecha a un formato localizado en espanol legible para el usuario.
+ * Permite opcionalmente incluir o excluir la hora (por defecto incluye fecha y hora).
  *
  * @param {string|Date} dateValue - Marca temporal ISO o instancia Date a formatear.
- * @returns {string} Fecha y hora formateadas (ej. "25/10/2026, 15:30") o texto alternativo si es invalida.
+ * @param {boolean} [includeTime=true] - Indica si se incluye la hora en el formateo localizado.
+ * @returns {string} Fecha formateada (ej. "25/10/2026, 15:30" o "25/10/2026") o texto alternativo si es invalida.
  */
-export const formatDateTime = (dateValue) => {
+export const formatDate = (dateValue, includeTime = true) => {
   if (!dateValue) {
     return 'Fecha no disponible';
   }
@@ -28,16 +30,29 @@ export const formatDateTime = (dateValue) => {
     if (Number.isNaN(date.getTime())) {
       return String(dateValue);
     }
-    return new Intl.DateTimeFormat('es-ES', {
+    const options = {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    };
+    if (includeTime) {
+      options.hour = '2-digit';
+      options.minute = '2-digit';
+    }
+    return new Intl.DateTimeFormat('es-ES', options).format(date);
   } catch {
     return String(dateValue);
   }
+};
+
+/**
+ * Formatea una marca temporal ISO 8601 o fecha a un formato localizado en espanol legible para el usuario.
+ *
+ * @param {string|Date} dateValue - Marca temporal ISO o instancia Date a formatear.
+ * @returns {string} Fecha y hora formateadas (ej. "25/10/2026, 15:30") o texto alternativo si es invalida.
+ */
+export const formatDateTime = (dateValue) => {
+  return formatDate(dateValue, true);
 };
 
 /**

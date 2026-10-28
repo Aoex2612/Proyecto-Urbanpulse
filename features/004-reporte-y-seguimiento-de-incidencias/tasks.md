@@ -34,12 +34,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 5.3 Renderizar en `CreateIncidentModal.jsx` los campos de Dirección, Barrio y Distrito en modo estrictamente de solo lectura, mostrando `"Sin asignar"` si son nulos.
 - [x] 5.4 Crear pruebas unitarias con Vitest en `CreateIncidentModal.test.jsx` comprobando la previsualización de la dirección, campos de solo lectura y descarte de coordenadas al cancelar.
 
-## [ ] Tarea 6: Vista de Seguimiento "Mis Incidencias" y Navegación en Frontend - Depende de Tarea 5 - RF: RF-11, RF-12, RF-13, RF-14, RF-15, RF-16, RF-17
-- [ ] 6.1 Crear componente `MyIncidentsPage.jsx` y hoja de estilos `MyIncidentsPage.css` con listado paginado (10 avisos por página), orden cronológico descendente y selector de filtro por estado (`TODOS` y estados del ciclo de vida).
-- [ ] 6.2 Integrar en cada tarjeta o fila de `MyIncidentsPage` el botón "Ver detalle" para abrir `IncidentDetailModal` con la información completa y fechas clave.
-- [ ] 6.3 Implementar vista de estado vacío descriptiva ("No tienes incidencias registradas") con botón de acción directa para navegar al mapa `/map`.
-- [ ] 6.4 Registrar la ruta protegida `/my-incidents` en `App.jsx` y agregar el enlace de navegación en la barra superior para usuarios autenticados.
-- [ ] 6.5 Crear pruebas unitarias con Vitest en `MyIncidentsPage.test.jsx` comprobando renderizado de avisos, cambio de página, filtrado por estado y estado vacío.
+## [x] Tarea 6: Vista de Seguimiento "Mis Incidencias" y Navegación en Frontend - Depende de Tarea 5 - RF: RF-11, RF-12, RF-13, RF-14, RF-15, RF-16, RF-17
+- [x] 6.1 Crear componente `MyIncidentsPage.jsx` y hoja de estilos `MyIncidentsPage.css` con listado paginado (10 avisos por página), orden cronológico descendente y selector de filtro por estado (`TODOS` y estados del ciclo de vida).
+- [x] 6.2 Integrar en cada tarjeta o fila de `MyIncidentsPage` el botón "Ver detalle" para abrir `IncidentDetailModal` con la información completa y fechas clave.
+- [x] 6.3 Implementar vista de estado vacío descriptiva ("No tienes incidencias registradas") con botón de acción directa para navegar al mapa `/map`.
+- [x] 6.4 Registrar la ruta protegida `/my-incidents` en `App.jsx` y agregar el enlace de navegación en la barra superior para usuarios autenticados.
+- [x] 6.5 Crear pruebas unitarias con Vitest en `MyIncidentsPage.test.jsx` comprobando renderizado de avisos, cambio de página, filtrado por estado y estado vacío.
 
 ## [ ] Tarea 7: Verificación Integral de Criterios de Aceptación, Cobertura y Calidad - Depende de Tareas 4 y 6 - RF: Todos
 - [ ] 7.1 Ejecutar suite completa de tests de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y generación de reporte JaCoCo.
