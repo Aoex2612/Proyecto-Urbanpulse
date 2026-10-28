@@ -41,10 +41,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 6.4 Registrar la ruta protegida `/my-incidents` en `App.jsx` y agregar el enlace de navegación en la barra superior para usuarios autenticados.
 - [x] 6.5 Crear pruebas unitarias con Vitest en `MyIncidentsPage.test.jsx` comprobando renderizado de avisos, cambio de página, filtrado por estado y estado vacío.
 
-## [ ] Tarea 7: Verificación Integral de Criterios de Aceptación, Cobertura y Calidad - Depende de Tareas 4 y 6 - RF: Todos
-- [ ] 7.1 Ejecutar suite completa de tests de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y generación de reporte JaCoCo.
-- [ ] 7.2 Ejecutar suite de pruebas de Frontend (`cd frontend && npm test`) y análisis estático (`npm run lint`) garantizando 0 errores y advertencias.
-- [ ] 7.3 Validar uno a uno los criterios de aceptación de `spec.md` asegurando que todos los comportamientos observables funcionen según especificación.
+## [x] Tarea 7: Verificación Integral de Criterios de Aceptación, Cobertura y Calidad - Depende de Tareas 4 y 6 - RF: Todos
+- [x] 7.1 Ejecutar suite completa de tests de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y generación de reporte JaCoCo.
+- [x] 7.2 Ejecutar suite de pruebas de Frontend (`cd frontend && npm test`) y análisis estático (`npm run lint`) garantizando 0 errores y advertencias.
+- [x] 7.3 Validar uno a uno los criterios de aceptación de `spec.md` asegurando que todos los comportamientos observables funcionen según especificación.
 
 ---
 ## Mantenimiento (checklist recurrente)
