@@ -606,4 +606,34 @@ class IncidentControllerSecurityTest {
         assertEquals("Estado de la incidencia actualizado exitosamente", response.getBody().getMessage());
         assertNotNull(response.getBody().getUpdatedAt());
     }
+
+    /**
+     * Verifica que peticiones no autenticadas a my-incidents respondan HTTP 401 Unauthorized.
+     *
+     * @throws Exception si ocurre un fallo durante la ejecucion de la peticion.
+     */
+    @Test
+    @DisplayName("Peticion no autenticada a GET /api/incidents/my-incidents debe responder 401 Unauthorized")
+    void shouldRejectAnonymousAccessToMyIncidentsWith401() throws Exception {
+        mockMvc.perform(get("/api/incidents/my-incidents"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    /**
+     * Verifica que peticiones no autenticadas a geocode/reverse respondan HTTP 401 Unauthorized.
+     *
+     * @throws Exception si ocurre un fallo durante la ejecucion de la peticion.
+     */
+    @Test
+    @DisplayName("Peticion no autenticada a GET /api/incidents/geocode/reverse debe responder 401 Unauthorized")
+    void shouldRejectAnonymousAccessToReverseGeocodeWith401() throws Exception {
+        mockMvc.perform(get("/api/incidents/geocode/reverse")
+                        .param("latitude", "36.7213")
+                        .param("longitude", "-4.4214"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
 }

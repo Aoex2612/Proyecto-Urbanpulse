@@ -5,11 +5,17 @@ import org.bulbaseros.dto.AttachmentResponse;
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
+import org.bulbaseros.dto.PageResponse;
+import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
+import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.service.AttachmentService;
 import org.bulbaseros.service.IncidentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -36,7 +43,7 @@ import java.util.List;
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.1
+ * @version 1.2
  */
 @RestController
 @RequestMapping("/api/incidents")
@@ -86,6 +93,73 @@ public class IncidentController {
     public ResponseEntity<List<IncidentResponse>> getActiveIncidents() {
         List<IncidentResponse> incidents = incidentService.getActiveIncidents();
         return ResponseEntity.ok(incidents);
+    }
+
+    /**
+     * Recupera el listado paginado de incidencias urbanas reportadas por el ciudadano autenticado.
+     * <p>
+     * Permite filtrar opcionalmente por el estado del ciclo de vida ({@link EstadoIncidencia}).
+     * Si el parámetro {@code status} se omite, está vacío o equivale a "TODOS" (ignorando mayúsculas/minúsculas),
+     * no se aplica filtro de estado y se recuperan todos los avisos del emisor.
+     * Extrae el correo electrónico del emisor a partir del token JWT contenido en {@link Authentication}.
+     * Aplica ordenación cronológica descendente por fecha de creación por defecto.
+     * </p>
+     *
+     * @param status         Filtro opcional por estado del ciclo de vida (o "TODOS" para consultar todos los avisos).
+     * @param page           Número de página basado en índice cero (por defecto 0, mínimo 0).
+     * @param size           Tamaño de página o cantidad de registros por página (por defecto 10, mínimo 1, máximo 50).
+     * @param authentication Contexto de autenticación de Spring Security para extraer la identidad del emisor.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y el cuerpo {@link PageResponse} estructurado.
+     */
+    @GetMapping("/my-incidents")
+    public ResponseEntity<PageResponse<IncidentResponse>> getMyIncidents(
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            Authentication authentication
+    ) {
+        if (page < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El parámetro 'page' no puede ser negativo");
+        }
+        if (size < 1 || size > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El parámetro 'size' debe estar comprendido entre 1 y 50");
+        }
+
+        EstadoIncidencia estadoFilter = null;
+        if (status != null && !status.trim().isEmpty() && !"TODOS".equalsIgnoreCase(status.trim())) {
+            try {
+                estadoFilter = EstadoIncidencia.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de incidencia no válido: " + status);
+            }
+        }
+
+        String userEmail = authentication != null ? authentication.getName() : null;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageResponse<IncidentResponse> pageResponse = incidentService.getMyIncidents(userEmail, estadoFilter, pageable);
+        return ResponseEntity.ok(pageResponse);
+    }
+
+    /**
+     * Resuelve territorialmente la dirección postal, distrito y barrio asociados a un par de coordenadas geográficas.
+     * <p>
+     * Endpoint protegido que requiere autenticación previa. Valida que las coordenadas pertenezcan al
+     * término municipal de Málaga (latitud [36.5000, 36.9000], longitud [-4.7000, -4.2000]).
+     * Si las coordenadas son nulas o exceden dichos límites, responde con HTTP 400 Bad Request.
+     * En caso de indisponibilidad o degradación controlada de los datos abiertos, retorna campos nulos.
+     * </p>
+     *
+     * @param latitude  Coordenada de latitud en grados decimales (WGS84).
+     * @param longitude Coordenada de longitud en grados decimales (WGS84).
+     * @return {@link ResponseEntity} con código HTTP 200 OK y el cuerpo {@link ReverseGeocodeResponse}.
+     */
+    @GetMapping("/geocode/reverse")
+    public ResponseEntity<ReverseGeocodeResponse> reverseGeocode(
+            @RequestParam(name = "latitude", required = false) Double latitude,
+            @RequestParam(name = "longitude", required = false) Double longitude
+    ) {
+        ReverseGeocodeResponse response = incidentService.reverseGeocode(latitude, longitude);
+        return ResponseEntity.ok(response);
     }
 
     /**

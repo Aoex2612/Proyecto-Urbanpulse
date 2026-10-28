@@ -22,11 +22,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 3.4 Implementar método `reverseGeocode(Double latitude, Double longitude)` delegando en `MalagaOpenDataService` con validación previa de coordenadas.
 - [x] 3.5 Crear pruebas unitarias con Mockito en `IncidentServiceTest` verificando la creación con asignación territorial, degradación a null, validación de coordenadas y aislamiento por ciudadano.
 
-## [ ] Tarea 4: Endpoints REST y Seguridad Perimetral en Backend - Depende de Tarea 3 - RF: RF-1, RF-2, RF-5, RF-12, RF-14, RF-15, RF-16, RF-18
-- [ ] 4.1 Exponer en `IncidentController` el endpoint `GET /api/incidents/my-incidents` aceptando query params opcionales `status`, `page` y `size`, retornando `ResponseEntity<PageResponse<IncidentResponse>>`.
-- [ ] 4.2 Exponer en `IncidentController` el endpoint `GET /api/incidents/geocode/reverse` con parámetros `latitude` y `longitude`, retornando `ResponseEntity<ReverseGeocodeResponse>`.
-- [ ] 4.3 Actualizar `SecurityConfig` garantizando que `/api/incidents/my-incidents` y `/api/incidents/geocode/reverse` requieran autenticación (`.authenticated()`).
-- [ ] 4.4 Crear pruebas de integración en `IncidentControllerTest` comprobando respuestas HTTP 200 con paginación, 400 ante coordenadas fuera de límites y 401 sin autenticación.
+## [x] Tarea 4: Endpoints REST y Seguridad Perimetral en Backend - Depende de Tarea 3 - RF: RF-1, RF-2, RF-5, RF-12, RF-14, RF-15, RF-16, RF-18
+- [x] 4.1 Exponer en `IncidentController` el endpoint `GET /api/incidents/my-incidents` aceptando query params opcionales `status`, `page` y `size`, retornando `ResponseEntity<PageResponse<IncidentResponse>>`.
+- [x] 4.2 Exponer en `IncidentController` el endpoint `GET /api/incidents/geocode/reverse` con parámetros `latitude` y `longitude`, retornando `ResponseEntity<ReverseGeocodeResponse>`.
+- [x] 4.3 Actualizar `SecurityConfig` garantizando que `/api/incidents/my-incidents` y `/api/incidents/geocode/reverse` requieran autenticación (`.authenticated()`).
+- [x] 4.4 Crear pruebas de integración en `IncidentControllerTest` comprobando respuestas HTTP 200 con paginación, 400 ante coordenadas fuera de límites y 401 sin autenticación.
 
 ## [ ] Tarea 5: Capa de Servicio y Formulario de Alta con Solo Lectura en Frontend - Depende de Tarea 4 - RF: RF-1, RF-2, RF-3, RF-5, RF-9, RF-11
 - [ ] 5.1 Incorporar en `frontend/src/services/incidentService.js` los métodos `getMyIncidents(params)` y `reverseGeocode(latitude, longitude)` documentados con JSDoc.
