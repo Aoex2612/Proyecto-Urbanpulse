@@ -1,5 +1,5 @@
 # Spec 004 — Reporte y Seguimiento de Incidencias con Detección Territorial
-**Estado:** propuesta
+**Estado:** implementado ✅
 
 ## Contexto y objetivo
 Facilitar a la ciudadanía de Málaga la comunicación integral de incidencias urbanas con captura precisa de localización y dirección normalizada, complementando el aviso con la resolución automática de su barrio y distrito municipal sin bloquear el registro ante fallos externos. Asimismo, proporcionar a los ciudadanos una sección dedicada para consultar, filtrar y seguir de forma transparente la evolución y las fechas clave del estado de sus propios reportes.
@@ -62,20 +62,20 @@ Facilitar a la ciudadanía de Málaga la comunicación integral de incidencias u
 - Edición manual de dirección, barrio o distrito por parte del usuario.
 
 ## Criterios de aceptación
-- [ ] Captura automática de coordenadas geográficas de latitud y longitud al marcar el punto en el mapa interactivo.
-- [ ] Resolución automática de la dirección postal a través del callejero de datos abiertos del Ayuntamiento de Málaga en modo de solo lectura.
-- [ ] Detección automática y asignación de distrito municipal a partir de las coordenadas del aviso consultando los datos abiertos de Málaga.
-- [ ] Detección automática y asignación de barrio a partir de las coordenadas del aviso consultando los datos abiertos de Málaga.
-- [ ] Persistencia con valor nulo (`null`) y visualización como "Sin asignar" si no se halla correspondencia territorial o si la fuente externa supera el timeout de 3 segundos.
-- [ ] Bloqueo de registro si las coordenadas geográficas exceden el término municipal de Málaga (latitud [36.5000, 36.9000], longitud [-4.7000, -4.2000]).
-- [ ] Endpoint `GET /api/incidents/my-incidents` implementado con soporte de paginación (`page`, `size`) para recuperar exclusivamente las incidencias del usuario autenticado.
-- [ ] Vista frontend "Mis Incidencias" implementada y protegida para el ciudadano, con listado ordenado cronológicamente descendentemente y filtro por estado.
-- [ ] Visualización de detalle de la incidencia mostrando estado actual, barrio, distrito, dirección y fechas clave (creación y actualización).
-- [ ] Respuesta HTTP 404 controlada ante identificadores de incidencia inexistentes tanto en backend como en frontend.
-- [ ] Respuesta HTTP 200 con lista vacía ante solicitudes de páginas fuera de rango en la paginación.
-- [ ] Permiso de lectura pública del detalle de cualquier incidencia para todos los usuarios autenticados.
-- [ ] Suite de pruebas unitarias y de integración de backend pasando satisfactoriamente (`mvn test`).
-- [ ] Suite de pruebas de frontend y verificación de estilo pasando satisfactoriamente (`npm run lint` y `npm test`).
+- [x] Captura automática de coordenadas geográficas de latitud y longitud al marcar el punto en el mapa interactivo.
+- [x] Resolución automática de la dirección postal a través del callejero de datos abiertos del Ayuntamiento de Málaga en modo de solo lectura.
+- [x] Detección automática y asignación de distrito municipal a partir de las coordenadas del aviso consultando los datos abiertos de Málaga.
+- [x] Detección automática y asignación de barrio a partir de las coordenadas del aviso consultando los datos abiertos de Málaga.
+- [x] Persistencia con valor nulo (`null`) y visualización como "Sin asignar" si no se halla correspondencia territorial o si la fuente externa supera el timeout de 3 segundos.
+- [x] Bloqueo de registro si las coordenadas geográficas exceden el término municipal de Málaga (latitud [36.5000, 36.9000], longitud [-4.7000, -4.2000]).
+- [x] Endpoint `GET /api/incidents/my-incidents` implementado con soporte de paginación (`page`, `size`) para recuperar exclusivamente las incidencias del usuario autenticado.
+- [x] Vista frontend "Mis Incidencias" implementada y protegida para el ciudadano, con listado ordenado cronológicamente descendentemente y filtro por estado.
+- [x] Visualización de detalle de la incidencia mostrando estado actual, barrio, distrito, dirección y fechas clave (creación y actualización).
+- [x] Respuesta HTTP 404 controlada ante identificadores de incidencia inexistentes tanto en backend como en frontend.
+- [x] Respuesta HTTP 200 con lista vacía ante solicitudes de páginas fuera de rango en la paginación.
+- [x] Permiso de lectura pública del detalle de cualquier incidencia para todos los usuarios autenticados.
+- [x] Suite de pruebas unitarias y de integración de backend pasando satisfactoriamente (`mvn test`).
+- [x] Suite de pruebas de frontend y verificación de estilo pasando satisfactoriamente (`npm run lint` y `npm test`).
 
 ## Dudas abiertas
 _Todas las aclaraciones y ambigüedades detectadas en la clarificación han sido resueltas y consensuadas._
