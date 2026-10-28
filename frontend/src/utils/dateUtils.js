@@ -55,18 +55,32 @@ export const isWithinDateRange = (targetDate, startDate = null, endDate = null) 
   if (Number.isNaN(target.getTime())) return false;
 
   if (startDate) {
-    const start = new Date(startDate);
-    if (!Number.isNaN(start.getTime())) {
-      start.setHours(0, 0, 0, 0);
-      if (target.getTime() < start.getTime()) return false;
+    let start;
+    if (typeof startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      start = new Date(`${startDate}T00:00:00.000Z`);
+    } else {
+      start = new Date(startDate);
+      if (!Number.isNaN(start.getTime())) {
+        start.setHours(0, 0, 0, 0);
+      }
+    }
+    if (!Number.isNaN(start.getTime()) && target.getTime() < start.getTime()) {
+      return false;
     }
   }
 
   if (endDate) {
-    const end = new Date(endDate);
-    if (!Number.isNaN(end.getTime())) {
-      end.setHours(23, 59, 59, 999);
-      if (target.getTime() > end.getTime()) return false;
+    let end;
+    if (typeof endDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      end = new Date(`${endDate}T23:59:59.999Z`);
+    } else {
+      end = new Date(endDate);
+      if (!Number.isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999);
+      }
+    }
+    if (!Number.isNaN(end.getTime()) && target.getTime() > end.getTime()) {
+      return false;
     }
   }
 

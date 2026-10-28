@@ -32,6 +32,51 @@ export const getIncidentById = async (id) => {
 };
 
 /**
+ * Recupera el listado paginado de incidencias urbanas reportadas por el ciudadano autenticado.
+ * Permite filtrar opcionalmente por estado de ciclo de vida (status) y paginar resultados.
+ *
+ * @param {Object} [params={}] - Parámetros de consulta para paginación y filtrado.
+ * @param {number} [params.page=0] - Número de página basado en índice cero.
+ * @param {number} [params.size=10] - Cantidad de registros por página.
+ * @param {string} [params.status] - Filtro opcional por estado de la incidencia (o "TODOS").
+ * @returns {Promise<{content: Array<Object>, totalElements: number, totalPages: number, page: number, size: number}>} Objeto PageResponse con las incidencias del usuario.
+ * @throws {import('axios').AxiosError} Si ocurre un error durante la petición HTTP o falta autenticación.
+ */
+export const getMyIncidents = async (params = {}) => {
+  const response = await api.get('/api/incidents/my-incidents', { params });
+  return response.data;
+};
+
+/**
+ * Resuelve territorialmente la dirección postal, distrito y barrio asociados a un par de coordenadas geográficas
+ * consultando los datos abiertos oficiales del Ayuntamiento de Málaga.
+ * Aplica degradación controlada retornando valores nulos en caso de error de red, timeout o fallo del servicio externo.
+ *
+ * @param {number|string} latitude - Coordenada de latitud en grados decimales.
+ * @param {number|string} longitude - Coordenada de longitud en grados decimales.
+ * @returns {Promise<{address: string|null, district: string|null, neighborhood: string|null}>} Objeto con la dirección, distrito y barrio resueltos o nulos ante fallo.
+ */
+export const reverseGeocode = async (latitude, longitude) => {
+  try {
+    const response = await api.get('/api/incidents/geocode/reverse', {
+      params: { latitude, longitude },
+    });
+    return {
+      address: response.data?.address ?? null,
+      district: response.data?.district ?? null,
+      neighborhood: response.data?.neighborhood ?? null,
+    };
+  } catch (error) {
+    console.error('Error al resolver la geocodificación inversa:', error);
+    return {
+      address: null,
+      district: null,
+      neighborhood: null,
+    };
+  }
+};
+
+/**
  * Registra una nueva incidencia urbana en la plataforma asociada al ciudadano autenticado.
  *
  * @param {{title: string, description: string, category: string, latitude: number, longitude: number}} incidentData - Datos del formulario de creación de incidencia.
@@ -113,6 +158,8 @@ export const getIncidentAttachments = async (incidentId) => {
 const incidentService = {
   getAllIncidents,
   getIncidentById,
+  getMyIncidents,
+  reverseGeocode,
   createIncident,
   updateIncidentStatus,
   updateStatus,

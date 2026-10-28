@@ -28,11 +28,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 4.3 Actualizar `SecurityConfig` garantizando que `/api/incidents/my-incidents` y `/api/incidents/geocode/reverse` requieran autenticación (`.authenticated()`).
 - [x] 4.4 Crear pruebas de integración en `IncidentControllerTest` comprobando respuestas HTTP 200 con paginación, 400 ante coordenadas fuera de límites y 401 sin autenticación.
 
-## [ ] Tarea 5: Capa de Servicio y Formulario de Alta con Solo Lectura en Frontend - Depende de Tarea 4 - RF: RF-1, RF-2, RF-3, RF-5, RF-9, RF-11
-- [ ] 5.1 Incorporar en `frontend/src/services/incidentService.js` los métodos `getMyIncidents(params)` y `reverseGeocode(latitude, longitude)` documentados con JSDoc.
-- [ ] 5.2 Actualizar `CreateIncidentModal.jsx` para invocar automáticamente `reverseGeocode` al recibir las coordenadas del mapa.
-- [ ] 5.3 Renderizar en `CreateIncidentModal.jsx` los campos de Dirección, Barrio y Distrito en modo estrictamente de solo lectura, mostrando `"Sin asignar"` si son nulos.
-- [ ] 5.4 Crear pruebas unitarias con Vitest en `CreateIncidentModal.test.jsx` comprobando la previsualización de la dirección, campos de solo lectura y descarte de coordenadas al cancelar.
+## [x] Tarea 5: Capa de Servicio y Formulario de Alta con Solo Lectura en Frontend - Depende de Tarea 4 - RF: RF-1, RF-2, RF-3, RF-5, RF-9, RF-11
+- [x] 5.1 Incorporar en `frontend/src/services/incidentService.js` los métodos `getMyIncidents(params)` y `reverseGeocode(latitude, longitude)` documentados con JSDoc.
+- [x] 5.2 Actualizar `CreateIncidentModal.jsx` para invocar automáticamente `reverseGeocode` al recibir las coordenadas del mapa.
+- [x] 5.3 Renderizar en `CreateIncidentModal.jsx` los campos de Dirección, Barrio y Distrito en modo estrictamente de solo lectura, mostrando `"Sin asignar"` si son nulos.
+- [x] 5.4 Crear pruebas unitarias con Vitest en `CreateIncidentModal.test.jsx` comprobando la previsualización de la dirección, campos de solo lectura y descarte de coordenadas al cancelar.
 
 ## [ ] Tarea 6: Vista de Seguimiento "Mis Incidencias" y Navegación en Frontend - Depende de Tarea 5 - RF: RF-11, RF-12, RF-13, RF-14, RF-15, RF-16, RF-17
 - [ ] 6.1 Crear componente `MyIncidentsPage.jsx` y hoja de estilos `MyIncidentsPage.css` con listado paginado (10 avisos por página), orden cronológico descendente y selector de filtro por estado (`TODOS` y estados del ciclo de vida).
