@@ -47,15 +47,15 @@ class IncidentPostgresIntegrationTest {
     @DisplayName("Debe persistir incidencia en PostgreSQL y registrar cambio de estado con auditoria real")
     void shouldCreateIncidentAndAuditStatusChangeInPostgres() {
         CreateIncidentRequest createReq = new CreateIncidentRequest(
-                "Farola fundida en Avenida de la Constitucion",
+                "Farola fundida en Calle Larios",
                 "Fallo intermitente en luminaria LED",
                 "ALUMBRADO",
-                37.3891,
-                -5.9845,
+                36.7213,
+                -4.4214,
                 5.0,
-                "Avenida de la Constitucion, 12",
-                "Casco Antiguo",
-                "Arenal"
+                "Calle Marqués de Larios, 12",
+                "Centro",
+                "Centro Histórico"
         );
 
         IncidentResponse created = incidentService.createIncident(createReq, "citizen@urbanpulse.es");
