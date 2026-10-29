@@ -62,23 +62,23 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 11.1 Añadir estilos en `frontend/src/components/Map/Map.css` para el botón `.btn-current-location` con icono SVG de geoposicionamiento, estados `:hover`, `:focus-visible`, `:disabled` y animación de giro `.is-locating`.
 - [x] 11.2 Diseñar clases para el distintivo de confirmación `.geo-status-badge` en verde esmeralda y la alerta de error en línea `.geo-error-banner` con semántica accesible y contraste WCAG 2.1 AA.
 
-## [ ] Tarea 12: Integración del botón y máquina de estados en el modal de alta (HU14.4) - Depende de Tareas 10 y 11 - RF: RF-21 a RF-33, RF-35
-- [ ] 12.1 Declarar estados en `CreateIncidentModal.jsx` (`isLocating`, `geoError`, `isLocationOverridden`, `isGeoSupported`, `currentCoords`) y salvaguarda contra desmontado asíncrono con `isMountedRef`.
-- [ ] 12.2 Implementar manejador `handleUseCurrentLocation()` para gestionar la llamada asíncrona a `getCurrentCoordinates()`, actualizar inputs de latitud y longitud a 6 decimales ante éxito, o mostrar error contextual preservando coordenadas previas ante fallo.
-- [ ] 12.3 Renderizar el botón "Usar mi ubicación actual" dentro del bloque de coordenadas, conmutando a "Obteniendo ubicación..." durante la carga y mostrando el badge "Ubicación actual obtenida" tras éxito.
-- [ ] 12.4 Deshabilitar el botón de envío principal del formulario MIENTRAS `isLocating` esté activo para impedir registros intermedios.
-- [ ] 12.5 Gestionar estado inhabilitado con mensaje explicativo si `isGeoSupported` es falso.
+## [x] Tarea 12: Integración del botón y máquina de estados en el modal de alta (HU14.4) - Depende de Tareas 10 y 11 - RF: RF-21 a RF-33, RF-35
+- [x] 12.1 Declarar estados en `CreateIncidentModal.jsx` (`isLocating`, `geoError`, `isLocationOverridden`, `isGeoSupported`, `currentCoords`) y salvaguarda contra desmontado asíncrono con `isMountedRef`.
+- [x] 12.2 Implementar manejador `handleUseCurrentLocation()` para gestionar la llamada asíncrona a `getCurrentCoordinates()`, actualizar inputs de latitud y longitud a 6 decimales ante éxito, o mostrar error contextual preservando coordenadas previas ante fallo.
+- [x] 12.3 Renderizar el botón "Usar mi ubicación actual" dentro del bloque de coordenadas, conmutando a "Obteniendo ubicación..." durante la carga y mostrando el badge "Ubicación actual obtenida" tras éxito.
+- [x] 12.4 Deshabilitar el botón de envío principal del formulario MIENTRAS `isLocating` esté activo para impedir registros intermedios.
+- [x] 12.5 Gestionar estado inhabilitado con mensaje explicativo si `isGeoSupported` es falso.
 
-## [ ] Tarea 13: Sincronización cartográfica y centrado suave tras creación (HU14.4) - Depende de Tarea 12 - RF: RF-34, RF-35
-- [ ] 13.1 Actualizar `MapPage.jsx` para pasar las coordenadas de la nueva incidencia como foco cartográfico en `handleIncidentCreated`.
-- [ ] 13.2 Incorporar en `IncidentsMap.jsx` efecto o controlador de Leaflet para centrar suavemente (`flyTo` a zoom 16) la cámara del mapa sobre las coordenadas del nuevo reporte tras guardarse con éxito.
-- [ ] 13.3 Asegurar descarte limpio de las coordenadas capturadas sin alterar el mapa cuando el usuario cancela o cierra el modal.
+## [x] Tarea 13: Sincronización cartográfica y centrado suave tras creación (HU14.4) - Depende de Tarea 12 - RF: RF-34, RF-35
+- [x] 13.1 Actualizar `MapPage.jsx` para pasar las coordenadas de la nueva incidencia como foco cartográfico en `handleIncidentCreated`.
+- [x] 13.2 Incorporar en `IncidentsMap.jsx` efecto o controlador de Leaflet para centrar suavemente (`flyTo` a zoom 16) la cámara del mapa sobre las coordenadas del nuevo reporte tras guardarse con éxito.
+- [x] 13.3 Asegurar descarte limpio de las coordenadas capturadas sin alterar el mapa cuando el usuario cancela o cierra el modal.
 
-## [ ] Tarea 14: Pruebas unitarias de componente y validación global (HU14.4) - Depende de Tareas 12 y 13 - RF: RF-21 a RF-35
-- [ ] 14.1 Ampliar `frontend/src/components/Map/CreateIncidentModal.test.jsx` con tests unitarios simulando: presencia del botón, transición a estado cargando con textos, actualización de lat/lng a 6 decimales, preservación de coordenadas ante error de permisos, y botón deshabilitado en navegadores incompatibles.
-- [ ] 14.2 Ejecutar `npm test` verificando que todas las pruebas unitarias pasen en verde.
-- [ ] 14.3 Ejecutar `npm run lint` en el frontend asegurando 0 errores de estilo y formato.
-- [ ] 14.4 Validar contra todos los criterios de aceptación de `spec.md`.
+## [x] Tarea 14: Pruebas unitarias de componente y validación global (HU14.4) - Depende de Tareas 12 y 13 - RF: RF-21 a RF-35
+- [x] 14.1 Ampliar `frontend/src/components/Map/CreateIncidentModal.test.jsx` con tests unitarios simulando: presencia del botón, transición a estado cargando con textos, actualización de lat/lng a 6 decimales, preservación de coordenadas ante error de permisos, y botón deshabilitado en navegadores incompatibles.
+- [x] 14.2 Ejecutar `npm test` verificando que todas las pruebas unitarias pasen en verde.
+- [x] 14.3 Ejecutar `npm run lint` en el frontend asegurando 0 errores de estilo y formato.
+- [x] 14.4 Validar contra todos los criterios de aceptación de `spec.md`.
 
 ---
 ## Mantenimiento (checklist recurrente)
