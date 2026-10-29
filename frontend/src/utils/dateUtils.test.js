@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  formatDate,
   formatDateTime,
   isWithinDateRange,
   filterIncidentsByDate,
@@ -7,6 +8,32 @@ import {
 } from './dateUtils';
 
 describe('dateUtils', () => {
+  describe('formatDate', () => {
+    it('formatea correctamente una fecha ISO incluyendo hora por defecto', () => {
+      const isoString = '2026-03-15T10:30:00Z';
+      const formatted = formatDate(isoString);
+      expect(formatted).toBeDefined();
+      expect(formatted).toContain('2026');
+      expect(formatted).toContain('15');
+    });
+
+    it('formatea fecha sin hora cuando includeTime es false', () => {
+      const isoString = '2026-03-15T10:30:00Z';
+      const formatted = formatDate(isoString, false);
+      expect(formatted).toBeDefined();
+      expect(formatted).toContain('2026');
+      expect(formatted).toContain('15');
+      expect(formatted).not.toContain(':');
+    });
+
+    it('retorna texto informativo cuando la fecha es nula, vacia o no valida', () => {
+      expect(formatDate(null)).toBe('Fecha no disponible');
+      expect(formatDate('')).toBe('Fecha no disponible');
+      expect(formatDate(undefined)).toBe('Fecha no disponible');
+      expect(formatDate('invalida')).toBe('invalida');
+    });
+  });
+
   describe('formatDateTime', () => {
     it('formatea correctamente una fecha ISO a formato local legible en espanol', () => {
       const isoString = '2026-03-15T10:30:00Z';

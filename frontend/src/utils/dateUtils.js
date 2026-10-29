@@ -15,11 +15,13 @@ export const DATE_FILTER_PRESETS = Object.freeze({
 
 /**
  * Formatea una marca temporal ISO 8601 o fecha a un formato localizado en espanol legible para el usuario.
+ * Permite opcionalmente incluir o excluir la hora (por defecto incluye fecha y hora).
  *
  * @param {string|Date} dateValue - Marca temporal ISO o instancia Date a formatear.
- * @returns {string} Fecha y hora formateadas (ej. "25/10/2026, 15:30") o texto alternativo si es invalida.
+ * @param {boolean} [includeTime=true] - Indica si se incluye la hora en el formateo localizado.
+ * @returns {string} Fecha formateada (ej. "25/10/2026, 15:30" o "25/10/2026") o texto alternativo si es invalida.
  */
-export const formatDateTime = (dateValue) => {
+export const formatDate = (dateValue, includeTime = true) => {
   if (!dateValue) {
     return 'Fecha no disponible';
   }
@@ -28,16 +30,29 @@ export const formatDateTime = (dateValue) => {
     if (Number.isNaN(date.getTime())) {
       return String(dateValue);
     }
-    return new Intl.DateTimeFormat('es-ES', {
+    const options = {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    };
+    if (includeTime) {
+      options.hour = '2-digit';
+      options.minute = '2-digit';
+    }
+    return new Intl.DateTimeFormat('es-ES', options).format(date);
   } catch {
     return String(dateValue);
   }
+};
+
+/**
+ * Formatea una marca temporal ISO 8601 o fecha a un formato localizado en espanol legible para el usuario.
+ *
+ * @param {string|Date} dateValue - Marca temporal ISO o instancia Date a formatear.
+ * @returns {string} Fecha y hora formateadas (ej. "25/10/2026, 15:30") o texto alternativo si es invalida.
+ */
+export const formatDateTime = (dateValue) => {
+  return formatDate(dateValue, true);
 };
 
 /**
@@ -55,18 +70,32 @@ export const isWithinDateRange = (targetDate, startDate = null, endDate = null) 
   if (Number.isNaN(target.getTime())) return false;
 
   if (startDate) {
-    const start = new Date(startDate);
-    if (!Number.isNaN(start.getTime())) {
-      start.setHours(0, 0, 0, 0);
-      if (target.getTime() < start.getTime()) return false;
+    let start;
+    if (typeof startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      start = new Date(`${startDate}T00:00:00.000Z`);
+    } else {
+      start = new Date(startDate);
+      if (!Number.isNaN(start.getTime())) {
+        start.setHours(0, 0, 0, 0);
+      }
+    }
+    if (!Number.isNaN(start.getTime()) && target.getTime() < start.getTime()) {
+      return false;
     }
   }
 
   if (endDate) {
-    const end = new Date(endDate);
-    if (!Number.isNaN(end.getTime())) {
-      end.setHours(23, 59, 59, 999);
-      if (target.getTime() > end.getTime()) return false;
+    let end;
+    if (typeof endDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      end = new Date(`${endDate}T23:59:59.999Z`);
+    } else {
+      end = new Date(endDate);
+      if (!Number.isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999);
+      }
+    }
+    if (!Number.isNaN(end.getTime()) && target.getTime() > end.getTime()) {
+      return false;
     }
   }
 

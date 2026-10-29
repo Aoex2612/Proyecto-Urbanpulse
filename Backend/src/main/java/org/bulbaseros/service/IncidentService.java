@@ -3,6 +3,8 @@ package org.bulbaseros.service;
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
+import org.bulbaseros.dto.PageResponse;
+import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.CambiosEstado;
@@ -16,6 +18,10 @@ import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +74,11 @@ public class IncidentService {
     private final StatusChangeMapper statusChangeMapper;
 
     /**
+     * Servicio de integracion con el portal de datos abiertos de Malaga para resolucion territorial.
+     */
+    private final MalagaOpenDataService malagaOpenDataService;
+
+    /**
      * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
      * de incidencias en UrbanPulse:
      * <ul>
@@ -99,17 +110,20 @@ public class IncidentService {
      * @param userRepository          Repositorio JPA de usuarios del sistema.
      * @param incidentMapper          Mapeador de incidencias a DTOs.
      * @param statusChangeMapper      Mapeador de cambios de estado a DTOs.
+     * @param malagaOpenDataService   Servicio de integracion territorial con datos abiertos de Malaga.
      */
     public IncidentService(IncidenciaRepository incidenciaRepository,
                            CambiosEstadoRepository cambiosEstadoRepository,
                            UserRepository userRepository,
                            IncidentMapper incidentMapper,
-                           StatusChangeMapper statusChangeMapper) {
+                           StatusChangeMapper statusChangeMapper,
+                           MalagaOpenDataService malagaOpenDataService) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
         this.incidentMapper = incidentMapper;
         this.statusChangeMapper = statusChangeMapper;
+        this.malagaOpenDataService = malagaOpenDataService;
     }
 
     /**
@@ -150,16 +164,21 @@ public class IncidentService {
     /**
      * Registra una nueva incidencia urbana en el sistema asociandola al ciudadano emisor autenticado.
      * <p>
-     * Busca al usuario por su correo electronico normalizado, inicializa los valores por defecto del ciclo
-     * de vida (estado {@link EstadoIncidencia#REPORTED}, prioridad {@link PrioridadIncidencia#MEDIUM} y marcas
-     * temporales actuales) y persiste la entidad en la base de datos relacional.
+     * Valida que las coordenadas geograficas pertenezcan estrictamente al termino municipal de Malaga
+     * (latitud [36.5000, 36.9000], longitud [-4.7000, -4.2000]). Si los datos de direccion, distrito o barrio
+     * no vienen especificados (o vienen vacios), consulta el servicio de Datos Abiertos de Malaga ({@link MalagaOpenDataService})
+     * para autocompletar la informacion territorial aplicando degradacion controlada.
+     * Inicializa los valores por defecto del ciclo de vida (estado {@link EstadoIncidencia#REPORTED},
+     * prioridad {@link PrioridadIncidencia#MEDIUM} y marcas temporales actuales) y persiste la entidad
+     * en la base de datos relacional.
      * </p>
      *
      * @param request   DTO con los datos validados del reporte (titulo, descripcion, categoria y coordenadas).
      * @param userEmail Correo electronico del usuario autenticado extraido del token JWT.
      * @return DTO {@link IncidentResponse} con los datos persistidos de la incidencia creada.
-     * @throws IllegalArgumentException      si la peticion recibida o el correo electronico son nulos o vacios.
-     * @throws ResponseStatusException       con estado 404 si el usuario autenticado no existe en la base de datos.
+     * @throws IllegalArgumentException si la peticion recibida o el correo electronico son nulos o vacios.
+     * @throws ResponseStatusException  con estado 400 si las coordenadas estan fuera del termino municipal de Malaga,
+     *                                  o con estado 404 si el usuario autenticado no existe en la base de datos.
      */
     @Transactional
     public IncidentResponse createIncident(CreateIncidentRequest request, String userEmail) {
@@ -170,9 +189,40 @@ public class IncidentService {
             throw new IllegalArgumentException("El correo electronico del usuario no puede estar vacio");
         }
 
+        if (request.getLatitude() == null || request.getLongitude() == null
+                || !malagaOpenDataService.isWithinMalagaBounds(request.getLatitude(), request.getLongitude())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Las coordenadas se encuentran fuera del término municipal de Málaga"
+            );
+        }
+
         String normalizedEmail = userEmail.trim().toLowerCase();
         Usuario citizen = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario emisor no encontrado con email: " + userEmail));
+
+        String address = request.getAddress();
+        String district = request.getDistrict();
+        String neighborhood = request.getNeighborhood();
+
+        boolean needsEnrichment = (address == null || address.trim().isEmpty())
+                || (district == null || district.trim().isEmpty())
+                || (neighborhood == null || neighborhood.trim().isEmpty());
+
+        if (needsEnrichment) {
+            ReverseGeocodeResponse geo = malagaOpenDataService.resolveLocation(request.getLatitude(), request.getLongitude());
+            if (geo != null) {
+                if (address == null || address.trim().isEmpty()) {
+                    address = geo.getAddress();
+                }
+                if (district == null || district.trim().isEmpty()) {
+                    district = geo.getDistrict();
+                }
+                if (neighborhood == null || neighborhood.trim().isEmpty()) {
+                    neighborhood = geo.getNeighborhood();
+                }
+            }
+        }
 
         Incidencia incidencia = new Incidencia();
         incidencia.setTitle(request.getTitle());
@@ -181,9 +231,9 @@ public class IncidentService {
         incidencia.setLatitude(request.getLatitude());
         incidencia.setLongitude(request.getLongitude());
         incidencia.setAccuracyMeters(request.getAccuracyMeters());
-        incidencia.setAddress(request.getAddress());
-        incidencia.setDistrict(request.getDistrict());
-        incidencia.setNeighborhood(request.getNeighborhood());
+        incidencia.setAddress(address);
+        incidencia.setDistrict(district);
+        incidencia.setNeighborhood(neighborhood);
         incidencia.setCitizen(citizen);
         incidencia.setStatus(EstadoIncidencia.REPORTED);
         incidencia.setPriority(PrioridadIncidencia.MEDIUM);
@@ -291,5 +341,71 @@ public class IncidentService {
 
         List<CambiosEstado> statusChanges = cambiosEstadoRepository.findByIncidentIdOrderByCreatedAtAsc(id);
         return statusChangeMapper.toDtoList(statusChanges);
+    }
+
+    /**
+     * Recupera de forma paginada y ordenada las incidencias urbanas reportadas por el ciudadano autenticado.
+     * <p>
+     * Permite el filtrado opcional por estado del ciclo de vida ({@link EstadoIncidencia}).
+     * Si el parametro {@link Pageable} no define una ordenacion explicita, aplica por defecto
+     * ordenacion descendente por fecha de creacion ({@code createdAt DESC}).
+     * </p>
+     *
+     * @param userEmail Correo electronico del ciudadano autenticado obtenido del token JWT.
+     * @param status    Filtro de estado del ciclo de vida (opcional, {@code null} para no filtrar por estado).
+     * @param pageable  Parametros de paginacion y ordenacion de Spring Data.
+     * @return DTO {@link PageResponse} estructurado con las incidencias del usuario y metadatos de paginacion.
+     * @throws IllegalArgumentException si el correo electronico es nulo o vacio.
+     * @throws ResponseStatusException  con estado 404 si el usuario autenticado no existe en la base de datos.
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<IncidentResponse> getMyIncidents(String userEmail, EstadoIncidencia status, Pageable pageable) {
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            throw new IllegalArgumentException("El correo electronico del usuario no puede estar vacio");
+        }
+
+        String normalizedEmail = userEmail.trim().toLowerCase();
+        Usuario citizen = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        Pageable effectivePageable = pageable;
+        if (effectivePageable == null) {
+            effectivePageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        } else if (effectivePageable.getSort().isUnsorted()) {
+            effectivePageable = PageRequest.of(
+                    effectivePageable.getPageNumber(),
+                    effectivePageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+        }
+
+        Page<Incidencia> page;
+        if (status == null) {
+            page = incidenciaRepository.findByCitizenId(citizen.getId(), effectivePageable);
+        } else {
+            page = incidenciaRepository.findByCitizenIdAndStatus(citizen.getId(), status, effectivePageable);
+        }
+
+        return incidentMapper.toPageResponse(page);
+    }
+
+    /**
+     * Resuelve territorialmente una direccion postal, distrito y barrio en Malaga a partir de coordenadas geograficas.
+     * <p>
+     * Valida que las coordenadas pertenezcan al termino municipal de Malaga (latitud [36.5000, 36.9000],
+     * longitud [-4.7000, -4.2000]). Si exceden los limites municipales o son nulas, lanza {@link ResponseStatusException}
+     * con codigo HTTP 400 Bad Request. En caso contrario, delega en {@link MalagaOpenDataService#resolveLocation(Double, Double)}.
+     * </p>
+     *
+     * @param latitude  Coordenada de latitud en grados decimales.
+     * @param longitude Coordenada de longitud en grados decimales.
+     * @return DTO {@link ReverseGeocodeResponse} con los datos territoriales obtenidos, o nulos ante degradacion controlada.
+     * @throws ResponseStatusException con estado 400 si las coordenadas estan fuera de los limites de Malaga o son nulas.
+     */
+    public ReverseGeocodeResponse reverseGeocode(Double latitude, Double longitude) {
+        if (latitude == null || longitude == null || !malagaOpenDataService.isWithinMalagaBounds(latitude, longitude)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Las coordenadas están fuera de Málaga");
+        }
+        return malagaOpenDataService.resolveLocation(latitude, longitude);
     }
 }

@@ -79,6 +79,26 @@ public class IncidentResponse {
     private OffsetDateTime updatedAt;
 
     /**
+     * Precision estimada de la captura geografica en metros (opcional).
+     */
+    private Double accuracyMeters;
+
+    /**
+     * Direccion postal normalizada del aviso.
+     */
+    private String address;
+
+    /**
+     * Distrito municipal administrativo en el que se ubica la incidencia.
+     */
+    private String district;
+
+    /**
+     * Barrio o vecindario en el que se ubica la incidencia.
+     */
+    private String neighborhood;
+
+    /**
      * Constructor por defecto requerido para deserializacion JSON.
      */
     public IncidentResponse() {
@@ -103,6 +123,34 @@ public class IncidentResponse {
     public IncidentResponse(Long id, String title, String description, String category, Double latitude, Double longitude,
                             EstadoIncidencia status, PrioridadIncidencia priority, Long citizenId, String citizenName,
                             OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+        this(id, title, description, category, latitude, longitude, status, priority, citizenId, citizenName,
+                createdAt, updatedAt, null, null, null, null);
+    }
+
+    /**
+     * Constructor completo con todos los atributos de representacion de la incidencia incluyendo datos territoriales.
+     *
+     * @param id             Identificador unico de la incidencia.
+     * @param title          Titulo sintetico de la incidencia.
+     * @param description    Descripcion completa del suceso.
+     * @param category       Categoria tematica de clasificacion.
+     * @param latitude       Latitud geografica.
+     * @param longitude      Longitud geografica.
+     * @param status         Estado de ciclo de vida.
+     * @param priority       Prioridad asignada.
+     * @param citizenId      Identificador del ciudadano creador.
+     * @param citizenName    Nombre del ciudadano creador.
+     * @param createdAt      Marca temporal de creacion.
+     * @param updatedAt      Marca temporal de ultima actualizacion.
+     * @param accuracyMeters Precision estimada de captura en metros.
+     * @param address        Direccion postal normalizada.
+     * @param district       Distrito municipal.
+     * @param neighborhood   Barrio o vecindario.
+     */
+    public IncidentResponse(Long id, String title, String description, String category, Double latitude, Double longitude,
+                            EstadoIncidencia status, PrioridadIncidencia priority, Long citizenId, String citizenName,
+                            OffsetDateTime createdAt, OffsetDateTime updatedAt, Double accuracyMeters, String address,
+                            String district, String neighborhood) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -115,6 +163,10 @@ public class IncidentResponse {
         this.citizenName = citizenName;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.accuracyMeters = accuracyMeters;
+        this.address = address;
+        this.district = district;
+        this.neighborhood = neighborhood;
     }
 
     /**
@@ -142,7 +194,11 @@ public class IncidentResponse {
                 citizenId,
                 citizenName,
                 incidencia.getCreatedAt(),
-                incidencia.getUpdatedAt()
+                incidencia.getUpdatedAt(),
+                incidencia.getAccuracyMeters(),
+                incidencia.getAddress(),
+                incidencia.getDistrict(),
+                incidencia.getNeighborhood()
         );
     }
 
@@ -360,5 +416,77 @@ public class IncidentResponse {
      */
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Obtiene la precision estimada en metros de la captura.
+     *
+     * @return Precision como {@link Double}.
+     */
+    public Double getAccuracyMeters() {
+        return accuracyMeters;
+    }
+
+    /**
+     * Establece la precision estimada en metros de la captura.
+     *
+     * @param accuracyMeters Precision como {@link Double}.
+     */
+    public void setAccuracyMeters(Double accuracyMeters) {
+        this.accuracyMeters = accuracyMeters;
+    }
+
+    /**
+     * Obtiene la direccion postal normalizada.
+     *
+     * @return Direccion postal como {@link String}.
+     */
+    public String getAddress() {
+        return address;
+    }
+
+    /**
+     * Establece la direccion postal normalizada.
+     *
+     * @param address Direccion postal como {@link String}.
+     */
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    /**
+     * Obtiene el distrito municipal de la incidencia.
+     *
+     * @return Distrito municipal como {@link String}.
+     */
+    public String getDistrict() {
+        return district;
+    }
+
+    /**
+     * Establece el distrito municipal de la incidencia.
+     *
+     * @param district Distrito municipal como {@link String}.
+     */
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    /**
+     * Obtiene el barrio o vecindario de la incidencia.
+     *
+     * @return Barrio como {@link String}.
+     */
+    public String getNeighborhood() {
+        return neighborhood;
+    }
+
+    /**
+     * Establece el barrio o vecindario de la incidencia.
+     *
+     * @param neighborhood Barrio como {@link String}.
+     */
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
     }
 }
