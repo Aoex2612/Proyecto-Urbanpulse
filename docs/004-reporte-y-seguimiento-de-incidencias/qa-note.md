@@ -165,6 +165,7 @@ La aplicación estará disponible en `http://localhost:5173`.
 
 ### Escenario C — Acceso al detalle por usuario autenticado
 
-1. Con cualquier usuario autenticado (no necesariamente el propietario), accede directamente a la URL `http://localhost:5173/incidents/{id}` con un ID de incidencia existente.
-2. Verifica que se muestra la ficha completa con dirección, barrio, distrito, estado y fechas.
-3. Accede a `http://localhost:5173/incidents/99999` (ID inexistente) y verifica que se muestra un mensaje de error 404.
+1. Con cualquier usuario autenticado (no necesariamente el propietario), consulta el detalle de la incidencia a través del endpoint REST del backend en `http://localhost:8080/api/incidents/{id}` con un ID existente, adjuntando la cabecera `Authorization: Bearer <token_jwt>` (o desde la consola/herramienta de API).
+2. Verifica que la respuesta JSON contiene la ficha completa con `address`, `neighborhood`, `district`, `status`, `createdAt` y `updatedAt`.
+3. Consulta `http://localhost:8080/api/incidents/99999` (ID inexistente) con token y verifica que el sistema responde con código HTTP 404 Not Found y el objeto de error estructurado.
+4. En el interfaz web (`http://localhost:5173`), cualquier usuario autenticado puede abrir la ficha completa de detalle pulsando el botón **"Ver detalle"** en la tabla de **"Mis Incidencias"** (`/my-incidents`) o haciendo clic sobre cualquier marcador en el mapa interactivo (**"Mapa"**, `/map`).
