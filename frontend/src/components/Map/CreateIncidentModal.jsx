@@ -3,17 +3,21 @@
  * Despliega un formulario modal con validación en frontend para capturar el título,
  * descripción, categoría y archivo multimedia adjunto (imagen JPEG/PNG opcional)
  * de la incidencia, mostrando las coordenadas geográficas seleccionadas sobre el mapa
- * en modo de solo lectura. Persiste la nueva incidencia a través de incidentService
- * y sube el archivo adjunto si fue provisto, notificando al componente padre para actualizar el mapa.
+ * en modo de solo lectura. Permite además obtener la ubicación actual del dispositivo
+ * mediante la API de geolocalización del navegador (HU14.4). Persiste la nueva
+ * incidencia a través de incidentService y sube el archivo adjunto si fue provisto,
+ * notificando al componente padre para actualizar el mapa.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import incidentService from '../../services/incidentService';
 import { INCIDENT_CATEGORIES } from './mapConstants';
+import { isGeolocationSupported, getCurrentCoordinates } from '../../utils/geolocationUtils';
 import './Map.css';
 
 /**
- * Componente modal para dar de alta una nueva incidencia geolocalizada con soporte para adjunto multimedia.
+ * Componente modal para dar de alta una nueva incidencia geolocalizada con soporte para adjunto multimedia
+ * y captura de ubicación actual via API de geolocalización del navegador.
  *
  * @param {Object} props - Propiedades del componente.
  * @param {boolean} [props.isOpen=true] - Controla la visibilidad del modal.
@@ -52,8 +56,73 @@ export default function CreateIncidentModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
 
+  /**
+   * Coordenadas obtenidas por GPS. Cuando tiene valor, reemplaza a selectedLocation
+   * como fuente de coordenadas activa para el formulario y el envío.
+   * Al cerrarse el modal o al cambiar el punto del mapa, se resetea a null.
+   *
+   * @type {[{latitude: number, longitude: number}|null, Function]}
+   */
+  const [gpsLocation, setGpsLocation] = useState(null);
+
+  /**
+   * Indica si se está obteniendo la geolocalización del dispositivo en curso.
+   * Bloquea el botón de envío y el botón de ubicación durante la petición.
+   *
+   * @type {[boolean, Function]}
+   */
+  const [isLocating, setIsLocating] = useState(false);
+
+  /**
+   * Mensaje de error de geolocalización, o null si no hay error activo.
+   *
+   * @type {[string|null, Function]}
+   */
+  const [geoError, setGeoError] = useState(null);
+
+  /**
+   * Indica si las coordenadas activas provienen de GPS (true) o del clic en el mapa (false).
+   * Controla la visibilidad del badge de confirmación de ubicación GPS.
+   *
+   * @type {[boolean, Function]}
+   */
+  const [isLocationOverridden, setIsLocationOverridden] = useState(false);
+
+  /**
+   * Indica si la API de geolocalización está disponible en el navegador actual.
+   * Se calcula una sola vez al montarse el componente.
+   *
+   * @type {[boolean, Function]}
+   */
+  const [isGeoSupported] = useState(() => isGeolocationSupported());
+
   const titleInputRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  /**
+   * Ref de salvaguarda contra actualizaciones de estado en componentes desmontados.
+   * Se establece a false en el cleanup del useEffect de ciclo de vida.
+   *
+   * @type {import('react').MutableRefObject<boolean>}
+   */
+  const isMountedRef = useRef(true);
+
+  // Efecto de ciclo de vida: marcar desmontado al limpiar
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  /**
+   * Ubicación efectiva del formulario. Usa las coordenadas GPS si están disponibles,
+   * o el punto seleccionado en el mapa en caso contrario.
+   * Derivada durante el render sin necesidad de efectos de sincronización.
+   *
+   * @type {{latitude: number|string, longitude: number|string}|null}
+   */
+  const internalLocation = gpsLocation ?? selectedLocation;
 
   // Manejador unificado de cierre y cancelación memorizado
   const handleDismiss = useCallback(() => {
@@ -81,6 +150,12 @@ export default function CreateIncidentModal({
     setErrors({});
     setServerError(null);
 
+    // Resetear estados de geolocalización
+    setIsLocating(false);
+    setGeoError(null);
+    setIsLocationOverridden(false);
+    setGpsLocation(null);
+
     if (onClose) {
       onClose();
     } else if (onCancel) {
@@ -92,9 +167,9 @@ export default function CreateIncidentModal({
   useEffect(() => {
     let isMounted = true;
 
-    if (isOpen && selectedLocation) {
-      const lat = Number(selectedLocation.latitude);
-      const lng = Number(selectedLocation.longitude);
+    if (isOpen && internalLocation) {
+      const lat = Number(internalLocation.latitude);
+      const lng = Number(internalLocation.longitude);
 
       if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
         Promise.resolve().then(() => {
@@ -149,11 +224,11 @@ export default function CreateIncidentModal({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, selectedLocation]);
+  }, [isOpen, internalLocation]);
 
   // Foco automático en el primer campo al abrirse el modal y escucha de tecla Escape
   useEffect(() => {
-    if (isOpen && selectedLocation) {
+    if (isOpen && internalLocation) {
       const timer = setTimeout(() => {
         titleInputRef.current?.focus();
       }, 50);
@@ -177,15 +252,15 @@ export default function CreateIncidentModal({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isOpen, selectedLocation, handleDismiss]);
+  }, [isOpen, internalLocation, handleDismiss]);
 
   // Si no está abierto o no existen coordenadas válidas, no renderizar nada
-  if (!isOpen || !selectedLocation) {
+  if (!isOpen || !internalLocation) {
     return null;
   }
 
-  const latNumber = Number(selectedLocation.latitude);
-  const lngNumber = Number(selectedLocation.longitude);
+  const latNumber = Number(internalLocation.latitude);
+  const lngNumber = Number(internalLocation.longitude);
   const formattedLatitude = !Number.isNaN(latNumber) ? latNumber.toFixed(6) : '';
   const formattedLongitude = !Number.isNaN(lngNumber) ? lngNumber.toFixed(6) : '';
 
@@ -261,6 +336,42 @@ export default function CreateIncidentModal({
     setErrors((prev) => ({ ...prev, file: null }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  /**
+   * Solicita la ubicación actual del dispositivo mediante la API de geolocalización del navegador.
+   * Actualiza gpsLocation con las coordenadas GPS obtenidas, convirtiendo éste en la fuente
+   * activa de coordenadas para el formulario (RF-21, RF-22, RF-24).
+   * Si el componente se desmonta antes de recibir respuesta, descarta la actualización de estado
+   * para evitar memory leaks (salvaguarda con isMountedRef).
+   * Preserva las coordenadas previas (mapa) ante cualquier error (RF-32).
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
+  const handleUseCurrentLocation = async () => {
+    setIsLocating(true);
+    setGeoError(null);
+    setIsLocationOverridden(false);
+
+    try {
+      const coords = await getCurrentCoordinates();
+
+      if (isMountedRef.current) {
+        setGpsLocation({ latitude: coords.latitude, longitude: coords.longitude });
+        setIsLocationOverridden(true);
+        setGeoError(null);
+      }
+    } catch (err) {
+      if (isMountedRef.current) {
+        // Preservar gpsLocation/selectedLocation sin cambios (RF-32)
+        setGeoError(err.message);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsLocating(false);
+      }
     }
   };
 
@@ -650,11 +761,45 @@ export default function CreateIncidentModal({
                 </div>
               </div>
 
-              {/* Coordenadas en sólo lectura */}
+              {/* Coordenadas en sólo lectura con opción de geolocalización GPS */}
               <div className="form-group">
                 <label className="form-label">
                   Ubicación geolocalizada (Sólo lectura)
                 </label>
+
+                {/* Botón de geolocalización GPS (RF-21, RF-22, RF-24, RF-25) */}
+                <button
+                  type="button"
+                  className={`btn-current-location${isLocating ? ' is-locating' : ''}`}
+                  onClick={handleUseCurrentLocation}
+                  disabled={isLocating || !isGeoSupported}
+                  aria-label="Usar mi ubicación actual por GPS"
+                >
+                  {isLocating ? 'Obteniendo ubicación...' : 'Usar mi ubicación actual'}
+                </button>
+
+                {/* Badge de confirmación GPS (RF-26) */}
+                {isLocationOverridden && (
+                  <p className="geo-status-badge" aria-live="polite">
+                    Ubicación actual obtenida
+                  </p>
+                )}
+
+                {/* Banner de error de geolocalización (RF-29, RF-30, RF-31) */}
+                {geoError && (
+                  <div className="geo-error-banner" role="alert" aria-live="assertive">
+                    {geoError}
+                  </div>
+                )}
+
+                {/* Aviso de geolocalización no soportada (RF-33) */}
+                {!isGeoSupported && (
+                  <p className="coordinates-hint" aria-live="polite">
+                    Geolocalización no disponible en este navegador
+                  </p>
+                )}
+
+
                 <div className="coordinates-grid">
                   <div>
                     <input
@@ -701,7 +846,7 @@ export default function CreateIncidentModal({
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLocating}
             >
               {isSubmitting ? 'Guardando...' : 'Guardar incidencia'}
             </button>

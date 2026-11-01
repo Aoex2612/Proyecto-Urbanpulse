@@ -7,6 +7,7 @@ _Cómo se implementa lo descrito en `spec.md`. Respeta estrictamente la `constit
 La solución aborda de forma unificada la dimensión geoespacial y la trazabilidad del ciclo de vida de las incidencias mediante dos ejes complementarios:
 1. **Cartografía interactiva con Leaflet en Frontend:** Incorporación de una vista `/map` protegida centrada en la ciudad de Málaga (`[36.7213, -4.4214]`, zoom 13) que consume teselas de OpenStreetMap. Muestra marcadores para las incidencias no terminadas (`status NOT IN ('CLOSED', 'REJECTED')`). Al hacer clic en un marcador, despliega un Popup nativo de Leaflet con la información básica y un botón de acción "Ver detalle completo" que levanta un modal de detalle (con la línea temporal `Timeline` para usuarios con rol `ADMIN`). Ofrece un flujo guiado ("Crear incidencia" / "Cancelar selección") para capturar coordenadas geográficas precisas al hacer clic en el mapa y abrir el formulario modal de alta con categorías predefinidas (`Alumbrado`, `Vías Públicas`, `Limpieza`, `Parques y Jardines`, `Mobiliario Urbano`), descartando el punto limpiamente si el usuario cancela.
 2. **Auditoría inmutable transversal en Backend:** Aprovechamiento del esquema relacional ya existente en PostgreSQL (`status_changes` e `incidents`), integrando la persistencia transaccional de cada cambio de estado en `CambiosEstado` con captura automática de la identidad del usuario desde el token JWT (`SecurityContextHolder`). Exposición de un endpoint seguro `GET /api/incidents/{id}/history` restringido a `ADMIN` (con manejo estricto de 404 si la incidencia no existe), consumido por un componente desacoplado `Timeline` diseñado para permitir su rápida reutilización por otros perfiles operativos (`OPERATOR`).
+3. **Captura opcional de ubicación actual con geolocalización en frontend (HU14.4):** Adición de la función "Usar mi ubicación actual" mediante la API nativa W3C `navigator.geolocation` encapsulada en un módulo utilitario (`geolocationUtils.js`) y acoplada a `CreateIncidentModal.jsx`. Proporciona estados visuales precisos (cargando con bloqueo de envío, éxito con distintivo y formateo a 6 decimales, error contextual en línea ante permiso denegado o timeout manteniendo coordenadas previas, y botón inhabilitado en navegadores incompatibles) y centrado suave del mapa hacia la nueva posición al crearse la incidencia.
 
 ---
 
@@ -82,6 +83,36 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
   - Registro de la ruta protegida `<Route path="/map" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />`.
   - Enlace de acceso directo "Mapa" en la cabecera/navegación accesible para usuarios autenticados.
 
+### 9. Frontend: Módulo utilitario de geolocalización (HU14.4)
+- **Archivo:** `frontend/src/utils/geolocationUtils.js`
+  - `isGeolocationSupported()`: Valida la existencia de `navigator.geolocation` y `window.isSecureContext`.
+  - `getCurrentCoordinates(options)`: Retorna una `Promise` que resuelve `{ latitude: number, longitude: number, accuracy: number }` redondeados a 6 decimales tras invocar `navigator.geolocation.getCurrentPosition`.
+  - Configuración predeterminada: `{ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }`.
+  - Mapeo de códigos de error de geolocalización a textos contextuales legibles y resolutivos para el usuario.
+  - Documentación completa con JSDoc.
+
+### 10. Frontend: Estilos visuales del control de geolocalización (HU14.4)
+- **Archivo:** `frontend/src/components/Map/Map.css`
+  - `.btn-current-location`: Botón secundario con icono SVG de ubicación geográfica, bordes nítidos y contraste de color accesible.
+  - `.btn-current-location:disabled`: Estado deshabilitado visualmente claro para carga o entornos incompatibles.
+  - `.btn-current-location.is-locating`: Animación sutil de rotación en el icono y cursor de espera.
+  - `.geo-status-badge`: Distintivo verde esmeralda con texto de confirmación "Ubicación actual obtenida" con icono de check.
+  - `.geo-error-banner`: Alerta en línea con semántica de error en tono carmesí suave, tipografía clara y diseño no intrusivo bajo los campos de latitud y longitud.
+
+### 11. Frontend: Integración en el modal de creación de incidencias (HU14.4)
+- **Archivo:** `frontend/src/components/Map/CreateIncidentModal.jsx`
+  - Incorporación de estados locales: `isLocating`, `geoError`, `isLocationOverridden`, `isGeoSupported` y `currentCoords` inicializadas con `selectedLocation`.
+  - Manejador `handleUseCurrentLocation()`: Previene llamadas concurrentes, activa `isLocating = true`, captura las coordenadas con `getCurrentCoordinates()` y actualiza `currentCoords` con formato de 6 decimales.
+  - Maneja excepciones actualizando `geoError` sin alterar las coordenadas previas (RF-32).
+  - Resetea `isLocating = false` asegurando limpieza si el componente se desmonta (`isMountedRef`).
+  - Bloqueo del botón de submit (`isSubmitting || isLocating`) mientras se localiza (RF-25).
+  - Renderizado del botón, el badge de éxito y la alerta de error en la sección de coordenadas del formulario.
+
+### 12. Frontend: Sincronización cartográfica y centrado suave tras creación (HU14.4)
+- **Archivos:** `frontend/src/components/Map/IncidentsMap.jsx` y `frontend/src/pages/MapPage.jsx`
+  - En `MapPage.jsx`: Tras recibir la confirmación de creación (`handleIncidentCreated`), emitir las coordenadas de la nueva incidencia como objetivo de centrado cartográfico (`focusCoordinates`).
+  - En `IncidentsMap.jsx`: Componente auxiliar `MapCenterController` que detecta cambios en `focusCoordinates` y ejecuta `map.flyTo([lat, lng], 16, { duration: 1.5 })` para centrar suavemente sin interferir con la navegación libre del usuario.
+
 ---
 
 ## Decisiones
@@ -96,6 +127,12 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
   - _Justificación:_ Proporciona una interfaz intuitiva y controlada que evita la creación accidental de incidencias por clics involuntarios en el mapa.
 - **Desacoplamiento del componente `Timeline`:**
   - _Justificación:_ Garantiza que habilitar la visualización del historial al rol `OPERATOR` requiera únicamente modificar una regla de acceso sin refactorizar la lógica visual.
+- **Captura con API nativa W3C `navigator.geolocation` frente a librerías externas o geolocalización IP (HU14.4):**
+  - _Justificación:_ Proporciona máxima precisión física del hardware (GPS) sin cuotas ni dependencias externas ([ADR-06: Captura de ubicación con API nativa W3C Geolocation en el cliente](file:///C:/Users/Yesu/Proyecto-Urbanpulse/docs/ADR/ADR-06-geolocalizacion-nativa-navegador.md)).
+- **Ubicación en el bloque de coordenadas del modal frente a control externo en mapa (HU14.4):**
+  - _Justificación:_ Actúa como atajo contextual directo al revisar los datos de ubicación sin sobrecargar la barra de mandos del mapa.
+- **Preservación de coordenadas previas ante error de geolocalización (HU14.4):**
+  - _Justificación:_ Asegura que una denegación de permisos o timeout del GPS no degrade la experiencia de usuario ni elimine el punto marcado previamente.
 
 ---
 
@@ -107,6 +144,12 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
   - _Mitigación:_ Control transaccional en Spring Data JPA garantizando lecturas y escrituras atómicas de `from_status` y `to_status`.
 - **Rendimiento cartográfico ante incremento de incidencias:**
   - _Mitigación:_ Filtrado de estados terminados en backend y consumo ligero de marcadores en React.
+- **Desmontado del modal mientras se resuelve la promesa de geolocalización (HU14.4):**
+  - _Mitigación:_ Referencia `isMountedRef` en `CreateIncidentModal` para prevenir actualizaciones de estado (`setState`) si el modal se cierra durante la petición.
+- **Demora excesiva en respuesta de satélites GPS o pérdida de señal (HU14.4):**
+  - _Mitigación:_ Configuración de timeout estricto de 10 segundos (`timeout: 10000`), cancelando la consulta y mostrando error contextual en línea.
+- **Contextos HTTP sin TLS (HU14.4):**
+  - _Mitigación:_ Detección mediante `isGeolocationSupported()`, deshabilitando el control con aviso explicativo.
 
 ---
 
@@ -126,3 +169,6 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
 - **Frontend (Linting y Verificación de Flujo):**
   - Verificación con ESLint (`npm run lint`).
   - Comprobación manual de interacción en el mapa centrado en Málaga, apertura de Popup, despliegue del modal de detalle con `Timeline` condicional y cancelación limpia de creación.
+- **Frontend (Unitarios y Componente para HU14.4):**
+  - `geolocationUtils.test.js`: Verificación de `isGeolocationSupported`, resolución exitosa con redondeo a 6 decimales, mapeo de `PERMISSION_DENIED`, `POSITION_UNAVAILABLE` y `TIMEOUT`.
+  - `CreateIncidentModal.test.jsx`: Presencia del botón opcional, transición a estado cargando con `Obteniendo ubicación...` y bloqueo de submit, actualización de lat/lng a 6 decimales, despliegue del badge de éxito, mensaje ante permiso denegado manteniendo coordenadas previas, y botón deshabilitado si no hay soporte.

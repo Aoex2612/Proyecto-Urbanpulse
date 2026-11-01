@@ -1,5 +1,5 @@
 # Spec 003 — Mapa de Incidencias con Leaflet y Auditoría Transversal
-**Estado:** implementado ✅
+**Estado:** en curso (incorporación de HU14.4)
 
 ## Contexto y objetivo
 Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva centrada en el territorio mediante un mapa basado en Leaflet, facilitando tanto la visualización de las incidencias no terminadas en la ciudad de Málaga como la captura geolocalizada precisa para dar de alta nuevos avisos. Asimismo, garantizar la trazabilidad transversal y rendición de cuentas del ciclo de vida de cada incidencia mediante el registro inmutable de sus transiciones de estado (`status_changes`) y la visualización de una línea temporal (Timeline) de auditoría accesible para el rol de administración, diseñada de forma modular para admitir futura extensión a otros roles operativos.
@@ -16,6 +16,7 @@ Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva cen
 - **H2 (Reporte Geolocalizado Asistido por Mapa):** Como ciudadano quiero activar el modo de creación de incidencia y marcar con un clic el punto exacto en el mapa para asociar automáticamente las coordenadas geográficas al formulario básico del aviso.
 - **H3 (Auditoría Inmutable de Estados):** Como sistema quiero persistir un registro histórico auditable cada vez que una incidencia cambie de estado, vinculando automáticamente el usuario responsable a partir de su token JWT.
 - **H4 (Consulta Histórica y Línea Temporal):** Como administrador quiero consultar el historial cronológico de cambios de estado de una incidencia en su modal de detalle para auditar quién realizó cada transición, en qué fecha y bajo qué justificación.
+- **H5 (HU14.4 - Captura de Ubicación Actual en Reporte):** Como usuario que da de alta una incidencia, quiero pulsar el botón opcional "Usar mi ubicación actual" dentro del bloque de coordenadas del formulario para asociar automáticamente las coordenadas de mi dispositivo sin necesidad de fijarlas a mano sobre el mapa interactivo.
 
 ## Requisitos funcionales (criterios de aceptación en EARS)
 
@@ -47,11 +48,31 @@ Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva cen
 - **RF-19:** MIENTRAS el usuario activo en sesión no disponga de rol `ADMIN`, EL SISTEMA omitirá la visualización del componente `Timeline` en el modal de detalle de la incidencia.
 - **RF-20:** EL SISTEMA estructurará el componente `Timeline` en frontend y la capa de servicios en backend de forma desacoplada y modular, de tal forma que habilitar la visualización del historial al rol `OPERATOR` en futuras iteraciones requiera únicamente actualizar la política de autorización sin refactorizar la lógica central.
 
+### Captura Opcional de Ubicación Actual con Geolocalización en Alta (HU14.4)
+- **RF-21:** CUANDO el usuario abre el formulario modal de alta de incidencia, EL SISTEMA mostrará un botón opcional con el texto "Usar mi ubicación actual" e icono de geoposicionamiento en el bloque de coordenadas geográficas.
+- **RF-22:** CUANDO el usuario pulsa el botón "Usar mi ubicación actual", EL SISTEMA solicitará al navegador las coordenadas de latitud y longitud del dispositivo.
+- **RF-23:** MIENTRAS se procesa la consulta de geolocalización, EL SISTEMA mantendrá deshabilitado el botón "Usar mi ubicación actual".
+- **RF-24:** MIENTRAS se procesa la consulta de geolocalización, EL SISTEMA mostrará en dicho botón el texto "Obteniendo ubicación..." acompañado de un indicador animado de actividad.
+- **RF-25:** MIENTRAS se procesa la consulta de geolocalización, EL SISTEMA bloqueará el botón de envío del formulario para evitar registros con coordenadas incompletas o transitorias.
+- **RF-26:** CUANDO la consulta de geolocalización finaliza satisfactoriamente, EL SISTEMA actualizará los campos de latitud y longitud con los valores obtenidos expresados con 6 decimales.
+- **RF-27:** CUANDO se actualizan las coordenadas con la posición actual obtenida, EL SISTEMA desplegará una etiqueta visual informativa con el texto "Ubicación actual obtenida".
+- **RF-28:** CUANDO finaliza la consulta de geolocalización, EL SISTEMA restaurará el botón a su estado interactivo original para permitir reintentos posteriores.
+- **RF-29:** SI el usuario rechaza o revoca el permiso de geolocalización en su navegador, ENTONCES EL SISTEMA mostrará un mensaje de error contextual en línea bajo las coordenadas indicando que el permiso fue denegado y que puede mantener el punto marcado en el mapa.
+- **RF-30:** SI la consulta de geolocalización supera un tiempo límite de 10 segundos sin respuesta, ENTONCES EL SISTEMA cancelará la solicitud y mostrará un mensaje de error contextual en línea indicando que se agotó el tiempo de espera.
+- **RF-31:** SI el dispositivo no puede determinar su posición geográfica por falta de cobertura GPS o señal de red, ENTONCES EL SISTEMA mostrará un mensaje de error contextual en línea indicando que la posición no está disponible.
+- **RF-32:** SI ocurre cualquier error durante la obtención de la geolocalización, ENTONCES EL SISTEMA preservará intactas las coordenadas que estuviesen previamente cargadas en el formulario sin bloquear la edición de los demás campos.
+- **RF-33:** SI el navegador o entorno de ejecución no dispone de soporte para la API de geolocalización, ENTONCES EL SISTEMA presentará el botón "Usar mi ubicación actual" deshabilitado con el mensaje informativo "Geolocalización no disponible en este navegador".
+- **RF-34:** CUANDO el usuario completa y envía con éxito el formulario habiendo empleado la ubicación actual, EL SISTEMA cerrará el modal, posicionará el nuevo marcador en dichas coordenadas e iniciará un centrado suave de la cámara del mapa hacia ese punto.
+- **RF-35:** SI el usuario cancela o cierra el modal de alta tras haber obtenido su ubicación actual, ENTONCES EL SISTEMA descartará las coordenadas capturadas y mantendrá el encuadre cartográfico previo sin fijar marcadores residuales.
+
 ## Requisitos no funcionales
 - **Seguridad perimetral y RBAC:** El endpoint de historial está protegido en Spring Security garantizando acceso exclusivo a la autoridad `ROLE_ADMIN`. La identidad del actor en cambios de estado se toma inmutablemente del `SecurityContextHolder` (JWT firmado), imposibilitando la suplantación de identidad (`changed_by_user_id`).
 - **Inmutabilidad de auditoría:** Los registros de `status_changes` son estrictamente de solo lectura y append-only; no existen endpoints de modificación (`PUT`/`PATCH`) ni borrado (`DELETE`) sobre el historial.
 - **Modularidad y desacoplamiento:** El componente `Timeline` se concibe desacoplado del mapa, permitiendo su inserción en paneles de operador o vistas dedicadas de detalle con mínimo esfuerzo.
 - **Rendimiento cartográfico:** El mapa gestiona marcadores de forma ligera sin bloquear el hilo principal del navegador ni provocar re-renderizados innecesarios del lienzo de Leaflet.
+- **Accesibilidad en geolocalización:** El botón y las alertas contextuales de error deben incorporar atributos accesibles (`aria-live="polite"`, `role="alert"` en fallos) y contraste cromático superior a 4.5:1 (conforme a WCAG 2.1 AA).
+- **Precisión submétrica:** Las coordenadas capturadas con geolocalización deben formatearse con una precisión de 6 dígitos decimales (aproximación de 0.1 metros).
+- **Privacidad y consentimiento explícito:** La captura de ubicación se ejecuta de manera estrictamente voluntaria bajo demanda activa del usuario mediante clic; no se efectuarán peticiones automáticas de posición en segundo plano.
 
 ## Casos límite
 - Incidencia sin transiciones de estado previas: al consultar el historial de una incidencia recién creada, `GET /api/incidents/{id}/history` responderá con una lista vacía `[]` y el `Timeline` mostrará un estado informativo indicando que la incidencia permanece en su estado original de reporte.
@@ -59,12 +80,18 @@ Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva cen
 - Token JWT expirado mientras el usuario interactúa con el mapa o envía el formulario: el interceptor de Axios intercepta el 401 y redirige de forma limpia a `/login`.
 - Intentos de forzar estados no definidos en el enum del dominio: Hibernate y Bean Validation rechazan la entrada con código HTTP 400 antes de acceder a la base de datos.
 - Descarte de selección: pulsar cancelar cierra el modal y no deja marcas residuales en el lienzo de Leaflet.
+- Pulsación múltiple o concurrente sobre el botón de geolocalización: el botón permanece deshabilitado mientras se resuelve la posición del GPS, previniendo solicitudes duplicadas al hardware.
+- Cancelación prematura del modal durante la consulta GPS: si el usuario cierra el formulario mientras la petición de geolocalización está pendiente, la promesa asíncrona descarta la actualización de estado de forma segura sin provocar advertencias de fuga de memoria.
+- Contextos no seguros (sin HTTPS): el sistema detecta la ausencia o restricción de la API y presenta el control deshabilitado con texto explicativo.
 
 ## Fuera de alcance
 - Adjuntos multimedia (fotografías o vídeos) vinculados a la incidencia o a las transiciones.
 - Asignación de incidencias a técnicos y departamentos específicos (`assignments`) y vistas filtradas por técnico asignado.
 - Algoritmos de deduplicación geográfica o inferencia automática de proximidad con activos urbanos (`urban_assets`).
 - Pantalla global de volcado o exportación de auditoría completa para toda la base de datos.
+- Modo de seguimiento continuo o rastreo en tiempo real de la posición del usuario a medida que se desplaza por la ciudad (HU14.4).
+- Geocodificación inversa o deducción textual de la dirección física (nombre de calle o número de portal) (HU14.4).
+- Inclusión del botón de ubicación actual fuera del formulario modal de alta (HU14.4).
 
 ## Criterios de aceptación
 - [x] Endpoint `GET /api/incidents` implementado y protegido para devolver la lista de incidencias no terminadas (`status NOT IN ('CLOSED', 'REJECTED')`) para el mapa.
@@ -79,6 +106,14 @@ Proporcionar a los usuarios de UrbanPulse una experiencia visual interactiva cen
 - [x] Formulario de alta con selector desplegable de categoría predefinida y descarte limpio de coordenadas si se cancela.
 - [x] Suite de pruebas unitarias y de integración de backend pasando satisfactoriamente (`mvn clean test`).
 - [x] Verificación de estilo y sintaxis de frontend sin errores (`npm run lint`).
+- [ ] Botón opcional "Usar mi ubicación actual" visible e interactivo en el bloque de coordenadas geográficas del formulario modal de alta (HU14.4).
+- [ ] Estado de carga activo durante la petición con texto "Obteniendo ubicación...", icono animado y bloqueo de envío del formulario (HU14.4).
+- [ ] Actualización exitosa de los campos de latitud y longitud con 6 decimales y despliegue del distintivo visual "Ubicación actual obtenida" (HU14.4).
+- [ ] Manejo contextual de errores en línea bajo el bloque de coordenadas ante permisos denegados, superación del tiempo límite (10s) o señal inaccesible, manteniendo las coordenadas previas (HU14.4).
+- [ ] Botón deshabilitado con texto aclaratorio cuando el entorno o navegador no ofrezca compatibilidad con geolocalización (HU14.4).
+- [ ] Animación de centrado suave de la vista cartográfica hacia la nueva incidencia al guardar satisfactoriamente el reporte (HU14.4).
+- [ ] Descarte limpio de las coordenadas capturadas al cancelar o cerrar el formulario modal (HU14.4).
+- [ ] Cobertura completa de pruebas unitarias verificando todos los estados visuales (inactivo, cargando, éxito, error, no soportado) y verificación de lint en verde (HU14.4).
 
 ## Dudas abiertas
 _Todas las aclaraciones y ambigüedades detectadas por QA han sido resueltas y consensuadas._
