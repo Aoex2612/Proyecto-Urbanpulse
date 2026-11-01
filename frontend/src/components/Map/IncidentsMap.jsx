@@ -5,7 +5,8 @@
  * coordenadas geograficas mediante eventos de clic sobre el lienzo cartografico.
  */
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import { createColoredMarkerIcon } from '../../utils/leafletIcons';
 import {
   DEFAULT_MAP_CENTER,
@@ -39,6 +40,32 @@ function MapEventsHandler({ isSelectingLocation, onLocationSelected }) {
 
   return null;
 }
+/**
+ * Subcomponente interno que ejecuta el centrado suave del mapa (flyTo) cuando
+ * se reciben nuevas coordenadas de foco tras la creacion de una incidencia (RF-34).
+ *
+ * @param {Object} props
+ * @param {{lat: number, lng: number}|null} props.focusCoords - Coordenadas destino del vuelo cartografico.
+ * @param {Function} [props.onFocusConsumed] - Callback para limpiar las coordenadas tras el flyTo.
+ * @returns {null}
+ */
+function MapFlyToController({ focusCoords, onFocusConsumed }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (focusCoords && focusCoords.lat != null && focusCoords.lng != null) {
+      map.flyTo([focusCoords.lat, focusCoords.lng], 16, {
+        animate: true,
+        duration: 1.2,
+      });
+      if (onFocusConsumed) {
+        onFocusConsumed();
+      }
+    }
+  }, [focusCoords, map, onFocusConsumed]);
+
+  return null;
+}
 
 /**
  * Componente principal de visualizacion cartografica de incidencias con Leaflet.
@@ -52,6 +79,8 @@ function MapEventsHandler({ isSelectingLocation, onLocationSelected }) {
  * @param {[number, number]} [props.center=DEFAULT_MAP_CENTER] - Coordenadas iniciales del centro cartografico.
  * @param {number} [props.zoom=DEFAULT_MAP_ZOOM] - Nivel inicial de zoom.
  * @param {string} [props.className=''] - Clases CSS adicionales para el contenedor.
+ * @param {{lat: number, lng: number}|null} [props.focusCoords=null] - Coordenadas destino para centrado suave flyTo tras alta de incidencia (RF-34).
+ * @param {Function} [props.onFocusConsumed] - Callback invocado tras ejecutar el flyTo para limpiar las coordenadas (RF-34).
  * @returns {import('react').JSX.Element} Vista del mapa interactivo con OpenStreetMap.
  */
 export default function IncidentsMap({
@@ -63,6 +92,8 @@ export default function IncidentsMap({
   center = DEFAULT_MAP_CENTER,
   zoom = DEFAULT_MAP_ZOOM,
   className = '',
+  focusCoords = null,
+  onFocusConsumed,
 }) {
   // Filtrar unicamente aquellas incidencias que presenten coordenadas geograficas numericas validas
   const validIncidents = incidents.filter(
@@ -115,6 +146,9 @@ export default function IncidentsMap({
           isSelectingLocation={isSelectingLocation}
           onLocationSelected={onLocationSelected}
         />
+
+        {/* Controlador de centrado suave flyTo tras alta de incidencia (RF-34) */}
+        <MapFlyToController focusCoords={focusCoords} onFocusConsumed={onFocusConsumed} />
 
         {/* Marcadores de incidencias urbanas registradas */}
         {validIncidents.map((incident) => {

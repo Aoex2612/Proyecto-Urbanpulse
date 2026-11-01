@@ -42,6 +42,9 @@ export default function MapPage() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Coordenadas de foco cartografico para centrado suave tras alta de incidencia (RF-34)
+  const [focusCoords, setFocusCoords] = useState(null);
+
   // Estados de flujo de inspeccion de detalle
   const [selectedIncident, setSelectedIncident] = useState(null);
 
@@ -131,18 +134,22 @@ export default function MapPage() {
 
   /**
    * Descarta la seleccion de coordenadas y cierra el modal de alta sin persistir datos (RF-9).
+   * RF-35: focusCoords permanece null al cancelar porque solo se actualiza en handleIncidentCreated
+   * (creacion exitosa), garantizando que el flyTo no se dispara en cancelaciones.
    *
    * @returns {void}
    */
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
     setSelectedLocation(null);
+    // RF-35: focusCoords no se modifica aqui; permanece null para evitar flyTo no deseado
   };
 
   /**
-   * Callback invocado tras la creacion exitosa de una nueva incidencia (RF-11).
+   * Callback invocado tras la creacion exitosa de una nueva incidencia (RF-11, RF-34).
    * Incorpora inmediatamente la nueva incidencia al estado para reflejar su marcador
-   * en el mapa y despliega una notificacion de confirmacion.
+   * en el mapa, establece las coordenadas de foco para el centrado suave flyTo (RF-34)
+   * y despliega una notificacion de confirmacion.
    *
    * @param {Object} newIncident - Incidencia devuelta por la API con HTTP 201.
    * @returns {void}
@@ -156,6 +163,9 @@ export default function MapPage() {
     }
     setIsCreateModalOpen(false);
     setSelectedLocation(null);
+    if (newIncident) {
+      setFocusCoords({ lat: newIncident.latitude, lng: newIncident.longitude });
+    }
     setToastMessage('¡Incidencia registrada con exito y posicionada en el mapa!');
   };
 
@@ -361,6 +371,8 @@ export default function MapPage() {
             onSelectIncident={handleSelectIncident}
             selectedLocation={selectedLocation}
             className="map-view-fullscreen"
+            focusCoords={focusCoords}
+            onFocusConsumed={() => setFocusCoords(null)}
           />
         )}
       </main>

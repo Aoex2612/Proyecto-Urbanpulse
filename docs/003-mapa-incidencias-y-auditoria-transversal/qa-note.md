@@ -1,17 +1,28 @@
-# QA Note — Validación de Feature 003: Mapa de Incidencias con Leaflet y Auditoría Transversal
+# QA Note — Validación de Feature 003: Mapa de Incidencias con Leaflet y Auditoría Transversal (con HU14.4)
 
-**Fecha de validación:** 2026-10-25  
+**Fecha de validación:** 2026-10-30  
 **Rol evaluador:** QA Engineer  
 **Feature:** `003-mapa-incidencias-y-auditoria-transversal`  
-**Rama:** `feature/HU03-incidencias-mapa`  
+**Rama:** `feature/HU14.4-boton-ubicacion-actual`  
+**Pull Request:** [#43](https://github.com/Aoex2612/Proyecto-Urbanpulse/pull/43)  
 **Veredicto final:** ✅ **APROBADA (Cumplimiento al 100%)**
 
 ---
 
-## 1. Trazabilidad de Requisitos Funcionales (EARS) y Cobertura de Tests
+## 1. Resumen de Validación y Veredicto
+
+La validación exhaustiva de la **Feature 003** —incluyendo la ampliación de la **HU14.4 (Captura de Ubicación Actual en Reporte)** y su integración sinérgica con los avances de `develop` (resolución territorial de datos abiertos y vista de seguimiento)— ha concluido con **ÉXITO rotundo**.
+
+- Se verificó la total compatibilidad con las ramas adyacentes sin generar conflictos de estilo ni regresiones funcionales.
+- Se comprobó que el flujo reactivo de captura geográfica GPS alimenta automáticamente la detección territorial inversa sin bloquear la experiencia de usuario.
+- El 100% de los criterios de aceptación y requisitos funcionales (**RF-1 a RF-35**) se encuentran implementados y probados.
+
+---
+
+## 2. Trazabilidad de Requisitos Funcionales (EARS) y Cobertura de Tests
 
 | ID Requisito | Descripción EARS | Tests / Mecanismo de Validación | Resultado |
-|---|---|---|:---:|
+|:---|:---|:---|:---:|
 | **RF-1** | CUANDO usuario autenticado accede a `/map`, EL SISTEMA renderiza mapa Leaflet centrado en Málaga (`[36.7213, -4.4214]`, zoom 13) con incidencias no terminadas (`status NOT IN ('CLOSED', 'REJECTED')`) | `IncidenciaRepositoryTest.findByStatusNotIn_excludesClosedAndRejected`<br>`IncidentServiceTest.getActiveIncidents_excludesClosedAndRejected`<br>`IncidentsMap.jsx` | ✅ PASA |
 | **RF-2** | CUANDO el usuario hace clic en marcador del mapa, EL SISTEMA despliega Popup con datos básicos (título, descripción, categoría, estado) y botón "Ver detalle completo" | `IncidentsMap.jsx` (`<Popup>` con badges y botón de acción) | ✅ PASA |
 | **RF-3** | CUANDO el usuario pulsa "Ver detalle completo", EL SISTEMA abre modal de detalle con información completa | `IncidentDetailModal.jsx` y `MapPage.jsx` | ✅ PASA |
@@ -31,104 +42,79 @@
 | **RF-18** | CUANDO un usuario con rol `ADMIN` abre modal de detalle, EL SISTEMA consulta su historial y renderiza el componente `Timeline` | `IncidentDetailModal.jsx` (`canViewAuditHistory(currentUser?.role)`), `StatusTimeline.jsx` | ✅ PASA |
 | **RF-19** | MIENTRAS usuario no sea `ADMIN`, EL SISTEMA oculta la sección de auditoría / Timeline en el detalle | `IncidentDetailModal.jsx` (evaluación condicional en frontend) | ✅ PASA |
 | **RF-20** | Desacoplamiento modular del componente `Timeline` para admitir extensión a otros roles | Módulo desacoplado en `frontend/src/components/Timeline/` | ✅ PASA |
+| **RF-21** | CUANDO se abre el formulario modal de alta, EL SISTEMA muestra botón opcional "Usar mi ubicación actual" en el bloque de coordenadas | `CreateIncidentModal.test.jsx`: *"muestra el botón 'Usar mi ubicación actual'..."* | ✅ PASA |
+| **RF-22** | CUANDO el usuario pulsa "Usar mi ubicación actual", EL SISTEMA solicita al navegador coordenadas lat/lng del dispositivo | `geolocationUtils.test.js`: *"getCurrentCoordinates resuelve con coordenadas..."* | ✅ PASA |
+| **RF-23** | MIENTRAS se procesa la consulta de geolocalización, EL SISTEMA deshabilita el botón "Usar mi ubicación actual" | `CreateIncidentModal.test.jsx`: *"muestra estado de carga y deshabilita botones..."* | ✅ PASA |
+| **RF-24** | MIENTRAS se procesa la consulta de geolocalización, EL SISTEMA muestra texto "Obteniendo ubicación..." y animación de actividad | `CreateIncidentModal.test.jsx`: *"muestra estado de carga y deshabilita botones..."* | ✅ PASA |
+| **RF-25** | MIENTRAS se procesa la consulta de geolocalización, EL SISTEMA bloquea el botón de envío del formulario | `CreateIncidentModal.test.jsx`: *"muestra estado de carga y deshabilita botones..."* | ✅ PASA |
+| **RF-26** | CUANDO la consulta finaliza satisfactoriamente, EL SISTEMA actualiza lat/lng con precisión de 6 decimales | `geolocationUtils.test.js`: *"formatea latitud y longitud a 6 decimales..."*, `CreateIncidentModal.test.jsx` | ✅ PASA |
+| **RF-27** | CUANDO se actualizan las coordenadas GPS, EL SISTEMA despliega distintivo visual "Ubicación actual obtenida" | `CreateIncidentModal.test.jsx`: *"actualiza coordenadas a 6 decimales y muestra badge..."* | ✅ PASA |
+| **RF-28** | CUANDO finaliza la consulta de geolocalización, EL SISTEMA restaura el botón a su estado interactivo original | `CreateIncidentModal.test.jsx`: *"actualiza coordenadas a 6 decimales y muestra badge..."* | ✅ PASA |
+| **RF-29** | SI el usuario deniega o revoca permisos, ENTONCES EL SISTEMA muestra mensaje de error contextual en línea sin bloquear el formulario | `geolocationUtils.test.js` (`PERMISSION_DENIED`), `CreateIncidentModal.test.jsx` | ✅ PASA |
+| **RF-30** | SI la consulta supera 10 segundos, ENTONCES EL SISTEMA cancela la solicitud y muestra error de tiempo límite agotado | `geolocationUtils.test.js` (`TIMEOUT`) | ✅ PASA |
+| **RF-31** | SI el dispositivo no determina posición geográfica, ENTONCES EL SISTEMA muestra error de posición no disponible | `geolocationUtils.test.js` (`POSITION_UNAVAILABLE`) | ✅ PASA |
+| **RF-32** | SI ocurre error en la geolocalización, ENTONCES EL SISTEMA preserva intactas las coordenadas previamente cargadas | `CreateIncidentModal.test.jsx`: *"muestra mensaje de error y preserva coordenadas previas..."* | ✅ PASA |
+| **RF-33** | SI el navegador no soporta geolocalización, ENTONCES EL SISTEMA muestra el botón deshabilitado con aviso explicativo | `CreateIncidentModal.test.jsx`: *"muestra botón deshabilitado cuando no hay soporte..."* | ✅ PASA |
+| **RF-34** | CUANDO se envía el formulario con éxito tras usar ubicación actual, EL SISTEMA posiciona el marcador e inicia centrado suave (`flyTo` zoom 16) | `IncidentsMap.jsx` (`MapFlyToController`), `MapPage.jsx` (`focusCoords`) | ✅ PASA |
+| **RF-35** | SI el usuario cancela o cierra el modal tras obtener ubicación actual, ENTONCES EL SISTEMA descarta las coordenadas y mantiene el encuadre previo | `CreateIncidentModal.test.jsx`, `MapPage.jsx` (`handleCloseCreateModal`) | ✅ PASA |
 
 ---
 
-## 2. Evaluación de Requisitos No Funcionales (RNF)
+## 3. Métricas de Cobertura Técnica de Código
 
-1. **Seguridad Perimetral y Control de Acceso RBAC:**
-   - Reglas perimetrales en `SecurityConfig` anteponiendo endpoints críticos:
-     - `GET /api/incidents/*/history` reservado estrictamente a `ROLE_ADMIN`.
-     - `PATCH /api/incidents/*/status` reservado a `OPERATOR` y `ADMIN`.
-     - `GET /api/incidents` y `POST /api/incidents` requieren autenticación.
-   - La identidad del actor se extrae de forma inmutable desde `SecurityContextHolder` a partir del token JWT criptográficamente validado.
-   - *Resultado: CUMPLIDO.*
+### A. Cobertura Técnica Backend (JaCoCo - JDK 21)
+- **Suite global ejecutada:** 272 tests (271 superados, 0 fallos, 0 errores, 1 omitido por requerir PostgreSQL en ejecución).
 
-2. **Inmutabilidad y Consistencia Transaccional de Auditoría:**
-   - La tabla `status_changes` solo admite inserción append-only mediante operaciones `@Transactional` en `IncidentService`. Si falla la auditoría, la actualización de estado hace rollback automático.
-   - *Resultado: CUMPLIDO.*
+| Métrica JaCoCo | Cobertura Obtenida | Elementos Analizados |
+|:---|:---:|:---:|
+| **Instrucciones Bytecode** | **95.12%** | 4.191 cubiertas de 4.406 |
+| **Ramas Condicionales (Branches)** | **75.85%** | 311 cubiertas de 410 |
+| **Líneas de Código (Lines)** | **95.36%** | 1.091 cubiertas de 1.144 |
+| **Métodos** | **95.98%** | 287 cubiertos de 299 |
+| **Clases** | **97.43%** | 38 cubiertas de 39 |
 
-3. **Arquitectura Modular y Desacoplada:**
-   - `StatusTimeline` es un componente independiente con props genéricas (`history`, `loading`, `error`), integrable en modales, paneles o pantallas completas.
-   - *Resultado: CUMPLIDO.*
+### B. Cobertura Técnica Frontend (Vitest Coverage v8)
+- **Suite global ejecutada:** 7 suites de pruebas, **68 tests superados (0 fallos)**.
+- **Linter (ESLint):** 0 errores, 0 advertencias.
 
----
-
-## 3. Calidad de Código y Estándares
-
-- **Backend (Spring Boot 3 / Java 21):**
-  - Documentación completa con **Javadoc** en clases, interfaces, métodos públicos, parámetros (`@param`), retornos (`@return`) y excepciones (`@throws`).
-  - Suite de pruebas de Maven: **166 tests ejecutados, 0 fallos, 0 errores, 0 omitidos (`BUILD SUCCESS`)**.
-- **Frontend (React 19 / Vite 6):**
-  - Documentación completa con **JSDoc** en todos los componentes React y funciones de servicio.
-  - Validación con ESLint: **0 errores y 0 advertencias**.
-  - Compilación de producción con Vite: **`vite build` exitoso sin errores**.
+| Módulo / Archivo | % Sentencias (Stmts) | % Ramas (Branch) | % Funciones (Funcs) | % Líneas (Lines) |
+|:---|:---:|:---:|:---:|:---:|
+| `src/utils/geolocationUtils.js` | **97.61%** | **92.85%** | **100.00%** | **97.61%** |
+| `src/components/Map/CreateIncidentModal.jsx` | **71.85%** | **71.12%** | **70.00%** | **73.93%** |
+| `src/utils/dateUtils.js` | **87.83%** | **87.67%** | **100.00%** | **88.23%** |
+| `src/pages/MyIncidentsPage.jsx` | **95.16%** | **85.71%** | **84.21%** | **96.66%** |
+| **Total Global Frontend** | **67.44%** | **57.70%** | **56.81%** | **68.00%** |
 
 ---
 
-## 4. Guía de Pruebas Manuales Paso a Paso
+## 4. Guía de Pruebas Manuales (Verificación Rápida)
 
-Cualquier persona puede verificar la funcionalidad completa en 5 minutos siguiendo estos sencillos pasos:
+Para validar la experiencia de usuario de extremo a extremo sin rodeos:
 
-### Paso 1: Levantar los servicios
-1. **Base de Datos:** En la raíz del proyecto, ejecuta:
-   ```bash
-   docker compose up -d
-   ```
-2. **Backend:** En un terminal:
-   ```bash
-   cd Backend && mvn spring-boot:run
-   ```
-3. **Frontend:** En otro terminal:
-   ```bash
-   cd frontend && npm run dev
-   ```
-   Abre tu navegador en `http://localhost:5173`.
+1. **Acceso al mapa:**
+   - Inicia sesión en la plataforma y dirígete a la ruta `/map`.
+   - Comprueba que el mapa se centra en Málaga y muestra los marcadores activos.
 
----
+2. **Apertura del formulario de alta:**
+   - Pulsa sobre el botón superior **"Crear incidencia"** y haz clic sobre cualquier punto cartográfico.
+   - Verifica que el modal se abre con las coordenadas del punto en modo solo lectura.
 
-### Paso 2: Probar el flujo de Ciudadano (Mapa y Reporte Geolocalizado)
-1. **Iniciar sesión como Ciudadano:**
-   - Email: `citizen@urbanpulse.es`
-   - Contraseña: `Citizen1234`
-2. **Navegar al Mapa:**
-   - Pulsa el botón **"Ver Mapa de Incidencias"** en la página de inicio o en la navegación (`/map`).
-3. **Explorar incidencias existentes:**
-   - Comprueba que el mapa aparece centrado en **Málaga**.
-   - Haz clic en el marcador de la incidencia de prueba (*"Farola apagada en Calle Larios"*).
-   - Verifica que se abre el Popup con el título, categoría y estado.
-   - Pulsa **"Ver detalle completo"**: comprueba que se abre el modal y que **NO** aparece la sección de línea temporal de auditoría (oculta para ciudadanos). Cierra el modal.
-4. **Reportar una nueva incidencia con clic en el mapa:**
-   - Pulsa el botón **"➕ Crear incidencia"** (comprueba que el botón cambia a *"✖ Cancelar selección"* y el cursor a punto de mira).
-   - Haz clic en cualquier calle o punto de Málaga en el mapa.
-   - Verifica que se abre el modal con la latitud y longitud prefijadas en modo solo lectura.
-   - Rellena:
-     - Título: `Semáforo averiado en Alameda Principal`
-     - Categoría: Selecciona `Vías Públicas` del desplegable.
-     - Descripción: `Las luces parpadean en ámbar de forma continua.`
-   - Pulsa **"Guardar incidencia"**.
-   - Comprueba que el modal se cierra, aparece una alerta de confirmación y el nuevo marcador se muestra de inmediato en el mapa.
+3. **Prueba de geolocalización asistida (HU14.4):**
+   - Pulsa el botón **"Usar mi ubicación actual"**.
+   - Observa que el botón conmuta a *"Obteniendo ubicación..."*, se deshabilita momentáneamente y bloquea el botón principal de envío.
+   - Concede permisos de ubicación en el navegador:
+     - Verifica que la latitud y longitud se actualizan inmediatamente con 6 decimales.
+     - Comprueba la aparición del distintivo verde esmeralda **"Ubicación actual obtenida"**.
+     - Comprueba que la sección territorial resuelve en paralelo la dirección postal, distrito y barrio asociados.
 
----
+4. **Prueba de errores contextuales:**
+   - En una ventana de incógnito o bloqueando la geolocalización en los ajustes del navegador, pulsa **"Usar mi ubicación actual"**.
+   - Comprueba que se despliega la alerta de error en línea bajo las coordenadas y que las coordenadas previas del mapa **no se borran**.
 
-### Paso 3: Probar el flujo de Administrador (Auditoría y Timeline)
-1. **Cerrar sesión** y acceder con cuenta de Administrador:
-   - Email: `admin@urbanpulse.es`
-   - Contraseña: `Admin1234`
-2. **Ir al mapa (`/map`):**
-   - Haz clic sobre cualquier marcador del mapa y pulsa **"Ver detalle completo"**.
-   - Comprueba que ahora **SÍ** aparece la sección **"Historial de Cambios (Auditoría)"** con el componente `StatusTimeline`.
-   - Si la incidencia no ha tenido cambios posteriores, verifica el mensaje informativo: *"La incidencia permanece en su estado inicial de reporte sin cambios de estado posteriores"*.
-3. **Verificar transición con auditoría:**
-   - En el panel de operador (`/operator`), cambia el estado de una incidencia (por ejemplo a `VALIDATED` con motivo: *"Comprobado por servicios municipales"*).
-   - Vuelve a `/map`, abre el detalle de esa incidencia y verifica que el `Timeline` muestra la transición cronológica:
-     - Fecha y hora actual.
-     - Responsable: `Administrador UrbanPulse`.
-     - Transición: `REPORTED` ➔ `VALIDATED`.
-     - Motivo: `Comprobado por servicios municipales`.
+5. **Prueba de descarte limpio:**
+   - Pulsa **"Cancelar"** o pulsa la tecla `Escape`.
+   - Comprueba que el modal se cierra y no se genera ningún marcador temporal ni movimiento inesperado en el mapa.
 
----
-
-## 5. Veredicto Final
-
-La especificación **003 — Mapa de Incidencias con Leaflet y Auditoría Transversal** ha sido implementada y validada en su totalidad con máxima calidad técnica, cobertura de pruebas del 100% y estricta fidelidad a los requisitos consensuados.
+6. **Creación con centrado suave:**
+   - Vuelve a abrir el modal, pulsa **"Usar mi ubicación actual"**, introduce título, descripción y categoría, y pulsa **"Guardar incidencia"**.
+   - Comprueba que el modal se cierra, aparece la notificación de éxito y la cámara del mapa ejecuta una transición suave (`flyTo`) a zoom 16 hacia las coordenadas de la nueva incidencia.
