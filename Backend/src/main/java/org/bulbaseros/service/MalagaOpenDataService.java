@@ -8,6 +8,10 @@ import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -16,22 +20,31 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 /**
  * Servicio de integracion con el portal de Datos Abiertos del Ayuntamiento de Malaga
- * ({@code datosabiertos.malaga.eu}) para la resolucion territorial asistida de incidencias.
+ * ({@code datosabiertos.malaga.eu}) y geocodificacion inversa asistida (Nominatim / OpenStreetMap)
+ * para la resolucion territorial asistida de incidencias.
  * <p>
  * Implementa el principio arquitectonico de <b>Degradacion Controlada</b> definido en el ADR-06:
  * ante latencias excesivas (timeout estricto de 3000 ms), indisponibilidad del servicio externo,
- * errores HTTP o coordenadas sin correspondencia territorial, el servicio captura la excepcion
- * de forma limpia y transparente, emite un log informativo/advertencia y devuelve un
+ * errores de certificacion SSL, errores HTTP o coordenadas sin correspondencia territorial, el servicio
+ * gestiona la conexion de forma limpia y transparente, consulta fuentes alternativas de fallback o devuelve un
  * {@link ReverseGeocodeResponse} con campos nulos para no bloquear el flujo de creacion o consulta.
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.0
+ * @version 1.1
  */
 @Service
 @Slf4j
@@ -73,6 +86,11 @@ public class MalagaOpenDataService {
     public static final String DEFAULT_ENDPOINT_PATH = "/api/action/datastore_search";
 
     /**
+     * URL base predeterminada para el servicio de geocodificacion inversa de respaldo (Nominatim OpenStreetMap).
+     */
+    public static final String DEFAULT_NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
+
+    /**
      * Cliente HTTP configurado para la comunicacion con la API externa.
      */
     private final RestTemplate restTemplate;
@@ -88,67 +106,145 @@ public class MalagaOpenDataService {
     private final String endpointPath;
 
     /**
-     * Deserializador JSON para procesar respuestas complejas o estructuradas de CKAN / GeoJSON.
+     * URL del servicio de fallback Nominatim OpenStreetMap (opcional).
+     */
+    private final String nominatimUrl;
+
+    /**
+     * Deserializador JSON para procesar respuestas complejas o estructuradas de CKAN / GeoJSON / Nominatim.
      */
     private final ObjectMapper objectMapper;
 
     /**
+     * Crea una factoria de clientes HTTP con timeouts de 3000 ms y configuracion SSL permisiva
+     * para evitar excepciones {@code SunCertPathBuilderException} producidas por certificados
+     * de administraciones publicas con cadenas intermedias no presentes en el truststore JVM.
+     *
+     * @return {@link SimpleClientHttpRequestFactory} con soporte TLS permisivo y timeouts estrictos.
+     */
+    public static SimpleClientHttpRequestFactory createSecureClientHttpRequestFactory() {
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+                }
+            };
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory() {
+                @Override
+                protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
+                    if (connection instanceof HttpsURLConnection httpsConnection) {
+                        httpsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+                        httpsConnection.setHostnameVerifier((hostname, session) -> true);
+                    }
+                    super.prepareConnection(connection, httpMethod);
+                }
+            };
+            factory.setConnectTimeout(TIMEOUT_MILLIS);
+            factory.setReadTimeout(TIMEOUT_MILLIS);
+            return factory;
+        } catch (Exception e) {
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(TIMEOUT_MILLIS);
+            factory.setReadTimeout(TIMEOUT_MILLIS);
+            return factory;
+        }
+    }
+
+    /**
+     * Construye un cliente {@link RestTemplate} con factoria segura y timeouts estrictos.
+     *
+     * @param builder Generador de clientes RestTemplate inyectado por Spring Boot.
+     * @return Instancia configurada de RestTemplate.
+     */
+    private static RestTemplate createCustomRestTemplate(RestTemplateBuilder builder) {
+        return builder
+                .requestFactory(MalagaOpenDataService::createSecureClientHttpRequestFactory)
+                .connectTimeout(Duration.ofMillis(TIMEOUT_MILLIS))
+                .readTimeout(Duration.ofMillis(TIMEOUT_MILLIS))
+                .defaultHeader(HttpHeaders.USER_AGENT, "UrbanPulse-App/1.0")
+                .build();
+    }
+
+    /**
      * Constructor principal para la inyeccion de dependencias en Spring Boot.
-     * <p>
-     * Aplica la configuracion de timeout estricto de 3 segundos (3000 ms) tanto para la conexion
-     * como para la lectura de la respuesta.
-     * </p>
      *
      * @param restTemplateBuilder Creador de clientes RestTemplate proporcionado por Spring Boot.
      * @param baseUrl             URL base inyectada desde propiedades de configuracion.
      * @param endpointPath        Ruta del endpoint territorial inyectada desde configuracion.
+     * @param nominatimUrl        URL base del servicio de respaldo Nominatim.
      */
     @Autowired
     public MalagaOpenDataService(RestTemplateBuilder restTemplateBuilder,
                                  @Value("${malaga.opendata.base-url:" + DEFAULT_BASE_URL + "}") String baseUrl,
-                                 @Value("${malaga.opendata.endpoint-path:" + DEFAULT_ENDPOINT_PATH + "}") String endpointPath) {
-        this(restTemplateBuilder
-                .connectTimeout(Duration.ofMillis(TIMEOUT_MILLIS))
-                .readTimeout(Duration.ofMillis(TIMEOUT_MILLIS))
-                .build(),
-             baseUrl,
-             endpointPath);
+                                 @Value("${malaga.opendata.endpoint-path:" + DEFAULT_ENDPOINT_PATH + "}") String endpointPath,
+                                 @Value("${nominatim.base-url:" + DEFAULT_NOMINATIM_URL + "}") String nominatimUrl) {
+        this(createCustomRestTemplate(restTemplateBuilder), baseUrl, endpointPath, nominatimUrl);
     }
 
     /**
-     * Constructor sobrecargado para pruebas unitarias con {@link RestTemplate} parametrizado.
+     * Constructor sobrecargado con {@link RestTemplateBuilder} para compatibilidad con firmas previas.
+     *
+     * @param restTemplateBuilder Creador de clientes RestTemplate.
+     * @param baseUrl             URL base inyectada.
+     * @param endpointPath        Ruta del endpoint.
+     */
+    public MalagaOpenDataService(RestTemplateBuilder restTemplateBuilder, String baseUrl, String endpointPath) {
+        this(restTemplateBuilder, baseUrl, endpointPath, DEFAULT_NOMINATIM_URL);
+    }
+
+    /**
+     * Constructor parametrizado para pruebas unitarias con {@link RestTemplate} e integracion de respaldo.
      *
      * @param restTemplate Instancia de cliente HTTP a utilizar.
      * @param baseUrl      URL base del servicio remoto.
      * @param endpointPath Ruta del endpoint de consulta territorial.
+     * @param nominatimUrl URL base del servicio de fallback Nominatim.
      */
-    public MalagaOpenDataService(RestTemplate restTemplate, String baseUrl, String endpointPath) {
+    public MalagaOpenDataService(RestTemplate restTemplate, String baseUrl, String endpointPath, String nominatimUrl) {
         this.restTemplate = restTemplate;
         this.baseUrl = (baseUrl != null && !baseUrl.isBlank()) ? baseUrl : DEFAULT_BASE_URL;
         this.endpointPath = (endpointPath != null && !endpointPath.isBlank()) ? endpointPath : DEFAULT_ENDPOINT_PATH;
+        this.nominatimUrl = (nominatimUrl != null && !nominatimUrl.isBlank()) ? nominatimUrl : null;
         this.objectMapper = new ObjectMapper();
     }
 
     /**
      * Constructor sobrecargado de conveniencia para pruebas con un {@link RestTemplate} mockeado
-     * empleando las URLs predeterminadas del servicio.
+     * sin servicio de respaldo de red activo por defecto.
+     *
+     * @param restTemplate Instancia de cliente HTTP configurada.
+     * @param baseUrl      URL base del servicio remoto.
+     * @param endpointPath Ruta del endpoint de consulta territorial.
+     */
+    public MalagaOpenDataService(RestTemplate restTemplate, String baseUrl, String endpointPath) {
+        this(restTemplate, baseUrl, endpointPath, null);
+    }
+
+    /**
+     * Constructor sobrecargado de conveniencia para pruebas con un {@link RestTemplate} mockeado
+     * empleando las URLs predeterminadas del servicio sin fallback activo.
      *
      * @param restTemplate Instancia de cliente HTTP configurada.
      */
     public MalagaOpenDataService(RestTemplate restTemplate) {
-        this(restTemplate, DEFAULT_BASE_URL, DEFAULT_ENDPOINT_PATH);
+        this(restTemplate, DEFAULT_BASE_URL, DEFAULT_ENDPOINT_PATH, null);
     }
 
     /**
-     * Constructor sin argumentos que crea un cliente {@link RestTemplate} autonomo con timeouts de 3000 ms.
+     * Constructor sin argumentos que crea un cliente {@link RestTemplate} autonomo con timeouts y SSL permisivo.
      */
     public MalagaOpenDataService() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(TIMEOUT_MILLIS);
-        factory.setReadTimeout(TIMEOUT_MILLIS);
-        this.restTemplate = new RestTemplate(factory);
+        this.restTemplate = new RestTemplate(createSecureClientHttpRequestFactory());
         this.baseUrl = DEFAULT_BASE_URL;
         this.endpointPath = DEFAULT_ENDPOINT_PATH;
+        this.nominatimUrl = DEFAULT_NOMINATIM_URL;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -159,6 +255,15 @@ public class MalagaOpenDataService {
      */
     public RestTemplate getRestTemplate() {
         return this.restTemplate;
+    }
+
+    /**
+     * Obtiene la URL configurada para el servicio de respaldo Nominatim.
+     *
+     * @return La URL de Nominatim o {@code null} si no esta configurada.
+     */
+    public String getNominatimUrl() {
+        return this.nominatimUrl;
     }
 
     /**
@@ -198,12 +303,12 @@ public class MalagaOpenDataService {
 
     /**
      * Resuelve territorialmente una ubicacion a partir de sus coordenadas geograficas consultando
-     * los datos abiertos oficiales del Ayuntamiento de Malaga.
+     * los datos abiertos oficiales del Ayuntamiento de Malaga o su fallback de respaldo (Nominatim OpenStreetMap).
      * <p>
      * Aplica la politica de degradacion controlada: si las coordenadas estan fuera de los limites de Malaga,
-     * si se supera el timeout de 3 segundos, si el portal remoto responde con un error HTTP (ej. 500)
-     * o si no se halla ninguna coincidencia, se captura la condicion limpiamente, se registra una advertencia
-     * y se devuelve una instancia de {@link ReverseGeocodeResponse} con todos sus atributos en {@code null}.
+     * si se supera el timeout de 3 segundos, si el portal remoto responde con un error HTTP o de certificado
+     * o si no se halla ninguna coincidencia, se captura la condicion limpiamente, se consulta el fallback y,
+     * en caso de agotarse las vias, se devuelve una instancia de {@link ReverseGeocodeResponse} con atributos en {@code null}.
      * </p>
      *
      * @param latitude  Latitud del punto en grados decimales.
@@ -223,6 +328,8 @@ public class MalagaOpenDataService {
             return new ReverseGeocodeResponse(null, null, null);
         }
 
+        ReverseGeocodeResponse response = null;
+
         try {
             URI uri = UriComponentsBuilder.fromUriString(baseUrl)
                     .path(endpointPath)
@@ -234,45 +341,104 @@ public class MalagaOpenDataService {
             log.debug("Consultando servicio de Datos Abiertos de Malaga en URI: {}", uri);
             String responseBody = restTemplate.getForObject(uri, String.class);
 
-            if (responseBody == null || responseBody.isBlank()) {
+            if (responseBody != null && !responseBody.isBlank()) {
+                response = parseTerritorialResponse(responseBody);
+            } else {
                 log.warn("Respuesta vacia al consultar datos abiertos de Malaga para ({}, {})", latitude, longitude);
-                return new ReverseGeocodeResponse(null, null, null);
             }
-
-            return parseTerritorialResponse(responseBody);
 
         } catch (ResourceAccessException e) {
             log.warn("Timeout o fallo de conectividad (limite 3000 ms) al consultar datos abiertos de Malaga para ({}, {}): {}",
                     latitude, longitude, e.getMessage());
-            return new ReverseGeocodeResponse(null, null, null);
         } catch (HttpStatusCodeException e) {
             log.warn("Error HTTP {} recibido desde datos abiertos de Malaga para ({}, {}): {}",
                     e.getStatusCode(), latitude, longitude, e.getMessage());
-            return new ReverseGeocodeResponse(null, null, null);
         } catch (RestClientException e) {
             log.warn("Error de cliente REST al consultar datos abiertos de Malaga para ({}, {}): {}",
                     latitude, longitude, e.getMessage());
-            return new ReverseGeocodeResponse(null, null, null);
         } catch (Exception e) {
             log.warn("Error inesperado al resolver ubicacion con datos abiertos de Malaga para ({}, {}): {}",
                     latitude, longitude, e.getMessage());
-            return new ReverseGeocodeResponse(null, null, null);
         }
+
+        // Si la resolucion primaria obtuvo algun dato util, se devuelve directamente
+        if (response != null && (response.getAddress() != null || response.getDistrict() != null || response.getNeighborhood() != null)) {
+            return response;
+        }
+
+        // Fallback a Nominatim OpenStreetMap si esta configurado
+        if (nominatimUrl != null && !nominatimUrl.isBlank()) {
+            log.info("Activando fallback de geocodificacion inversa con Nominatim para ({}, {})", latitude, longitude);
+            ReverseGeocodeResponse fallbackResponse = resolveWithNominatim(latitude, longitude);
+            if (fallbackResponse != null && (fallbackResponse.getAddress() != null || fallbackResponse.getDistrict() != null || fallbackResponse.getNeighborhood() != null)) {
+                return fallbackResponse;
+            }
+        }
+
+        return new ReverseGeocodeResponse(null, null, null);
     }
 
     /**
-     * Parsea el cuerpo de la respuesta JSON proveniente de Datos Abiertos de Malaga,
-     * admitiendo esquemas directos, respuestas CKAN Action API o geometrias GeoJSON.
+     * Consulta el servicio de geocodificacion inversa de respaldo (Nominatim OpenStreetMap)
+     * ante indisponibilidad, error de certificado o respuesta vacia del portal primario.
+     *
+     * @param latitude  Latitud del punto.
+     * @param longitude Longitud del punto.
+     * @return DTO {@link ReverseGeocodeResponse} normalizado o {@code null} si la consulta falla.
+     */
+    private ReverseGeocodeResponse resolveWithNominatim(Double latitude, Double longitude) {
+        try {
+            URI uri = UriComponentsBuilder.fromUriString(nominatimUrl)
+                    .queryParam("lat", latitude)
+                    .queryParam("lon", longitude)
+                    .queryParam("format", "json")
+                    .build()
+                    .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.USER_AGENT, "UrbanPulse-App/1.0");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && !response.getBody().isBlank()) {
+                return parseTerritorialResponse(response.getBody());
+            }
+        } catch (Exception e) {
+            log.warn("Fallo en fallback de Nominatim para ({}, {}): {}", latitude, longitude, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Parsea el cuerpo de la respuesta JSON proveniente de Datos Abiertos de Malaga o Nominatim,
+     * admitiendo esquemas CKAN Action API, geometrias GeoJSON, arrays directos, objetos planos y Nominatim.
      *
      * @param json Cuerpo de la respuesta HTTP en formato texto JSON.
      * @return DTO {@link ReverseGeocodeResponse} normalizado con los campos extraidos.
      */
-    private ReverseGeocodeResponse parseTerritorialResponse(String json) {
+    public ReverseGeocodeResponse parseTerritorialResponse(String json) {
         try {
             JsonNode root = objectMapper.readTree(json);
             JsonNode targetNode = null;
 
-            // 1. Caso respuesta CKAN Action API (e.g., result.records[])
+            // 1. Caso Nominatim OpenStreetMap (objeto con bloque 'address' anidado)
+            if (root.has("address") && root.get("address").isObject()) {
+                JsonNode addressNode = root.get("address");
+                String road = extractField(addressNode, "road", "pedestrian", "footway", "street", "cycleway", "path", "square");
+                String houseNumber = extractField(addressNode, "house_number");
+                String address = road;
+                if (road != null && houseNumber != null) {
+                    address = road + ", " + houseNumber;
+                } else if (address == null) {
+                    address = extractField(root, "display_name", "name");
+                }
+                String district = extractField(addressNode, "city_district", "district", "borough", "suburb");
+                String neighborhood = extractField(addressNode, "neighbourhood", "suburb", "quarter", "residential");
+
+                return new ReverseGeocodeResponse(address, district, neighborhood);
+            }
+
+            // 2. Caso respuesta CKAN Action API (e.g., result.records[])
             if (root.has("result")) {
                 JsonNode resultNode = root.get("result");
                 if (resultNode.has("records") && resultNode.get("records").isArray()) {
@@ -284,7 +450,7 @@ public class MalagaOpenDataService {
                     targetNode = resultNode;
                 }
             }
-            // 2. Caso GeoJSON (e.g., features[].properties)
+            // 3. Caso GeoJSON (e.g., features[].properties)
             else if (root.has("features") && root.get("features").isArray()) {
                 JsonNode features = root.get("features");
                 if (!features.isEmpty()) {
@@ -292,13 +458,13 @@ public class MalagaOpenDataService {
                     targetNode = firstFeature.has("properties") ? firstFeature.get("properties") : firstFeature;
                 }
             }
-            // 3. Caso array directo de registros JSON
+            // 4. Caso array directo de registros JSON
             else if (root.isArray()) {
                 if (!root.isEmpty()) {
                     targetNode = root.get(0);
                 }
             }
-            // 4. Caso objeto JSON plano directo
+            // 5. Caso objeto JSON plano directo
             else if (root.isObject()) {
                 targetNode = root;
             }

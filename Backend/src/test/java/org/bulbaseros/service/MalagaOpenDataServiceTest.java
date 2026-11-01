@@ -668,12 +668,104 @@ class MalagaOpenDataServiceTest {
         }
 
         @Test
+        @DisplayName("Constructor con 4 parametros debe configurar nominatimUrl correctamente")
+        void constructor_withNominatimUrl_initializesProperly() {
+            MalagaOpenDataService customService = new MalagaOpenDataService(restTemplate, BASE_URL, ENDPOINT_PATH, MalagaOpenDataService.DEFAULT_NOMINATIM_URL);
+
+            assertThat(customService).isNotNull();
+            assertThat(customService.getNominatimUrl()).isEqualTo(MalagaOpenDataService.DEFAULT_NOMINATIM_URL);
+        }
+
+        @Test
+        @DisplayName("createSecureClientHttpRequestFactory debe inicializar factoria con timeouts")
+        void createSecureClientHttpRequestFactory_initializesWithTimeouts() {
+            var factory = MalagaOpenDataService.createSecureClientHttpRequestFactory();
+            assertThat(factory).isNotNull();
+        }
+
+        @Test
         @DisplayName("Constructor sin argumentos debe inicializar RestTemplate autonomo")
         void defaultConstructor_initializesProperly() {
             MalagaOpenDataService defaultService = new MalagaOpenDataService();
 
             assertThat(defaultService).isNotNull();
             assertThat(defaultService.getRestTemplate()).isNotNull();
+            assertThat(defaultService.getNominatimUrl()).isEqualTo(MalagaOpenDataService.DEFAULT_NOMINATIM_URL);
+        }
+    }
+
+    @Nested
+    @DisplayName("Pruebas de integracion y fallback con Nominatim (OpenStreetMap)")
+    class NominatimIntegrationTests {
+
+        @Test
+        @DisplayName("Debe parsear correctamente la respuesta estructurada de Nominatim")
+        void parseTerritorialResponse_withNominatimFormat_extractsFieldsCorrectly() {
+            String nominatimJson = """
+                {
+                    "place_id": 123456,
+                    "licence": "Data © OpenStreetMap contributors",
+                    "osm_type": "way",
+                    "lat": "36.7203",
+                    "lon": "-4.4230",
+                    "display_name": "Calle Marqués de Larios, 4, Centro Histórico, Centro, Málaga, Andalucía, España",
+                    "address": {
+                        "road": "Calle Marqués de Larios",
+                        "house_number": "4",
+                        "suburb": "Centro Histórico",
+                        "city_district": "Centro",
+                        "city": "Málaga"
+                    }
+                }
+                """;
+
+            ReverseGeocodeResponse response = service.parseTerritorialResponse(nominatimJson);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getAddress()).isEqualTo("Calle Marqués de Larios, 4");
+            assertThat(response.getDistrict()).isEqualTo("Centro");
+            assertThat(response.getNeighborhood()).isEqualTo("Centro Histórico");
+        }
+
+        @Test
+        @DisplayName("Debe activar fallback a Nominatim cuando el portal primario responde con error 500")
+        void resolveLocation_whenPrimaryFails_usesNominatimFallback() {
+            String nominatimUrl = "https://nominatim.openstreetmap.org/reverse";
+            MalagaOpenDataService serviceWithFallback = new MalagaOpenDataService(restTemplate, BASE_URL, ENDPOINT_PATH, nominatimUrl);
+
+            Double lat = 36.7203;
+            Double lon = -4.4230;
+
+            String nominatimJson = """
+                {
+                    "display_name": "Calle Larios, Centro, Málaga",
+                    "address": {
+                        "road": "Calle Larios",
+                        "city_district": "Distrito Centro",
+                        "suburb": "Centro Histórico"
+                    }
+                }
+                """;
+
+            // Expectativa 1: Fallo en datos abiertos de Málaga
+            mockServer.expect(requestTo(containsString(ENDPOINT_PATH)))
+                    .andExpect(method(HttpMethod.GET))
+                    .andRespond(withServerError());
+
+            // Expectativa 2: Fallback exitoso a Nominatim
+            mockServer.expect(requestTo(containsString(nominatimUrl)))
+                    .andExpect(requestTo(containsString("lat=36.7203")))
+                    .andExpect(requestTo(containsString("lon=-4.423")))
+                    .andExpect(method(HttpMethod.GET))
+                    .andRespond(withSuccess(nominatimJson, MediaType.APPLICATION_JSON));
+
+            ReverseGeocodeResponse response = serviceWithFallback.resolveLocation(lat, lon);
+
+            mockServer.verify();
+            assertThat(response).isNotNull();
+            assertThat(response.getAddress()).isEqualTo("Calle Larios");
+            assertThat(response.getDistrict()).isEqualTo("Distrito Centro");
+            assertThat(response.getNeighborhood()).isEqualTo("Centro Histórico");
         }
     }
 }

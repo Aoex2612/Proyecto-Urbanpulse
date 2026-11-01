@@ -9,11 +9,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 1.4 Actualizar `IncidentMapper` para añadir método de conversión a `PageResponse<IncidentResponse>`.
 - [x] 1.5 Crear pruebas `@DataJpaTest` en `IncidenciaRepositoryTest` verificando ordenación descendente por fecha, paginación y filtrado por estado.
 
-## [x] Tarea 2: Servicio de Integración con Datos Abiertos de Málaga y Degradación Controlada en Backend - RF: RF-2, RF-6, RF-7, RF-8, RF-10, RF-11 - RNF: Tolerancia a fallos, timeout 3s
-- [x] 2.1 Crear servicio `MalagaOpenDataService` en `org.bulbaseros.service` configurando cliente HTTP con `ConnectTimeout` y `ReadTimeout` de 3000 ms.
-- [x] 2.2 Implementar método de resolución territorial consultando los recursos del callejero y delimitaciones oficiales del portal de Datos Abiertos del Ayuntamiento de Málaga.
-- [x] 2.3 Implementar degradación controlada: ante excepciones de timeout, fallos de red o ausencia de correspondencia espacial, capturar el error y devolver campos nulos (`null`).
-- [x] 2.4 Crear pruebas unitarias en `MalagaOpenDataServiceTest` con simulación de respuesta válida, respuesta sin coincidencias, timeout y error HTTP 500.
+## [x] Tarea 2: Servicio de Integración Territorial, Resiliencia TLS/SSL y Fallback Nominatim en Backend - RF: RF-2, RF-6, RF-7, RF-8, RF-10, RF-11 - RNF: Tolerancia a fallos, timeout 3s, resiliencia SSL
+- [x] 2.1 Crear servicio `MalagaOpenDataService` en `org.bulbaseros.service` configurando cliente HTTP con timeouts de 3000 ms y factoría SSL permisiva (`createSecureClientHttpRequestFactory`) para prevenir excepciones `SunCertPathBuilderException`.
+- [x] 2.2 Configurar propiedad `nominatim.base-url` en `application.properties` e incorporar cabecera estándar `User-Agent: UrbanPulse-App/1.0`.
+- [x] 2.3 Implementar resolución territorial con fallback automático a la API de Nominatim OpenStreetMap ante fallos HTTP, errores de certificado o respuestas vacías del portal municipal.
+- [x] 2.4 Ampliar `parseTerritorialResponse` para procesar esquemas estructurados de Nominatim (`road`, `house_number`, `city_district`, `suburb`, `display_name`) además de CKAN y GeoJSON.
+- [x] 2.5 Implementar degradación controlada: devolver campos nulos (`null`) sin lanzar excepción si todas las fuentes remotas fallan o superan el timeout.
+- [x] 2.6 Crear pruebas unitarias en `MalagaOpenDataServiceTest` con simulación de respuestas válidas, fallback a Nominatim, timeout, error HTTP 500 y factoría SSL.
 
 ## [x] Tarea 3: Lógica de Negocio de Creación Enriquecida y Consulta Paginada en `IncidentService` - Depende de Tarea 1, Tarea 2 - RF: RF-1, RF-4, RF-5, RF-6, RF-7, RF-8, RF-10, RF-12, RF-13, RF-14, RF-15, RF-18
 - [x] 3.1 Actualizar método `createIncident` en `IncidentService` para validar que las coordenadas pertenezcan al término municipal de Málaga (`[36.5000, 36.9000]`, `[-4.7000, -4.2000]`), arrojando excepción 400 si están fuera de rango.
@@ -41,14 +43,16 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 6.4 Registrar la ruta protegida `/my-incidents` en `App.jsx` y agregar el enlace de navegación en la barra superior para usuarios autenticados.
 - [x] 6.5 Crear pruebas unitarias con Vitest en `MyIncidentsPage.test.jsx` comprobando renderizado de avisos, cambio de página, filtrado por estado y estado vacío.
 
-## [x] Tarea 7: Verificación Integral de Criterios de Aceptación, Cobertura y Calidad - Depende de Tareas 4 y 6 - RF: Todos
-- [x] 7.1 Ejecutar suite completa de tests de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y generación de reporte JaCoCo.
+## [x] Tarea 7: Verificación Integral de Criterios de Aceptación, Cobertura y Guía de QA - Depende de Tareas 4 y 6 - RF: Todos
+- [x] 7.1 Ejecutar suite completa de tests de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y reporte JaCoCo.
 - [x] 7.2 Ejecutar suite de pruebas de Frontend (`cd frontend && npm test`) y análisis estático (`npm run lint`) garantizando 0 errores y advertencias.
 - [x] 7.3 Validar uno a uno los criterios de aceptación de `spec.md` asegurando que todos los comportamientos observables funcionen según especificación.
+- [x] 7.4 Corregir y verificar la guía de pruebas manuales en `docs/004-reporte-y-seguimiento-de-incidencias/qa-note.md` garantizando URLs exactas de backend y frontend.
 
 ---
 ## Mantenimiento (checklist recurrente)
 
-- [ ] Verificar que ninguna llamada externa a la API de datos abiertos exceda el timeout configurado de 3 segundos.
+- [ ] Verificar que ninguna llamada externa a la API de datos abiertos ni a Nominatim exceda el timeout configurado de 3 segundos.
 - [ ] Asegurar que el filtro `GET /api/incidents/my-incidents` siempre obtenga el identificador del usuario del token JWT y nunca de parámetros de petición manipulables.
 - [ ] Validar que los campos territoriales mantengan el fallback a `"Sin asignar"` ante respuestas nulas.
+- [ ] Comprobar periódicamente la vigencia y accesibilidad del certificado de los portales de datos abiertos.
