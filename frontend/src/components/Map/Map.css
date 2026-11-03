@@ -967,13 +967,13 @@
 }
 
 /* ==========================================================================
-   Control de Geolocalización — HU14.4
+   Control de GeolocalizaciÃ³n Â— HU14.4
    ========================================================================== */
 
 /**
- * Botón "Usar mi ubicación actual".
- * Icono SVG incrustado como background-image para máxima compatibilidad.
- * Contraste en estado normal: texto #065f46 sobre fondo #d1fae5 ? ratio ˜ 7.1:1 (WCAG AA ?)
+ * BotÃ³n "Usar mi ubicaciÃ³n actual".
+ * Icono SVG incrustado como background-image para mÃ¡xima compatibilidad.
+ * Contraste en estado normal: texto #065f46 sobre fondo #d1fae5 ? ratio Â˜ 7.1:1 (WCAG AA ?)
  */
 .btn-current-location {
   display: inline-flex;
@@ -1007,7 +1007,7 @@
   transition: transform 0.2s ease;
 }
 
-/* Estado hover: fondo ligeramente más intenso */
+/* Estado hover: fondo ligeramente mÃ¡s intenso */
 .btn-current-location:hover:not(:disabled) {
   background-color: #a7f3d0;
   border-color: #34d399;
@@ -1042,8 +1042,8 @@
 }
 
 /**
- * Estado activo de localización (.is-locating): animación de giro en el icono SVG.
- * El botón permanece deshabilitado durante la consulta GPS (RF-23).
+ * Estado activo de localizaciÃ³n (.is-locating): animaciÃ³n de giro en el icono SVG.
+ * El botÃ³n permanece deshabilitado durante la consulta GPS (RF-23).
  */
 .btn-current-location.is-locating {
   background-color: #ecfdf5;
@@ -1057,7 +1057,7 @@
   animation: spinLocating 1.1s linear infinite;
 }
 
-/* Keyframe de giro continuo para indicador de actividad de geolocalización */
+/* Keyframe de giro continuo para indicador de actividad de geolocalizaciÃ³n */
 @keyframes spinLocating {
   from {
     transform: rotate(0deg);
@@ -1068,13 +1068,13 @@
 }
 
 /* ==========================================================================
-   Distintivo de Confirmación de Ubicación (.geo-status-badge)
-   Contraste texto: #065f46 sobre fondo #d1fae5 ? ratio ˜ 7.1:1 (WCAG AA ?)
+   Distintivo de ConfirmaciÃ³n de UbicaciÃ³n (.geo-status-badge)
+   Contraste texto: #065f46 sobre fondo #d1fae5 ? ratio Â˜ 7.1:1 (WCAG AA ?)
    ========================================================================== */
 
 /**
- * Badge que aparece tras obtener con éxito las coordenadas actuales (RF-27).
- * aria-live="polite" debe añadirse en JSX para anuncio a lectores de pantalla.
+ * Badge que aparece tras obtener con Ã©xito las coordenadas actuales (RF-27).
+ * aria-live="polite" debe aÃ±adirse en JSX para anuncio a lectores de pantalla.
  */
 .geo-status-badge {
   display: inline-flex;
@@ -1091,7 +1091,7 @@
   animation: fadeInGeoStatus 0.3s ease-out;
 }
 
-/* Icono de verificación dentro del badge */
+/* Icono de verificaciÃ³n dentro del badge */
 .geo-status-badge::before {
   content: '';
   display: inline-block;
@@ -1115,14 +1115,14 @@
 }
 
 /* ==========================================================================
-   Alerta de Error de Geolocalización en Línea (.geo-error-banner)
-   Contraste texto: #991b1b sobre fondo #fef2f2 ? ratio ˜ 8.3:1 (WCAG AA ?)
+   Alerta de Error de GeolocalizaciÃ³n en LÃ­nea (.geo-error-banner)
+   Contraste texto: #991b1b sobre fondo #fef2f2 ? ratio Â˜ 8.3:1 (WCAG AA ?)
    ========================================================================== */
 
 /**
- * Banner de error contextual en línea bajo las coordenadas (RF-29, RF-30, RF-31).
+ * Banner de error contextual en lÃ­nea bajo las coordenadas (RF-29, RF-30, RF-31).
  * Usar role="alert" en JSX para anuncio inmediato a lectores de pantalla.
- * Usar aria-live="assertive" para errores críticos de interacción.
+ * Usar aria-live="assertive" para errores crÃ­ticos de interacciÃ³n.
  */
 .geo-error-banner {
   display: flex;
@@ -1164,9 +1164,9 @@
   }
 }
 
-/* Adaptación a Modo Oscuro — controles de geolocalización */
+/* AdaptaciÃ³n a Modo Oscuro Â— controles de geolocalizaciÃ³n */
 @media (prefers-color-scheme: dark) {
-  /* Botón de ubicación actual */
+  /* BotÃ³n de ubicaciÃ³n actual */
   .btn-current-location {
     background-color: rgba(16, 185, 129, 0.12);
     border-color: rgba(110, 231, 183, 0.4);
@@ -1209,8 +1209,8 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236ee7b7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4M12 19v4M1 12h4M19 12h4'/%3E%3Ccircle cx='12' cy='12' r='9' stroke-dasharray='2 3' stroke-width='1.2'/%3E%3C/svg%3E");
   }
 
-  /* Badge de confirmación en modo oscuro */
-  /* Contraste: #6ee7b7 sobre #0d2e22 ? ratio ˜ 7.8:1 (WCAG AA ?) */
+  /* Badge de confirmaciÃ³n en modo oscuro */
+  /* Contraste: #6ee7b7 sobre #0d2e22 ? ratio Â˜ 7.8:1 (WCAG AA ?) */
   .geo-status-badge {
     background-color: rgba(16, 185, 129, 0.12);
     border-color: rgba(110, 231, 183, 0.35);
@@ -1222,7 +1222,7 @@
   }
 
   /* Banner de error en modo oscuro */
-  /* Contraste: #fca5a5 sobre #2d1010 ? ratio ˜ 5.2:1 (WCAG AA ?) */
+  /* Contraste: #fca5a5 sobre #2d1010 ? ratio Â˜ 5.2:1 (WCAG AA ?) */
   .geo-error-banner {
     background-color: rgba(239, 68, 68, 0.1);
     border-color: rgba(252, 165, 165, 0.35);
