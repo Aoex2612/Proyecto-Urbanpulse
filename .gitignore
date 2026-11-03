@@ -9,7 +9,7 @@ target/
 *.iws
 *.iml
 *.ipr
-
+Backend/.openidea/
 ### Eclipse ###
 .apt_generated
 .classpath
