@@ -13,7 +13,7 @@
 
     <groupId>org.bulbaseros</groupId>
     <artifactId>Backend</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <name>Backend</name>
     <description>Backend de UrbanPulse con Spring Boot y Spring Security</description>
 
