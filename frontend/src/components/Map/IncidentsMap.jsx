@@ -68,6 +68,31 @@ function MapFlyToController({ focusCoords, onFocusConsumed }) {
 }
 
 /**
+ * Subcomponente interno que fuerza el recalculo del tamano del lienzo de Leaflet (invalidateSize).
+ * Resuelve el problema frecuente en Firefox y layouts Flexbox donde el mapa se inicializa
+ * antes de que el contenedor resuelva su altura real, provocando un lienzo gris o teselas sin cargar
+ * hasta que el usuario redimensiona la ventana manualmente.
+ *
+ * @returns {null}
+ */
+function MapResizeController() {
+  const map = useMap();
+
+  useEffect(() => {
+    map.invalidateSize();
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [map]);
+
+  return null;
+}
+
+/**
  * Componente principal de visualizacion cartografica de incidencias con Leaflet.
  *
  * @param {Object} props - Propiedades del componente cartografico.
@@ -133,7 +158,7 @@ export default function IncidentsMap({
         center={center}
         zoom={zoom}
         scrollWheelZoom={true}
-        preferCanvas={true}
+        preferCanvas={false}
         className="incidents-map-container"
       >
         <TileLayer
@@ -146,6 +171,9 @@ export default function IncidentsMap({
           isSelectingLocation={isSelectingLocation}
           onLocationSelected={onLocationSelected}
         />
+
+        {/* Controlador para invalidar tamano y forzar repintado de teselas en Firefox/Flexbox */}
+        <MapResizeController />
 
         {/* Controlador de centrado suave flyTo tras alta de incidencia (RF-34) */}
         <MapFlyToController focusCoords={focusCoords} onFocusConsumed={onFocusConsumed} />
