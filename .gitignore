@@ -3,16 +3,13 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
-
+.Rhistory
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
-
+*.openidea/
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -49,6 +46,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
 *.local
 
 # Editor directories and files
@@ -61,3 +59,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+mcp_config.json
+
+.obsidian/
+.env
+
+
+# Directorio de archivos multimedia subidos
+uploads/
+Backend/uploads/

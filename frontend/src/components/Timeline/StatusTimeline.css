@@ -1,0 +1,322 @@
+/**
+ * @fileoverview Estilos visuales del componente modular StatusTimeline para UrbanPulse.
+ * Implementa una línea temporal vertical accesible, responsiva y adaptable a temas claro/oscuro.
+ */
+
+/* ==========================================================================
+   Contenedor Principal de la Línea Temporal
+   ========================================================================== */
+
+.status-timeline-container {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   Estados Especiales: Carga, Error y Vacío
+   ========================================================================== */
+
+.status-timeline-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background-color: var(--code-bg, #f4f3ec);
+  border: 1px dashed var(--border, #e5e4e7);
+  border-radius: 10px;
+  color: var(--text, #6b6375);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.timeline-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(170, 59, 255, 0.2);
+  border-top-color: var(--accent, #aa3bff);
+  border-radius: 50%;
+  animation: timelineSpin 0.8s linear infinite;
+}
+
+@keyframes timelineSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-timeline-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  color: #dc2626;
+  text-align: left;
+}
+
+.timeline-error-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.timeline-error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline-error-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.timeline-error-message {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+.status-timeline-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  background-color: var(--code-bg, #f4f3ec);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 10px;
+  color: var(--text, #6b6375);
+  text-align: left;
+}
+
+.timeline-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #aa3bff);
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.timeline-empty-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline-empty-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+}
+
+.timeline-empty-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text, #6b6375);
+}
+
+.timeline-empty-description strong {
+  color: var(--text-h, #08060d);
+}
+
+/* ==========================================================================
+   Estructura Vertical de la Línea Temporal
+   ========================================================================== */
+
+.status-timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Línea conectora vertical entre hitos */
+.status-timeline-list::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 24px;
+  left: 17px;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    var(--accent, #aa3bff),
+    rgba(170, 59, 255, 0.2)
+  );
+  border-radius: 1px;
+}
+
+.status-timeline-item {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  padding-bottom: 22px;
+}
+
+.status-timeline-item:last-child {
+  padding-bottom: 4px;
+}
+
+/* Indicador de hito (nodo circular) */
+.timeline-marker {
+  position: relative;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--bg, #ffffff);
+  border: 2.5px solid var(--accent, #aa3bff);
+  box-shadow: 0 0 0 4px rgba(170, 59, 255, 0.15);
+  flex-shrink: 0;
+  margin-top: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-timeline-item:hover .timeline-marker {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 6px rgba(170, 59, 255, 0.25);
+}
+
+/* Tarjeta de hito */
+.timeline-card {
+  flex: 1;
+  background-color: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow, 0 2px 4px rgba(0, 0, 0, 0.04));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-card:hover {
+  border-color: rgba(170, 59, 255, 0.4);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Cabecera de la tarjeta: Transición y Marca Temporal */
+.timeline-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.timeline-transition {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.timeline-arrow {
+  color: var(--text, #6b6375);
+  font-weight: 700;
+  font-size: 14px;
+  user-select: none;
+}
+
+.timeline-time {
+  font-size: 12px;
+  color: var(--text, #6b6375);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Metadatos y Motivo */
+.timeline-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border, #e5e4e7);
+}
+
+.timeline-actor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text, #6b6375);
+}
+
+.timeline-actor-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.timeline-actor-name {
+  font-weight: 600;
+  color: var(--text-h, #08060d);
+}
+
+.timeline-reason {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-h, #08060d);
+  background-color: var(--code-bg, #f4f3ec);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent, #aa3bff);
+}
+
+.timeline-reason-label {
+  font-weight: 600;
+  color: var(--text, #6b6375);
+  margin-right: 4px;
+}
+
+.timeline-reason.empty {
+  font-style: italic;
+  color: var(--text, #6b6375);
+  background-color: transparent;
+  padding: 0;
+  border-left: none;
+}
+
+/* ==========================================================================
+   Adaptación a Modo Oscuro
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  .status-timeline-loading,
+  .status-timeline-empty {
+    background-color: #1a1b23;
+    border-color: #2e303a;
+  }
+
+  .timeline-marker {
+    background-color: #16171d;
+  }
+
+  .timeline-card {
+    background-color: #1a1b23;
+    border-color: #2e303a;
+  }
+
+  .timeline-card-body {
+    border-top-color: #2e303a;
+  }
+
+  .timeline-reason {
+    background-color: #16171d;
+    color: #e5e7eb;
+  }
+}
