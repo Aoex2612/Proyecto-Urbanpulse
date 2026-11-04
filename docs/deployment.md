@@ -20,10 +20,7 @@ Para ejecutar el proceso de despliegue se debe disponer de:
 - **Docker Engine & Docker Compose:** Versión 2+.
 - **Git:** Control de versiones para trazabilidad de tags y commits.
 - **Acceso a un registro de contenedores:** Docker Hub o GitHub Container Registry (`ghcr.io`).
-- **Acceso al entorno de despliegue:** Acceso SSH / VPS o credenciales del clúster de producción.
-- **Para despliegues en Kubernetes:**
-  - `kubectl` instalado y configurado en el equipo local / runner CI.
-  - Conexión autorizada al clúster (`~/.kube/config`).
+- **Acceso al entorno de despliegue:** Acceso SSH / VPS o servidor de despliegue.
 
 ---
 
@@ -65,7 +62,7 @@ npm run lint
 cd ../Backend
 mvn clean package -DskipTests
 ```
-El archivo `.jar` resultante se generará en el directorio `Backend/target/` (por ejemplo, `Backend-1.0-SNAPSHOT.jar`).
+El archivo `.jar` resultante se generará en el directorio `Backend/target/` (por ejemplo, `Backend-0.1.0.jar`).
 
 ```bash
 # Compilar los activos estáticos optimizados del frontend
@@ -83,18 +80,18 @@ Los artefactos estáticos listos para producción se ubicarán en `frontend/dist
 Se recomienda etiquetar siempre las imágenes con la versión semántica explícita del proyecto, evitando depender exclusivamente de la etiqueta `latest`:
 
 ```bash
-# Construir imagen del backend (ejemplo para versión 1.0.0)
-docker build -t ghcr.io/aoex2612/urbanpulse-backend:1.0.0 ./Backend
+# Construir imagen del backend (ejemplo para versión 0.1.0)
+docker build -t ghcr.io/aoex2612/urbanpulse-backend:0.1.0 ./Backend
 
 # Construir imagen del frontend (servido mediante Nginx para producción)
-docker build -t ghcr.io/aoex2612/urbanpulse-frontend:1.0.0 ./frontend
+docker build -t ghcr.io/aoex2612/urbanpulse-frontend:0.1.0 ./frontend
 ```
 
 > [!TIP]
 > Ejemplos de versionado para trazabilidad:
+> - `urbanpulse-backend:0.1.0`
+> - `urbanpulse-backend:0.2.0`
 > - `urbanpulse-backend:1.0.0`
-> - `urbanpulse-backend:1.1.0`
-> - `urbanpulse-backend:2.0.0`
 
 ### 4.2. Probar las imágenes localmente
 
@@ -102,7 +99,7 @@ Antes de publicar cualquier imagen en el registro, validar que arranca y respond
 
 ```bash
 # Probar el backend localmente en puerto 8080
-docker run --rm -p 8080:8080 ghcr.io/aoex2612/urbanpulse-backend:1.0.0
+docker run --rm -p 8080:8080 ghcr.io/aoex2612/urbanpulse-backend:0.1.0
 ```
 
 Verificar que la aplicación responde en el endpoint de salud:
@@ -119,8 +116,8 @@ docker login ghcr.io
 
 Subir las imágenes construidas:
 ```bash
-docker push ghcr.io/aoex2612/urbanpulse-backend:1.0.0
-docker push ghcr.io/aoex2612/urbanpulse-frontend:1.0.0
+docker push ghcr.io/aoex2612/urbanpulse-backend:0.1.0
+docker push ghcr.io/aoex2612/urbanpulse-frontend:0.1.0
 ```
 
 ---
@@ -145,204 +142,227 @@ La configuración sensible de cada entorno **no debe incluirse** en el código f
 
 ---
 
-## 6. Despliegue con Docker Compose (Pruebas y Staging)
+## 6. Despliegue con Docker Compose (Pruebas, Staging y Producción)
 
-Para entornos de prueba locales o servidores de integración (*staging*), se puede utilizar Docker Compose:
+Actualmente, **UrbanPulse** utiliza **Docker Compose** como motor de orquestación y despliegue para todos sus entornos (desarrollo local, pruebas/staging y servidores de producción en VPS o instancias cloud).
 
-```bash
-# Descargar las imágenes más recientes del registro
-docker compose pull
+### 6.1. Definición de servicios para producción (`docker-compose.yml` / `docker-compose.prod.yml`)
 
-# Levantar los servicios en segundo plano
-docker compose up -d
+Para desplegar la solución completa en un servidor de producción o staging, se orquestan los tres componentes esenciales: la base de datos PostgreSQL 16, el backend Spring Boot y el frontend web servido mediante un servidor web de producción (Nginx):
+
+```yaml
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: db_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-urban_pulse_db}
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-database}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init/diagramUrbanPulse.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-urban_pulse_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/aoex2612/urbanpulse-backend:${APP_VERSION:-0.1.0}
+    container_name: urbanpulse_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-urban_pulse_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      APP_UPLOAD_DIR: uploads
+    volumes:
+      - backend_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    image: ghcr.io/aoex2612/urbanpulse-frontend:${APP_VERSION:-0.1.0}
+    container_name: urbanpulse_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  backend_uploads:
 ```
 
-### 6.1. Comprobaciones y diagnóstico
+### 6.2. Puesta en marcha en el servidor
+
+1. **Configurar el entorno en el servidor:**
+   Clonar el repositorio o situar la plantilla `docker-compose.yml` junto al archivo `.env` configurado con las credenciales de producción:
+   ```bash
+   cp .env.example .env
+   # Editar .env con las claves y contraseñas reales
+   nano .env
+   ```
+
+2. **Descargar las imágenes más recientes del registro:**
+   ```bash
+   docker compose pull
+   ```
+
+3. **Levantar los servicios en segundo plano:**
+   ```bash
+   docker compose up -d
+   ```
+
+### 6.3. Comprobaciones y diagnóstico
 ```bash
 # Comprobar el estado y salud de los contenedores
 docker compose ps
 
-# Consultar los logs en tiempo real
+# Consultar los logs en tiempo real (todos los servicios)
 docker compose logs -f
 
-# Detener los servicios
+# Consultar los logs de un servicio concreto (ej. backend)
+docker compose logs -f backend
+
+# Detener los servicios conservando volúmenes de datos
 docker compose down
 ```
 
 ---
 
-## 7. Despliegue con Kubernetes (Producción)
+## 7. Estrategia de actualización y reversión (*Rollback*)
 
-En entornos de producción de alta disponibilidad, los servicios de UrbanPulse se gestionan mediante manifiestos de Kubernetes (`Deployment`, `Service`, `Secret` y `ConfigMap`).
+Al emplear Docker Compose, el proceso de actualización sin interrupciones prolongadas y la reversión rápida ante fallos críticos se gestionan mediante el versionado explícito de etiquetas de imagen:
 
-### 7.1. Manifiesto simplificado (`k8s/deployment-backend.yaml`)
+### 7.1. Actualización de versión
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: urbanpulse-backend
-  labels:
-    app: urbanpulse-backend
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: urbanpulse-backend
-  template:
-    metadata:
-      labels:
-        app: urbanpulse-backend
-    spec:
-      containers:
-        - name: backend
-          image: ghcr.io/aoex2612/urbanpulse-backend:1.0.0
-          ports:
-            - containerPort: 8080
-          env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: "production"
-            - name: DB_HOST
-              value: "postgres-service"
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_NAME
-              value: "urban_pulse_db"
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: urbanpulse-secrets
-                  key: db-user
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: urbanpulse-secrets
-                  key: db-password
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: urbanpulse-secrets
-                  key: jwt-secret
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 5
-```
-
-### 7.2. Aplicar la configuración
-```bash
-kubectl apply -f k8s/deployment-backend.yaml
-```
-
-### 7.3. Comprobar el estado del despliegue
-```bash
-kubectl get deployments
-kubectl get pods -l app=urbanpulse-backend
-```
-
----
-
-## 8. Estrategia de actualización y reversión (Rolling Update y Rollback)
-
-### 8.1. Rolling Update
-
-Kubernetes sustituye progresivamente los Pods de la versión anterior por nuevos Pods de la versión entrante sin interrumpir el servicio:
-
-```bash
-# Actualizar a una nueva versión de la imagen
-kubectl set image deployment/urbanpulse-backend backend=ghcr.io/aoex2612/urbanpulse-backend:1.1.0
-```
-
-Visualizar el progreso de la actualización en vivo:
-```bash
-kubectl rollout status deployment/urbanpulse-backend
-```
-
-### 8.2. Rollback (Reversión ante fallos)
-
-Si la nueva versión presenta anomalías o fallos críticos tras el despliegue, es posible revertir inmediatamente a la versión estable previa:
-
-```bash
-# Deshacer el último despliegue y regresar a la versión anterior
-kubectl rollout undo deployment/urbanpulse-backend
-```
-
-Consultar el historial de despliegues y versiones:
-```bash
-kubectl rollout history deployment/urbanpulse-backend
-```
-
----
-
-## 9. Comprobaciones posteriores al despliegue (*Post-Deployment*) y Health Checks
-
-Tras finalizar el despliegue, el operador o el pipeline de CI/CD debe verificar:
-
-1. **Disponibilidad:** Todos los Pods o contenedores se encuentran en estado `Running` y listos (`Ready`).
-2. **Conectividad a base de datos:** El backend conecta correctamente con PostgreSQL sin excepciones de conexión.
-3. **Respuesta de endpoints principales:** La API responde en `/api/auth` y endpoints de incidencias.
-4. **Logs limpios:** No aparecen excepciones no controladas ni errores `FATAL` en los logs:
+1. **Actualizar el tag de versión en el archivo `.env` del servidor:**
    ```bash
-   kubectl logs -l app=urbanpulse-backend --tail=100
+   # Modificar la variable a la nueva versión publicada
+   sed -i 's/APP_VERSION=.*/APP_VERSION=0.2.0/' .env
+   ```
+
+2. **Descargar la nueva imagen sin alterar los contenedores en ejecución:**
+   ```bash
+   docker compose pull backend
+   ```
+
+3. **Recrear y sustituir únicamente el contenedor actualizado:**
+   ```bash
+   docker compose up -d --no-deps backend
+   ```
+   > Docker Compose sustituye el contenedor del backend manteniendo intacta la base de datos PostgreSQL y los volúmenes de datos persistentes (`postgres_data`, `backend_uploads`).
+
+### 7.2. Rollback (Reversión ante fallos)
+
+Si la nueva versión presenta anomalías o fallos críticos tras el despliegue, la reversión a la versión estable previa se realiza en segundos:
+
+1. **Revertir la variable de versión en `.env` al tag estable previo:**
+   ```bash
+   sed -i 's/APP_VERSION=.*/APP_VERSION=0.1.0/' .env
+   ```
+
+2. **Reaplicar el contenedor con la versión anterior:**
+   ```bash
+   docker compose up -d --no-deps backend
+   ```
+
+3. **Comprobar que el servicio responde con normalidad:**
+   ```bash
+   docker compose ps
+   docker compose logs --tail=50 backend
+   ```
+
+---
+
+## 8. Comprobaciones posteriores al despliegue (*Post-Deployment*) y Health Checks
+
+Tras finalizar el despliegue o actualización, el operador o el pipeline de CI/CD debe verificar:
+
+1. **Disponibilidad:** Todos los contenedores se encuentran en estado `Up` y con estado de salud `healthy`:
+   ```bash
+   docker compose ps
+   ```
+2. **Conectividad a base de datos:** El backend conecta correctamente con PostgreSQL sin excepciones en el pool HikariCP.
+3. **Respuesta de endpoints principales:** La API responde en `/api/auth/login` y endpoints de incidencias.
+4. **Logs limpios:** No aparecen excepciones no controladas ni errores `FATAL` en los registros:
+   ```bash
+   docker compose logs --tail=100 backend
    ```
 5. **Comprobación de salud (*Health Checks*):**
-   - `livenessProbe`: Comprueba que el contenedor sigue vivo. Si falla, el orquestador lo reinicia.
-   - `readinessProbe`: Comprueba si el contenedor está preparado para recibir tráfico del balanceador. Si falla, se aísla temporalmente.
+   - Comprobación HTTP del endpoint de Spring Boot Actuator:
+     ```bash
+     curl -f http://localhost:8080/actuator/health
+     ```
+   - Si se define la directiva `healthcheck` en Docker Compose, el demonio Docker vigila periódicamente el estado del contenedor y reinicia el servicio automáticamente si este no responde.
 
 ---
 
-## 10. Flujo general de despliegue
+## 9. Flujo general de despliegue
 
 ```text
-  [ Nueva versión ]
-         │
-         ▼
+  [ Nueva versión (release/0.1.0) ]
+                 │
+                 ▼
   [ Compilación y tests (mvn verify, npm test) ]
-         │
-         ▼
-  [ Construcción de imagen Docker (:1.0.0) ]
-         │
-         ▼
+                 │
+                 ▼
+  [ Construcción de imágenes Docker (:0.1.0) ]
+                 │
+                 ▼
   [ Publicación en registro (docker push) ]
-         │
-         ▼
-  [ Actualización del Deployment ]
-         │
-         ▼
-  [ Rolling Update progresivo ]
-         │
-         ▼
-  [ Comprobaciones posteriores (Health checks) ]
-         │
-  ┌──────┴────────────────┐
-  │ ¿Correcto?            │
-  ▼                       ▼
-[ Producción OK ]       [ Problema detectado ]
-                          │
-                          ▼
+                 │
+                 ▼
+  [ Actualización de versión en servidor (.env) ]
+                 │
+                 ▼
+  [ Despliegue con Docker Compose (pull & up -d) ]
+                 │
+                 ▼
+  [ Comprobaciones posteriores (Health check) ]
+                 │
+          ┌──────┴────────────────┐
+          │ ¿Correcto?            │
+          ▼                       ▼
+   [ Producción OK ]      [ Problema detectado ]
+                                  │
+                                  ▼
                         [ Rollback inmediato ]
-                          │
-                          ▼
+                        (Revertir tag y up -d)
+                                  │
+                                  ▼
                         [ Versión anterior estable ]
 ```
 
 ---
 
-## 11. Resumen de buenas prácticas de despliegue
+## 10. Resumen de buenas prácticas de despliegue
 
-1. **Nunca desplegar desde código sin revisar:** Solo desplegar código validado y fusionado mediante Pull Requests.
-2. **Imágenes inmutables con versión explícita:** Usar números de versión semánticos (ej. `:1.0.0`) y no depender de `:latest`.
-3. **Cero secretos en imágenes o repositorios:** Inyectar claves y credenciales mediante variables de entorno o Secrets de Kubernetes.
-4. **Separación estricta de entornos:** El mismo binario/imagen debe poder ejecutarse en desarrollo, pruebas y producción sin recompilar.
-5. **Automatización:** Delegar el proceso de construcción y despliegue a pipelines de CI/CD (GitHub Actions).
-6. **Health checks activos:** Configurar siempre probes de liveness y readiness para asegurar tolerancia a fallos.
-7. **Estrategia de Rolling Update:** Minimizar o eliminar el tiempo de inactividad durante las actualizaciones.
-8. **Plan de Rollback siempre listo:** Conocer de antemano el comando y procedimiento de reversión si una versión falla.
+1. **Nunca desplegar desde código sin revisar:** Solo desplegar código validado y fusionado mediante Pull Requests a las ramas principales.
+2. **Imágenes inmutables con versión explícita:** Usar números de versión semánticos (ej. `:0.1.0`) y no depender exclusivamente de la etiqueta `:latest`.
+3. **Cero secretos en imágenes o repositorios:** Inyectar claves y credenciales exclusivamente mediante variables de entorno en archivos `.env` protegidos en el servidor o gestores de secretos.
+4. **Separación estricta de entornos:** El mismo binario/imagen Docker debe poder ejecutarse en desarrollo, pruebas y producción sin recompilar el código.
+5. **Automatización:** Delegar la validación, construcción y pruebas a pipelines de CI/CD (GitHub Actions).
+6. **Health checks activos:** Configurar y verificar siempre comprobaciones de salud del servicio (Spring Boot Actuator y directivas `healthcheck` de Docker).
+7. **Estrategia de Rollback siempre definida:** Mantener las imágenes anteriores disponibles en el registro para una reversión inmediata cambiando la etiqueta en `.env`.
+
+> [!NOTE]
+> **Evolución futura hacia orquestadores:** Aunque actualmente UrbanPulse se despliega íntegramente mediante **Docker y Docker Compose** por ajustarse de forma óptima a las necesidades de la fase actual y mantener la infraestructura simple, la arquitectura modular y desacoplada de microservicios contenerizados (OCI) está preparada para una transición limpia a plataformas como Kubernetes si en el futuro se requiere escalado horizontal masivo y alta disponibilidad multirregión.
