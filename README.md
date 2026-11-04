@@ -1,5 +1,19 @@
 # UrbanPulse
 
+[![CI Pipeline](https://github.com/Aoex2612/Proyecto-Urbanpulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Aoex2612/Proyecto-Urbanpulse/actions/workflows/ci.yml)
+![Versión](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.3-6DB33F?logo=springboot&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-3.9+-C71A36?logo=apachemaven&logoColor=white)
+![JaCoCo](https://img.shields.io/badge/Coverage-JaCoCo-blueviolet)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+![Vitest](https://img.shields.io/badge/Tested_with-Vitest-FCC72B?logo=vitest&logoColor=black)
+![ESLint](https://img.shields.io/badge/Linter-ESLint-4B32C3?logo=eslint&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker_Compose-v2+-2496ED?logo=docker&logoColor=white)
+
 Plataforma integral para la gestión, monitorización y resolución de incidencias urbanas en tiempo real. UrbanPulse centraliza el reporte ciudadano geolocalizado, la coordinación interdepartamental, la supervisión operativa y el seguimiento del ciclo de vida de cada aviso en la ciudad.
 
 Proyecto desarrollado para la asignatura Desarrollo Software en Plataformas en la Nube (DSPN), Escuela Técnica Superior de Ingeniería Informática (ETSII).
