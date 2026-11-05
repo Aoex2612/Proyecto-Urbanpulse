@@ -25,15 +25,15 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 3.4 Implementar `CommentService` en `org.bulbaseros.service` con autorización granular (ciudadanos solo leen públicos de sus incidencias; personal lee todos), bloqueo en incidencias cerradas/rechazadas y edición con sellado de `updatedAt`.
 - [x] 3.5 Crear pruebas unitarias con Mockito en `PriorityServiceTest`, `AssignmentServiceTest` y `CommentServiceTest` cubriendo todas las combinaciones y casos límite.
 
-## [ ] Tarea 4: Servicio de Orquestación del Ciclo de Vida y Transiciones de Estado (`IncidentTriageService`) - Depende de Tarea 3 - RF: RF-1, RF-2, RF-3, RF-4, RF-5, RF-6, RF-7, RF-13, RF-14, RF-15, RF-16, RF-17, RF-18, RF-19
-- [ ] 4.1 Implementar método `calculateAssistedPriority(Long incidentId, PriorityCalculationRequest request)` que delega en `PriorityService` con verificación de autorización para operadores/administradores.
-- [ ] 4.2 Implementar método `updatePriority(Long incidentId, UpdatePriorityRequest request)` registrando la prioridad definitiva y su justificación en la entidad `Incidencia` con auditoría.
-- [ ] 4.3 Implementar métodos `validateIncident(id, reason)` y `rejectIncident(id, reason)` con comprobación de motivo ≥ 5 caracteres, inactivación de asignaciones en rechazo vía `AssignmentService` e inserción en `CambiosEstadoRepository`.
-- [ ] 4.4 Implementar método de reevaluación (`reevaluateIncident`) con validación estricta de estado destino (`REPORTED` o `VALIDATED`) y motivo obligatorio.
-- [ ] 4.5 Implementar inicio de intervención técnica (`startIntervention`) verificando rol y asignación activa del técnico, transicionando desde `ASSIGNED` o `REOPENED` a `IN_PROGRESS`.
-- [ ] 4.6 Implementar reporte de resolución (`resolveIncident`) exigiendo justificación descriptiva de actuaciones ≥ 10 caracteres para prioridades medias, altas y críticas.
-- [ ] 4.7 Implementar cierre definitivo (`closeIncident`) y reapertura (`reopenIncident`) para operadores/administradores, inactivando asignaciones al cerrar vía `AssignmentService` y registrando motivos.
-- [ ] 4.8 Crear pruebas unitarias exhaustivas con Mockito en `IncidentTriageServiceTest` validando transiciones legales, estados bloqueados y auditoría de cambios.
+## [x] Tarea 4: Servicio de Orquestación del Ciclo de Vida y Transiciones de Estado (`IncidentTriageService`) - Depende de Tarea 3 - RF: RF-1, RF-2, RF-3, RF-4, RF-5, RF-6, RF-7, RF-13, RF-14, RF-15, RF-16, RF-17, RF-18, RF-19
+- [x] 4.1 Implementar método `calculateAssistedPriority(Long incidentId, PriorityCalculationRequest request)` que delega en `PriorityService` con verificación de autorización para operadores/administradores.
+- [x] 4.2 Implementar método `updatePriority(Long incidentId, UpdatePriorityRequest request)` registrando la prioridad definitiva y su justificación en la entidad `Incidencia` con auditoría.
+- [x] 4.3 Implementar métodos `validateIncident(id, reason)` y `rejectIncident(id, reason)` con comprobación de motivo ≥ 5 caracteres, inactivación de asignaciones en rechazo vía `AssignmentService` e inserción en `CambiosEstadoRepository`.
+- [x] 4.4 Implementar método de reevaluación (`reevaluateIncident`) con validación estricta de estado destino (`REPORTED` o `VALIDATED`) y motivo obligatorio.
+- [x] 4.5 Implementar inicio de intervención técnica (`startIntervention`) verificando rol y asignación activa del técnico, transicionando desde `ASSIGNED` o `REOPENED` a `IN_PROGRESS`.
+- [x] 4.6 Implementar reporte de resolución (`resolveIncident`) exigiendo justificación descriptiva de actuaciones ≥ 10 caracteres para prioridades medias, altas y críticas.
+- [x] 4.7 Implementar cierre definitivo (`closeIncident`) y reapertura (`reopenIncident`) para operadores/administradores, inactivando asignaciones al cerrar vía `AssignmentService` y registrando motivos.
+- [x] 4.8 Crear pruebas unitarias exhaustivas con Mockito en `IncidentTriageServiceTest` validando transiciones legales, estados bloqueados y auditoría de cambios.
 
 ## [ ] Tarea 5: Controladores REST, Seguridad RBAC y Documentación OpenAPI en Backend - Depende de Tarea 4 - RF: RF-1 al RF-24
 - [ ] 5.1 Crear `IncidentTriageController` en `org.bulbaseros.controller` exponiendo endpoints de cálculo y actualización de prioridad, validación, rechazo, reevaluación, inicio de trabajo, resolución, cierre y reapertura, protegidos con anotaciones de seguridad (`hasRole`).
