@@ -10,13 +10,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 1.5 Actualizar `UserRepository` en `org.bulbaseros.repository` añadiendo método `findByRoleAndDepartmentId(RolUsuario role, Long departmentId)` para filtrar técnicos por departamento - RF: RF-9.
 - [x] 1.6 Crear pruebas `@DataJpaTest` en `TareasRepositoryTest` y `ComentariosIncidenciasRepositoryTest` validando el filtrado por asignaciones activas, inactividad lógica y segregación de notas internas - RF: RF-8, RF-9, RF-10, RF-11, RF-20, RF-21, RF-22.
 
-## [ ] Tarea 2: DTOs, Enums de Validación y Mapeadores de Dominio - Depende de Tarea 1 - RF: RF-1, RF-2, RF-5, RF-6, RF-7, RF-8, RF-15, RF-16, RF-18, RF-20, RF-22
-- [ ] 2.1 Crear enum `SafetyRiskLevel` (`NONE`, `LOW`, `HIGH`) y DTOs de cálculo y actualización de prioridad (`PriorityCalculationRequest`, `PriorityCalculationResponse`, `UpdatePriorityRequest`) en `org.bulbaseros.dto`.
-- [ ] 2.2 Crear DTOs de transiciones de ciclo de vida (`ValidateIncidentRequest`, `RejectIncidentRequest`, `ReevaluateIncidentRequest`, `ResolveIncidentRequest`, `ReopenIncidentRequest`) con validaciones de Bean Validation (`@NotBlank`, `@Size`).
-- [ ] 2.3 Crear DTOs de gestión de asignaciones (`AssignIncidentRequest`, `DeactivateAssignmentRequest`, `AssignmentResponse`, `DepartmentResponse`, `UserSummaryResponse`).
-- [ ] 2.4 Crear DTOs de comentarios (`CreateCommentRequest`, `UpdateCommentRequest`, `CommentResponse`).
-- [ ] 2.5 Crear mapeadores desacoplados `AssignmentMapper`, `CommentMapper` y `DepartmentMapper` en `org.bulbaseros.mappers` documentados con Javadoc.
-- [ ] 2.6 Crear pruebas unitarias verificando conversiones bidireccionales de los mapeadores y validaciones de restricciones en DTOs.
+## [x] Tarea 2: DTOs, Enums de Validación y Mapeadores de Dominio - Depende de Tarea 1 - RF: RF-1, RF-2, RF-5, RF-6, RF-7, RF-8, RF-15, RF-16, RF-18, RF-20, RF-22
+- [x] 2.1 Crear enum `SafetyRiskLevel` (`NONE`, `LOW`, `HIGH`) y DTOs de cálculo y actualización de prioridad (`PriorityCalculationRequest`, `PriorityCalculationResponse`, `UpdatePriorityRequest`) en `org.bulbaseros.dto` - RF: RF-1, RF-2.
+- [x] 2.2 Crear DTOs de transiciones de ciclo de vida (`ValidateIncidentRequest`, `RejectIncidentRequest`, `ReevaluateIncidentRequest`, `ResolveIncidentRequest`, `ReopenIncidentRequest`) con validaciones de Bean Validation (`@NotBlank`, `@Size`) - RF: RF-5, RF-6, RF-7, RF-15, RF-16, RF-18.
+- [x] 2.3 Crear DTOs de gestión de asignaciones (`AssignIncidentRequest`, `DeactivateAssignmentRequest`, `AssignmentResponse`, `DepartmentResponse`, `UserSummaryResponse`) - RF: RF-8, RF-10, RF-11.
+- [x] 2.4 Crear DTOs de comentarios (`CreateCommentRequest`, `UpdateCommentRequest`, `CommentResponse`) - RF: RF-20, RF-22.
+- [x] 2.5 Crear mapeadores desacoplados `AssignmentMapper`, `CommentMapper` y `DepartmentMapper` en `org.bulbaseros.mappers` documentados con Javadoc - RF: RF-8, RF-20, RF-22.
+- [x] 2.6 Crear pruebas unitarias verificando conversiones bidireccionales de los mapeadores y validaciones de restricciones en DTOs en `AssignmentMapperTest`, `CommentMapperTest`, `DepartmentMapperTest` y `DtoValidationTest` - RF: RF-1, RF-2, RF-5, RF-6, RF-7, RF-8, RF-15, RF-16, RF-18, RF-20, RF-22.
 
 ## [ ] Tarea 3: Servicios de Negocio: Priorización Asistida, Asignaciones Multidepartamentales y Comentarios - Depende de Tareas 1 y 2 - RF: RF-1, RF-2, RF-8, RF-9, RF-10, RF-11, RF-12, RF-17, RF-20, RF-21, RF-22, RF-23, RF-24
 - [ ] 3.1 Implementar `PriorityService` en `org.bulbaseros.service` con la función pura de cálculo asistido según la matriz determinista (corte de vía y nivel de seguridad) y redacción de `priorityReason`.
