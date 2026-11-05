@@ -18,12 +18,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 2.5 Crear mapeadores desacoplados `AssignmentMapper`, `CommentMapper` y `DepartmentMapper` en `org.bulbaseros.mappers` documentados con Javadoc - RF: RF-8, RF-20, RF-22.
 - [x] 2.6 Crear pruebas unitarias verificando conversiones bidireccionales de los mapeadores y validaciones de restricciones en DTOs en `AssignmentMapperTest`, `CommentMapperTest`, `DepartmentMapperTest` y `DtoValidationTest` - RF: RF-1, RF-2, RF-5, RF-6, RF-7, RF-8, RF-15, RF-16, RF-18, RF-20, RF-22.
 
-## [ ] Tarea 3: Servicios de Negocio: Priorización Asistida, Asignaciones Multidepartamentales y Comentarios - Depende de Tareas 1 y 2 - RF: RF-1, RF-2, RF-8, RF-9, RF-10, RF-11, RF-12, RF-17, RF-20, RF-21, RF-22, RF-23, RF-24
-- [ ] 3.1 Implementar `PriorityService` en `org.bulbaseros.service` con la función pura de cálculo asistido según la matriz determinista (corte de vía y nivel de seguridad) y redacción de `priorityReason`.
-- [ ] 3.2 Implementar en `AssignmentService` los métodos `assignDepartmentsAndTechnicians` y `deactivateAssignments` (para desactivación manual a petición de operador), garantizando la correspondencia técnico-departamento, la desactivación lógica y la reversión automática a `VALIDATED` si no restan departamentos activos.
-- [ ] 3.3 Implementar en `AssignmentService` el método `deactivateAllActiveAssignments(Long incidentId)` para soporte de inactivación automática al cerrar o rechazar.
-- [ ] 3.4 Implementar `CommentService` en `org.bulbaseros.service` con autorización granular (ciudadanos solo leen públicos de sus incidencias; personal lee todos), bloqueo en incidencias cerradas/rechazadas y edición con sellado de `updatedAt`.
-- [ ] 3.5 Crear pruebas unitarias con Mockito en `PriorityServiceTest`, `AssignmentServiceTest` y `CommentServiceTest` cubriendo todas las combinaciones y casos límite.
+## [x] Tarea 3: Servicios de Negocio: Priorización Asistida, Asignaciones Multidepartamentales y Comentarios - Depende de Tareas 1 y 2 - RF: RF-1, RF-2, RF-8, RF-9, RF-10, RF-11, RF-12, RF-17, RF-20, RF-21, RF-22, RF-23, RF-24
+- [x] 3.1 Implementar `PriorityService` en `org.bulbaseros.service` con la función pura de cálculo asistido según la matriz determinista (corte de vía y nivel de seguridad) y redacción de `priorityReason`.
+- [x] 3.2 Implementar en `AssignmentService` los métodos `assignDepartmentsAndTechnicians` y `deactivateAssignments` (para desactivación manual a petición de operador), garantizando la correspondencia técnico-departamento, la desactivación lógica y la reversión automática a `VALIDATED` si no restan departamentos activos.
+- [x] 3.3 Implementar en `AssignmentService` el método `deactivateAllActiveAssignments(Long incidentId)` para soporte de inactivación automática al cerrar o rechazar.
+- [x] 3.4 Implementar `CommentService` en `org.bulbaseros.service` con autorización granular (ciudadanos solo leen públicos de sus incidencias; personal lee todos), bloqueo en incidencias cerradas/rechazadas y edición con sellado de `updatedAt`.
+- [x] 3.5 Crear pruebas unitarias con Mockito en `PriorityServiceTest`, `AssignmentServiceTest` y `CommentServiceTest` cubriendo todas las combinaciones y casos límite.
 
 ## [ ] Tarea 4: Servicio de Orquestación del Ciclo de Vida y Transiciones de Estado (`IncidentTriageService`) - Depende de Tarea 3 - RF: RF-1, RF-2, RF-3, RF-4, RF-5, RF-6, RF-7, RF-13, RF-14, RF-15, RF-16, RF-17, RF-18, RF-19
 - [ ] 4.1 Implementar método `calculateAssistedPriority(Long incidentId, PriorityCalculationRequest request)` que delega en `PriorityService` con verificación de autorización para operadores/administradores.
