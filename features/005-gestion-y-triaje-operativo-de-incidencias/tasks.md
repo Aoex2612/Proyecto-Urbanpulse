@@ -2,13 +2,13 @@
 
 _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas pequeñas y concretas; marca `[x]` al completarlas._
 
-## [ ] Tarea 1: Persistencia, Entidades, Repositorios Spring Data JPA y Pruebas DataJpaTest - RF: RF-8, RF-9, RF-10, RF-11, RF-20, RF-21, RF-22
-- [ ] 1.1 Modificar entidad `ComentariosIncidencias` en `Backend/src/main/java/org/bulbaseros/entity/ComentariosIncidencias.java` añadiendo campo `updatedAt` (`OffsetDateTime`) documentado con Javadoc.
-- [ ] 1.2 Crear interfaz de repositorio `TareasRepository` en `org.bulbaseros.repository` con métodos de consulta `findByIncidentIdAndIsActiveTrue`, `existsByIncidentIdAndTechnicianIdAndIsActiveTrue`, `findByIncidentId` y `findByIncidentIdAndDepartmentIdAndIsActiveTrue`.
-- [ ] 1.3 Crear interfaz de repositorio `ComentariosIncidenciasRepository` en `org.bulbaseros.repository` con consultas `findByIncidentIdOrderByCreatedAtAsc` y `findByIncidentIdAndIsInternalFalseOrderByCreatedAtAsc`.
-- [ ] 1.4 Crear interfaz de repositorio `DepartamentoRepository` en `org.bulbaseros.repository` con consulta `findAllByOrderByNameAsc`.
-- [ ] 1.5 Actualizar `UserRepository` en `org.bulbaseros.repository` añadiendo método `findByRoleAndDepartmentId(RolUsuario role, Long departmentId)` para filtrar técnicos por departamento.
-- [ ] 1.6 Crear pruebas `@DataJpaTest` en `TareasRepositoryTest` y `ComentariosIncidenciasRepositoryTest` validando el filtrado por asignaciones activas, inactividad lógica y segregación de notas internas.
+## [x] Tarea 1: Persistencia, Entidades, Repositorios Spring Data JPA y Pruebas DataJpaTest - RF: RF-8, RF-9, RF-10, RF-11, RF-20, RF-21, RF-22
+- [x] 1.1 Modificar entidad `ComentariosIncidencias` en `Backend/src/main/java/org/bulbaseros/entity/ComentariosIncidencias.java` añadiendo campo `updatedAt` (`OffsetDateTime`) documentado con Javadoc - RF: RF-22.
+- [x] 1.2 Crear interfaz de repositorio `TareasRepository` en `org.bulbaseros.repository` con métodos de consulta `findByIncidentIdAndIsActiveTrue`, `existsByIncidentIdAndTechnicianIdAndIsActiveTrue`, `findByIncidentId` y `findByIncidentIdAndDepartmentIdAndIsActiveTrue` - RF: RF-8, RF-9, RF-10, RF-11.
+- [x] 1.3 Crear interfaz de repositorio `ComentariosIncidenciasRepository` en `org.bulbaseros.repository` con consultas `findByIncidentIdOrderByCreatedAtAsc` y `findByIncidentIdAndIsInternalFalseOrderByCreatedAtAsc` - RF: RF-20, RF-21.
+- [x] 1.4 Crear interfaz de repositorio `DepartamentoRepository` en `org.bulbaseros.repository` con consulta `findAllByOrderByNameAsc` - RF: RF-8.
+- [x] 1.5 Actualizar `UserRepository` en `org.bulbaseros.repository` añadiendo método `findByRoleAndDepartmentId(RolUsuario role, Long departmentId)` para filtrar técnicos por departamento - RF: RF-9.
+- [x] 1.6 Crear pruebas `@DataJpaTest` en `TareasRepositoryTest` y `ComentariosIncidenciasRepositoryTest` validando el filtrado por asignaciones activas, inactividad lógica y segregación de notas internas - RF: RF-8, RF-9, RF-10, RF-11, RF-20, RF-21, RF-22.
 
 ## [ ] Tarea 2: DTOs, Enums de Validación y Mapeadores de Dominio - Depende de Tarea 1 - RF: RF-1, RF-2, RF-5, RF-6, RF-7, RF-8, RF-15, RF-16, RF-18, RF-20, RF-22
 - [ ] 2.1 Crear enum `SafetyRiskLevel` (`NONE`, `LOW`, `HIGH`) y DTOs de cálculo y actualización de prioridad (`PriorityCalculationRequest`, `PriorityCalculationResponse`, `UpdatePriorityRequest`) en `org.bulbaseros.dto`.

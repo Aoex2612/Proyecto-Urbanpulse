@@ -109,4 +109,33 @@ class UserRepositoryTest {
         assertEquals(RolUsuario.TECHNICIAN, found.get().getRole());
         assertEquals(dept.getId(), found.get().getDepartmentId());
     }
+
+    /**
+     * Verifica la consulta de usuarios por rol y departamento mediante findByRoleAndDepartmentId.
+     */
+    @Test
+    @DisplayName("Debería filtrar usuarios por rol TECHNICIAN y departamento asignado")
+    void shouldFindUsersByRoleAndDepartmentId() {
+        Departamento dept1 = entityManager.persistAndFlush(new Departamento("Mantenimiento", "Mantenimiento general"));
+        Departamento dept2 = entityManager.persistAndFlush(new Departamento("Jardinería", "Cuidado de parques"));
+
+        Usuario tech1Dept1 = new Usuario("tech1.mantenimiento@urbanpulse.es", "$2a$10$hash1", "Técnico Uno", RolUsuario.TECHNICIAN, dept1);
+        entityManager.persistAndFlush(tech1Dept1);
+
+        Usuario tech2Dept1 = new Usuario("tech2.mantenimiento@urbanpulse.es", "$2a$10$hash2", "Técnico Dos", RolUsuario.TECHNICIAN, dept1);
+        entityManager.persistAndFlush(tech2Dept1);
+
+        Usuario operatorDept1 = new Usuario("op.mantenimiento@urbanpulse.es", "$2a$10$hash3", "Operador Dept", RolUsuario.OPERATOR, dept1);
+        entityManager.persistAndFlush(operatorDept1);
+
+        Usuario techDept2 = new Usuario("tech.jardin@urbanpulse.es", "$2a$10$hash4", "Técnico Jardín", RolUsuario.TECHNICIAN, dept2);
+        entityManager.persistAndFlush(techDept2);
+
+        final Long dept1Id = dept1.getId();
+        java.util.List<Usuario> techniciansInDept1 = userRepository.findByRoleAndDepartmentId(RolUsuario.TECHNICIAN, dept1Id);
+
+        assertEquals(2, techniciansInDept1.size(), "Debe recuperar exactamente los 2 técnicos del departamento 1");
+        assertTrue(techniciansInDept1.stream().allMatch(u -> u.getRole() == RolUsuario.TECHNICIAN));
+        assertTrue(techniciansInDept1.stream().allMatch(u -> u.getDepartment().getId().equals(dept1Id)));
+    }
 }
