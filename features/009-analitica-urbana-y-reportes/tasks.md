@@ -2,13 +2,13 @@
 
 _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas pequeñas y concretas; marca `[x]` al completarlas._
 
-## [ ] Tarea 1: DTOs, Enums de Filtrado y Mapeador de Dominio en Backend - RF: RF-1 al RF-9, RF-14, RF-15, RF-16, RF-18
-- [ ] 1.1 Crear enum `AnalyticsTimePreset` (`TODAY`, `LAST_7_DAYS`, `LAST_30_DAYS`, `LAST_3_MONTHS`, `LAST_6_MONTHS`, `LAST_YEAR`, `SPECIFIC_YEAR`) y DTO `AnalyticsFilterRequest` en `org.bulbaseros.dto` con validaciones de Bean Validation.
-- [ ] 1.2 Crear DTOs de métricas operativas y territoriales `OperationalMetricsResponse`, `TerritorialMetricResponse`, `DepartmentMetricResponse` y `CategoryMetricResponse`.
-- [ ] 1.3 Crear DTOs de asistencia inteligente `DepartmentRecommendationResponse` (con campo `isLowConfidenceWarning`) y `AssistantPerformanceResponse`.
-- [ ] 1.4 Crear DTO consolidado `AnalyticsSummaryResponse` que agrupe todos los bloques analíticos y el listado de incidencias filtradas para la tabla y exportación.
-- [ ] 1.5 Crear componente mapeador `AnalyticsMapper` en `org.bulbaseros.mappers` extendiendo `BaseMapper` con Javadoc completo.
-- [ ] 1.6 Crear pruebas unitarias verificando conversiones bidireccionales y restricciones en `AnalyticsMapperTest` y `DtoAnalyticsValidationTest`.
+## [x] Tarea 1: DTOs, Enums de Filtrado y Mapeador de Dominio en Backend - RF: RF-1 al RF-9, RF-14, RF-15, RF-16, RF-18
+- [x] 1.1 Crear enum `AnalyticsTimePreset` (`TODAY`, `LAST_7_DAYS`, `LAST_30_DAYS`, `LAST_3_MONTHS`, `LAST_6_MONTHS`, `LAST_YEAR`, `SPECIFIC_YEAR`) y DTO `AnalyticsFilterRequest` en `org.bulbaseros.dto` con validaciones de Bean Validation.
+- [x] 1.2 Crear DTOs de métricas operativas y territoriales `OperationalMetricsResponse`, `TerritorialMetricResponse`, `DepartmentMetricResponse` y `CategoryMetricResponse`.
+- [x] 1.3 Crear DTOs de asistencia inteligente `DepartmentRecommendationResponse` (con campo `isLowConfidenceWarning`) y `AssistantPerformanceResponse`.
+- [x] 1.4 Crear DTO consolidado `AnalyticsSummaryResponse` que agrupe todos los bloques analíticos y el listado de incidencias filtradas para la tabla y exportación.
+- [x] 1.5 Crear componente mapeador `AnalyticsMapper` en `org.bulbaseros.mappers` extendiendo `BaseMapper` con Javadoc completo.
+- [x] 1.6 Crear pruebas unitarias verificando conversiones bidireccionales y restricciones en `AnalyticsMapperTest` y `DtoAnalyticsValidationTest`.
 
 ## [ ] Tarea 2: Métodos de Consulta y Agregación en Capa de Repositorios en Backend - Depende de Tarea 1 - RF: RF-1, RF-2, RF-6, RF-7, RF-8, RF-11
 - [ ] 2.1 Añadir consultas en `IncidenciaRepository` para filtrado combinado por rango temporal (`createdAt BETWEEN`), distrito y barrio, con agregaciones por categoría.
