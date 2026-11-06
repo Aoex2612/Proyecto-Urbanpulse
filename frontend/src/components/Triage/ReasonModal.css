@@ -38,7 +38,7 @@
 .reason-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #d0d0d0;
 }
 
 .required-star {
@@ -69,7 +69,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-family: inherit;
-  color: #0f172a;
+  color: #d5d5d5;
   resize: vertical;
   min-height: 90px;
   outline: none;
