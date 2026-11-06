@@ -10,11 +10,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 1.5 Crear componente mapeador `AnalyticsMapper` en `org.bulbaseros.mappers` extendiendo `BaseMapper` con Javadoc completo.
 - [x] 1.6 Crear pruebas unitarias verificando conversiones bidireccionales y restricciones en `AnalyticsMapperTest` y `DtoAnalyticsValidationTest`.
 
-## [ ] Tarea 2: Métodos de Consulta y Agregación en Capa de Repositorios en Backend - Depende de Tarea 1 - RF: RF-1, RF-2, RF-6, RF-7, RF-8, RF-11
-- [ ] 2.1 Añadir consultas en `IncidenciaRepository` para filtrado combinado por rango temporal (`createdAt BETWEEN`), distrito y barrio, con agregaciones por categoría.
-- [ ] 2.2 Añadir consultas en `CambiosEstadoRepository` para obtener marcas temporales de primera validación/rechazo (`REPORTED` → `VALIDATED`/`REJECTED`) y resolución (`RESOLVED`).
-- [ ] 2.3 Añadir consultas en `TareasRepository` para computar incidencias activas e históricas por departamento municipal.
-- [ ] 2.4 Crear pruebas `@DataJpaTest` en `AnalyticsRepositoriesTest` validando consultas temporales, agregaciones por distrito y comportamiento ante conjuntos vacíos.
+## [x] Tarea 2: Métodos de Consulta y Agregación en Capa de Repositorios en Backend - Depende de Tarea 1 - RF: RF-1, RF-2, RF-6, RF-7, RF-8, RF-11
+- [x] 2.1 Añadir consultas en `IncidenciaRepository` para filtrado combinado por rango temporal (`createdAt BETWEEN`), distrito y barrio, con agregaciones por categoría.
+- [x] 2.2 Añadir consultas en `CambiosEstadoRepository` para obtener marcas temporales de primera validación/rechazo (`REPORTED` → `VALIDATED`/`REJECTED`) y resolución (`RESOLVED`).
+- [x] 2.3 Añadir consultas en `TareasRepository` para computar incidencias activas e históricas por departamento municipal.
+- [x] 2.4 Crear pruebas `@DataJpaTest` en `AnalyticsRepositoriesTest` validando consultas temporales, agregaciones por distrito y comportamiento ante conjuntos vacíos.
 
 ## [ ] Tarea 3: Servicio de Asistencia Inteligente y Recomendación con Grado de Confianza - Depende de Tareas 1 y 2 - RF: RF-14, RF-15, RF-16, RF-17, RF-18
 - [ ] 3.1 Implementar `IntelligentRecommendationService` en `org.bulbaseros.service` con motor heurístico léxico ponderado y cálculo de grado de certeza porcentual (0% a 100%).

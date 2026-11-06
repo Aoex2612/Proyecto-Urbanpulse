@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -69,4 +70,37 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
      * @return Pagina de entidades {@link Incidencia} asociadas al ciudadano y estado indicados.
      */
     Page<Incidencia> findByCitizenIdAndStatus(Long citizenId, EstadoIncidencia status, Pageable pageable);
+
+    /**
+     * Recupera todas las incidencias dentro de un rango temporal con filtrado opcional por distrito y barrio.
+     * <p>
+     * Si los parametros {@code district} o {@code neighborhood} son nulos o cadenas vacias, la condicion respectiva
+     * es ignorada, recuperando todas las incidencias creadas en el intervalo temporal indicado ordenadas
+     * de forma cronologica descendente.
+     * </p>
+     *
+     * @param startDate    Fecha y hora de inicio del intervalo temporal (inclusive).
+     * @param endDate      Fecha y hora de finalizacion del intervalo temporal (inclusive).
+     * @param district     Nombre del distrito municipal por el que filtrar, o {@code null} para ignorar.
+     * @param neighborhood Nombre del barrio por el que filtrar, o {@code null} para ignorar.
+     * @return Lista de incidencias que satisfacen los filtros temporales y territoriales.
+     */
+    @Query("SELECT i FROM Incidencia i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate " +
+           "AND (:district IS NULL OR :district = '' OR LOWER(i.district) = LOWER(:district)) " +
+           "AND (:neighborhood IS NULL OR :neighborhood = '' OR LOWER(i.neighborhood) = LOWER(:neighborhood)) " +
+           "ORDER BY i.createdAt DESC")
+    List<Incidencia> findByDateRangeAndTerritory(
+            @Param("startDate") OffsetDateTime startDate,
+            @Param("endDate") OffsetDateTime endDate,
+            @Param("district") String district,
+            @Param("neighborhood") String neighborhood);
+
+    /**
+     * Recupera todas las incidencias registradas en un intervalo temporal ordenadas descendentemente por fecha.
+     *
+     * @param startDate Fecha inicial del rango.
+     * @param endDate   Fecha final del rango.
+     * @return Lista de incidencias creadas entre ambas fechas.
+     */
+    List<Incidencia> findByCreatedAtBetweenOrderByCreatedAtDesc(OffsetDateTime startDate, OffsetDateTime endDate);
 }
