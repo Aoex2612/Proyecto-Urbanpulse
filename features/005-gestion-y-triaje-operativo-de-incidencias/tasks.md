@@ -64,6 +64,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 8.6 Ejecutar suite de pruebas de Frontend (`cd frontend && npm test`) y linter (`npm run lint`) garantizando 0 errores y advertencias.
 - [x] 8.7 Redactar documento técnico y guía de pruebas de la feature en `docs/005-gestion-y-triaje-operativo-de-incidencias/qa-note.md` para la posterior fase de validación (`sdd-validate`).
 
+## [x] Tarea 9: Permisos Universales de Admin y Segregación de Incidencias para Técnicos - Depende de Tarea 8 - RF: RF-13, RF-14, RF-15, RF-16, RF-25
+- [x] 9.1 Backend: Modificar `IncidentTriageService.java` y `IncidentTriageController.java` para permitir que usuarios con rol `ADMIN` ejecuten `startIntervention` y `resolveIncident` directamente sin requerir asignación previa como técnico.
+- [x] 9.2 Backend: Modificar `IncidentController.java` / `IncidentService.java` para que `GET /api/incidents` filtre y retorne únicamente las incidencias donde el usuario autenticado con rol `TECHNICIAN` tenga una asignación técnica activa (`is_active = true`).
+- [x] 9.3 Frontend: Actualizar `App.jsx` y `HomePage.jsx` para habilitar el acceso a `/operator-panel` a usuarios con rol `TECHNICIAN`.
+- [x] 9.4 Frontend: Adaptar `OperatorPanelPage.jsx` para mostrar "Mis Asignaciones Técnicas" en rol `TECHNICIAN`, habilitar botones de "Iniciar Trabajo" y "Resolver" para `ADMIN` o técnico asignado, y ocultar acciones exclusivas de triaje al técnico.
+- [x] 9.5 Tests y QA: Actualizar pruebas unitarias e integración en backend (`IncidentTriageServiceTest`, `IncidentTriageControllerTest`, `IncidentControllerTest`, `IncidentServiceTest`) y frontend (`OperatorPanelPage.test.jsx`, `HomePage.test.jsx`, `App.test.jsx`), garantizando 100% de tests y lint en verde.
+
 ---
 ## Mantenimiento (checklist recurrente)
 
@@ -71,3 +78,5 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Comprobar que los comentarios con `is_internal = true` nunca sean serializados en respuestas dirigidas a ciudadanos.
 - [x] Asegurar que toda asignación técnica activa pertenezca siempre a un departamento activo de la misma incidencia.
 - [x] Validar que las transiciones a `RESOLVED` en incidencias no menores mantengan la obligatoriedad de la descripción.
+- [x] Comprobar que un usuario `TECHNICIAN` no pueda visualizar incidencias a las que no esté asignado activamente en `GET /api/incidents`.
+- [x] Verificar que un usuario `ADMIN` pueda transicionar incidencias a `IN_PROGRESS` y `RESOLVED` sin asignación previa.

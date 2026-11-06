@@ -29,6 +29,10 @@ import './OperatorPanelPage.css';
 export default function OperatorPanelPage() {
   const navigate = useNavigate();
   const user = authService.getUser();
+  const isTechnician = user?.role === 'TECHNICIAN';
+  const isAdmin = user?.role === 'ADMIN';
+  const canOperateTriage = isAdmin || user?.role === 'OPERATOR';
+  const canExecuteFieldWork = isAdmin || isTechnician;
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -289,7 +293,7 @@ export default function OperatorPanelPage() {
       <header className="operator-header">
         <div className="operator-brand">
           <h1 className="operator-brand-title">UrbanPulse</h1>
-          <span className="operator-badge">Panel de Operador</span>
+          <span className="operator-badge">{isTechnician ? 'Técnico de Campo' : 'Panel de Operador'}</span>
         </div>
         <div className="operator-header-actions">
           <Link to="/map" className="operator-map-nav-link" title="Explorar incidencias en el mapa">
@@ -311,54 +315,86 @@ export default function OperatorPanelPage() {
         <section className="operator-overview-card">
           <div className="overview-header">
             <div className="overview-title-group">
-              <h2>Centro de Triaje y Operaciones Urbanas</h2>
+              <h2>{isTechnician ? 'Mis Asignaciones Técnicas' : 'Centro de Triaje y Operaciones Urbanas'}</h2>
               <p className="overview-subtitle">
-                Supervisión de actuaciones técnicas, validación y priorización de reportes municipales conectados en
-                tiempo real a PostgreSQL.
+                {isTechnician
+                  ? 'Incidencias asignadas para intervención y resolución técnica en campo.'
+                  : 'Supervisión de actuaciones técnicas, validación y priorización de reportes municipales conectados en tiempo real a PostgreSQL.'}
               </p>
             </div>
             <div className="user-badge-info">
-              <span className="user-badge-name">{user?.fullName || 'Operador Municipal'}</span>
-              <span className="user-badge-role">{user?.role || 'OPERATOR'}</span>
+              <span className="user-badge-name">{user?.fullName || (isTechnician ? 'Técnico Municipal' : 'Operador Municipal')}</span>
+              <span className="user-badge-role">{user?.role || (isTechnician ? 'TECHNICIAN' : 'OPERATOR')}</span>
             </div>
           </div>
 
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-label">Pendientes de Triaje</span>
-              <span className="stat-number">
-                {incidents.filter((i) => i.status === 'REPORTED').length}
-              </span>
-              <span className="stat-help">Reportadas sin validar</span>
+          {isTechnician ? (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-label">Pendientes de Inicio</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => ['ASSIGNED', 'REOPENED'].includes(i.status)).length}
+                </span>
+                <span className="stat-help">Asignadas para campo</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">En Intervención</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => i.status === 'IN_PROGRESS').length}
+                </span>
+                <span className="stat-help">Trabajos en curso</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Resueltas</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
+                </span>
+                <span className="stat-help">Completadas en campo</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Total Asignadas</span>
+                <span className="stat-number">{incidents.length}</span>
+                <span className="stat-help">Incidencias en tu cola</span>
+              </div>
             </div>
-            <div className="stat-card">
-              <span className="stat-label">En Tramitación</span>
-              <span className="stat-number">
-                {
-                  incidents.filter((i) => ['VALIDATED', 'ASSIGNED', 'IN_PROGRESS', 'REOPENED'].includes(i.status))
-                    .length
-                }
-              </span>
-              <span className="stat-help">Equipos de campo asignados</span>
+          ) : (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-label">Pendientes de Triaje</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => i.status === 'REPORTED').length}
+                </span>
+                <span className="stat-help">Reportadas sin validar</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">En Tramitación</span>
+                <span className="stat-number">
+                  {
+                    incidents.filter((i) => ['VALIDATED', 'ASSIGNED', 'IN_PROGRESS', 'REOPENED'].includes(i.status))
+                      .length
+                  }
+                </span>
+                <span className="stat-help">Equipos de campo asignados</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Resueltas / Cerradas</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
+                </span>
+                <span className="stat-help">Validaciones completadas</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Total en BD</span>
+                <span className="stat-number">{incidents.length}</span>
+                <span className="stat-help">Incidencias registradas</span>
+              </div>
             </div>
-            <div className="stat-card">
-              <span className="stat-label">Resueltas / Cerradas</span>
-              <span className="stat-number">
-                {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
-              </span>
-              <span className="stat-help">Validaciones completadas</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Total en BD</span>
-              <span className="stat-number">{incidents.length}</span>
-              <span className="stat-help">Incidencias registradas</span>
-            </div>
-          </div>
+          )}
         </section>
 
         <section className="triage-section">
           <div className="section-header">
-            <h3>Cola de Incidencias en Base de Datos</h3>
+            <h3>{isTechnician ? 'Mis Incidencias Asignadas' : 'Cola de Incidencias en Base de Datos'}</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
                 type="button"
@@ -413,7 +449,7 @@ export default function OperatorPanelPage() {
             </div>
           ) : incidents.length === 0 ? (
             <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
-              <p>No hay incidencias registradas en la base de datos en este momento.</p>
+              <p>{isTechnician ? 'No tienes incidencias asignadas en este momento.' : 'No hay incidencias registradas en la base de datos en este momento.'}</p>
               <Link to="/map" style={{ color: '#0284c7', textDecoration: 'underline' }}>
                 Ir al mapa para registrar una nueva incidencia
               </Link>
@@ -451,15 +487,17 @@ export default function OperatorPanelPage() {
                             <span className={`badge-priority ${(incident.priority || 'medium').toLowerCase()}`}>
                               {getPriorityLabel(incident.priority)}
                             </span>
-                            <button
-                              type="button"
-                              className="btn-priority-assistant"
-                              onClick={() => setPriorityModalIncident(incident)}
-                              title="Calcular o modificar prioridad asistida"
-                              aria-label={`Prioridad asistida para incidencia #${incident.id}`}
-                            >
-                              ⚡ Asistente
-                            </button>
+                            {canOperateTriage && (
+                              <button
+                                type="button"
+                                className="btn-priority-assistant"
+                                onClick={() => setPriorityModalIncident(incident)}
+                                title="Calcular o modificar prioridad asistida"
+                                aria-label={`Prioridad asistida para incidencia #${incident.id}`}
+                              >
+                                ⚡ Asistente
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td>
@@ -489,7 +527,7 @@ export default function OperatorPanelPage() {
                         <td className="triage-actions-cell">
                           <div className="action-buttons-group">
                             {/* Botones contextuales según estado */}
-                            {incident.status === 'REPORTED' && (
+                            {incident.status === 'REPORTED' && canOperateTriage && (
                               <>
                                 <button
                                   type="button"
@@ -512,7 +550,7 @@ export default function OperatorPanelPage() {
                               </>
                             )}
 
-                            {incident.status === 'VALIDATED' && (
+                            {incident.status === 'VALIDATED' && canOperateTriage && (
                               <>
                                 <button
                                   type="button"
@@ -546,60 +584,70 @@ export default function OperatorPanelPage() {
 
                             {(incident.status === 'ASSIGNED' || incident.status === 'REOPENED') && (
                               <>
-                                <button
-                                  type="button"
-                                  className="btn-action-triage btn-triage-start"
-                                  onClick={() => handleStartWork(incident.id)}
-                                  disabled={isProcessing}
-                                  aria-label={`Iniciar trabajo en incidencia #${incident.id}`}
-                                >
-                                  Iniciar Trabajo
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-action-triage btn-triage-assign"
-                                  onClick={() => setAssignmentModalIncident(incident)}
-                                  disabled={isProcessing}
-                                  aria-label={`Asignar o reasignar departamentos a #${incident.id}`}
-                                >
-                                  Asignar / Reasignar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-action-triage btn-triage-reject"
-                                  onClick={() => openReasonModal(incident, 'REJECT')}
-                                  disabled={isProcessing}
-                                  aria-label={`Rechazar incidencia #${incident.id}`}
-                                >
-                                  Rechazar
-                                </button>
+                                {canExecuteFieldWork && (
+                                  <button
+                                    type="button"
+                                    className="btn-action-triage btn-triage-start"
+                                    onClick={() => handleStartWork(incident.id)}
+                                    disabled={isProcessing}
+                                    aria-label={`Iniciar trabajo en incidencia #${incident.id}`}
+                                  >
+                                    Iniciar Trabajo
+                                  </button>
+                                )}
+                                {canOperateTriage && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="btn-action-triage btn-triage-assign"
+                                      onClick={() => setAssignmentModalIncident(incident)}
+                                      disabled={isProcessing}
+                                      aria-label={`Asignar o reasignar departamentos a #${incident.id}`}
+                                    >
+                                      Asignar / Reasignar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn-action-triage btn-triage-reject"
+                                      onClick={() => openReasonModal(incident, 'REJECT')}
+                                      disabled={isProcessing}
+                                      aria-label={`Rechazar incidencia #${incident.id}`}
+                                    >
+                                      Rechazar
+                                    </button>
+                                  </>
+                                )}
                               </>
                             )}
 
                             {incident.status === 'IN_PROGRESS' && (
                               <>
-                                <button
-                                  type="button"
-                                  className="btn-action-triage btn-triage-resolve"
-                                  onClick={() => setResolveModalIncident(incident)}
-                                  disabled={isProcessing}
-                                  aria-label={`Resolver incidencia #${incident.id}`}
-                                >
-                                  Resolver
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-action-triage btn-triage-assign"
-                                  onClick={() => setAssignmentModalIncident(incident)}
-                                  disabled={isProcessing}
-                                  aria-label={`Asignar o reasignar departamentos a #${incident.id}`}
-                                >
-                                  Asignar / Reasignar
-                                </button>
+                                {canExecuteFieldWork && (
+                                  <button
+                                    type="button"
+                                    className="btn-action-triage btn-triage-resolve"
+                                    onClick={() => setResolveModalIncident(incident)}
+                                    disabled={isProcessing}
+                                    aria-label={`Resolver incidencia #${incident.id}`}
+                                  >
+                                    Resolver
+                                  </button>
+                                )}
+                                {canOperateTriage && (
+                                  <button
+                                    type="button"
+                                    className="btn-action-triage btn-triage-assign"
+                                    onClick={() => setAssignmentModalIncident(incident)}
+                                    disabled={isProcessing}
+                                    aria-label={`Asignar o reasignar departamentos a #${incident.id}`}
+                                  >
+                                    Asignar / Reasignar
+                                  </button>
+                                )}
                               </>
                             )}
 
-                            {incident.status === 'RESOLVED' && (
+                            {incident.status === 'RESOLVED' && canOperateTriage && (
                               <>
                                 <button
                                   type="button"
@@ -622,7 +670,7 @@ export default function OperatorPanelPage() {
                               </>
                             )}
 
-                            {incident.status === 'REJECTED' && (
+                            {incident.status === 'REJECTED' && canOperateTriage && (
                               <button
                                 type="button"
                                 className="btn-action-triage btn-triage-reevaluate"

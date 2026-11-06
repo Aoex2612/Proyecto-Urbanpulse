@@ -372,6 +372,23 @@ class IncidentTriageControllerTest {
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
     }
 
+    @Test
+    @WithMockUser(username = "admin@urbanpulse.es", roles = "ADMIN")
+    @DisplayName("POST /api/incidents/{id}/start-work con rol ADMIN debe retornar 200 OK")
+    void shouldReturn200WhenAdminOnStartWork() throws Exception {
+        IncidentResponse response = new IncidentResponse();
+        response.setId(1L);
+        response.setStatus(EstadoIncidencia.IN_PROGRESS);
+
+        when(incidentTriageService.startIntervention(eq(1L), eq("admin@urbanpulse.es")))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/api/incidents/1/start-work"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
     // -------------------------------------------------------------------------
     // 7. RESOLUCIÓN DE INCIDENCIA
     // -------------------------------------------------------------------------
@@ -395,6 +412,26 @@ class IncidentTriageControllerTest {
         response.setStatus(EstadoIncidencia.RESOLVED);
 
         when(incidentTriageService.resolveIncident(eq(1L), any(), eq("tech@urbanpulse.es")))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/api/incidents/1/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.status").value("RESOLVED"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@urbanpulse.es", roles = "ADMIN")
+    @DisplayName("POST /api/incidents/{id}/resolve con rol ADMIN debe retornar 200 OK")
+    void shouldReturn200WhenAdminOnResolve() throws Exception {
+        ResolveIncidentRequest request = new ResolveIncidentRequest("Reparación completa por admin");
+        IncidentResponse response = new IncidentResponse();
+        response.setId(1L);
+        response.setStatus(EstadoIncidencia.RESOLVED);
+
+        when(incidentTriageService.resolveIncident(eq(1L), any(), eq("admin@urbanpulse.es")))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/incidents/1/resolve")

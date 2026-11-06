@@ -11,6 +11,7 @@ import { MemoryRouter } from 'react-router-dom';
 import OperatorPanelPage from './OperatorPanelPage';
 import incidentService from '../services/incidentService';
 import triageService from '../services/triageService';
+import authService from '../services/authService';
 
 // Mock de servicios
 vi.mock('../services/incidentService', () => ({
@@ -23,9 +24,9 @@ vi.mock('../services/authService', () => ({
   default: {
     getUser: vi.fn(() => ({
       id: 99,
-      fullName: 'Operador Test',
-      email: 'operador@malaga.es',
-      role: 'OPERATOR',
+      fullName: 'Administrador Test',
+      email: 'admin@malaga.es',
+      role: 'ADMIN',
     })),
     logout: vi.fn(),
   },
@@ -137,6 +138,12 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    authService.getUser.mockReturnValue({
+      id: 99,
+      fullName: 'Administrador Test',
+      email: 'admin@malaga.es',
+      role: 'ADMIN',
+    });
     incidentService.getAllIncidents.mockResolvedValue(mockIncidents);
   });
 
@@ -370,5 +377,59 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
     fireEvent.click(commentsBtn);
 
     expect(screen.getByText(/Muro de Comentarios — Incidencia #1/i)).toBeInTheDocument();
+  });
+
+  it('para rol TECHNICIAN adapta el encabezado a Mis Asignaciones Técnicas y oculta acciones de triaje exclusivo', async () => {
+    authService.getUser.mockReturnValue({
+      id: 44,
+      fullName: 'Carlos Técnico',
+      email: 'carlos.tech@malaga.es',
+      role: 'TECHNICIAN',
+    });
+
+    renderPanel();
+
+    expect(await screen.findByText('Mis Asignaciones Técnicas')).toBeInTheDocument();
+    expect(
+      screen.getByText('Incidencias asignadas para intervención y resolución técnica en campo.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Técnico de Campo')).toBeInTheDocument();
+
+    // Verificación de estadísticas específicas de técnico
+    expect(screen.getByText('Pendientes de Inicio')).toBeInTheDocument();
+    expect(screen.getByText('En Intervención')).toBeInTheDocument();
+    expect(screen.getByText('Total Asignadas')).toBeInTheDocument();
+
+    // Botones de técnico presentes para su incidencia asignada y en progreso
+    expect(screen.getByRole('button', { name: 'Iniciar trabajo en incidencia #3' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resolver incidencia #4' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver y redactar comentarios de la incidencia #3' })).toBeInTheDocument();
+
+    // Acciones de operador ocultas para técnico
+    expect(screen.queryByRole('button', { name: 'Validar incidencia #1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rechazar incidencia #1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Asignar departamentos a #2' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cerrar incidencia #5' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reabrir incidencia #5' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Prioridad asistida para incidencia #1' })).not.toBeInTheDocument();
+  });
+
+  it('para rol OPERATOR oculta botones de campo (iniciar trabajo y resolver) mostrando únicamente triaje', async () => {
+    authService.getUser.mockReturnValue({
+      id: 20,
+      fullName: 'Operador Municipal',
+      email: 'operador@malaga.es',
+      role: 'OPERATOR',
+    });
+
+    renderPanel();
+
+    expect(await screen.findByText('Centro de Triaje y Operaciones Urbanas')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Validar incidencia #1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Asignar departamentos a #2' })).toBeInTheDocument();
+
+    // No debe mostrar Iniciar Trabajo ni Resolver a operadores
+    expect(screen.queryByRole('button', { name: 'Iniciar trabajo en incidencia #3' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Resolver incidencia #4' })).not.toBeInTheDocument();
   });
 });

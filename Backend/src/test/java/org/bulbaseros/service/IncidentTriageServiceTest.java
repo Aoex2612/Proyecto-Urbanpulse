@@ -704,6 +704,44 @@ class IncidentTriageServiceTest {
                 () -> triageService.resolveIncident(100L, new ResolveIncidentRequest("Notas suficientes"), "tecnico@urbanpulse.es"));
     }
 
+    @Test
+    @DisplayName("resolveIncident: administrador puede resolver incidencia sin requerir asignación técnica activa previa")
+    void shouldResolveIncidentSuccessfullyByAdmin() {
+        incident.setStatus(EstadoIncidencia.IN_PROGRESS);
+        incident.setPriority(PrioridadIncidencia.HIGH);
+
+        ResolveIncidentRequest request = ResolveIncidentRequest.builder()
+                .resolutionNotes("Resolución directa ejecutada por el administrador municipal")
+                .build();
+
+        when(userRepository.findByEmail("admin@urbanpulse.es")).thenReturn(Optional.of(admin));
+        when(incidenciaRepository.findById(100L)).thenReturn(Optional.of(incident));
+        when(incidenciaRepository.save(incident)).thenReturn(incident);
+        when(incidentMapper.toDto(incident)).thenReturn(incidentResponse);
+
+        IncidentResponse result = triageService.resolveIncident(100L, request, "admin@urbanpulse.es");
+
+        assertNotNull(result);
+        assertEquals(EstadoIncidencia.RESOLVED, incident.getStatus());
+        verify(tareasRepository, never()).existsByIncidentIdAndTechnicianIdAndIsActiveTrue(any(), any());
+    }
+
+    @Test
+    @DisplayName("resolveIncident: lanza 403 Forbidden si el técnico no está asignado activamente")
+    void shouldThrow403WhenTechnicianIsNotAssignedOnResolve() {
+        incident.setStatus(EstadoIncidencia.IN_PROGRESS);
+
+        when(userRepository.findByEmail("tecnico@urbanpulse.es")).thenReturn(Optional.of(technician));
+        when(incidenciaRepository.findById(100L)).thenReturn(Optional.of(incident));
+        when(tareasRepository.existsByIncidentIdAndTechnicianIdAndIsActiveTrue(100L, 3L)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> triageService.resolveIncident(100L, new ResolveIncidentRequest("Reparación terminada"), "tecnico@urbanpulse.es"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("No es un técnico asignado"));
+        verifyNoInteractions(cambiosEstadoRepository);
+    }
+
     // =========================================================================
     // 8. closeIncident (RF-17, RF-19)
     // =========================================================================

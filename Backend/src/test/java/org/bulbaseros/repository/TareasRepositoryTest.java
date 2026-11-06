@@ -162,4 +162,30 @@ class TareasRepositoryTest {
         assertEquals(1, alumbradoResults.size(), "Debe haber 1 asignación activa en Alumbrado (omitiendo la inactiva)");
         assertEquals(technicianAlumbrado.getId(), alumbradoResults.get(0).getTechnician().getId());
     }
+
+    @Test
+    @DisplayName("Debería recuperar únicamente las tareas activas de un técnico específico (RF-25)")
+    void shouldFindActiveTasksByTechnicianId() {
+        Tareas activeTask1 = new Tareas(incident1, deptVias, technicianVias, operatorUser);
+        activeTask1.setIsActive(true);
+        entityManager.persistAndFlush(activeTask1);
+
+        Tareas activeTask2 = new Tareas(incident2, deptVias, technicianVias, operatorUser);
+        activeTask2.setIsActive(true);
+        entityManager.persistAndFlush(activeTask2);
+
+        Tareas inactiveTask = new Tareas(incident1, deptVias, technicianVias, operatorUser);
+        inactiveTask.setIsActive(false);
+        entityManager.persistAndFlush(inactiveTask);
+
+        Tareas otherTechTask = new Tareas(incident1, deptAlumbrado, technicianAlumbrado, operatorUser);
+        otherTechTask.setIsActive(true);
+        entityManager.persistAndFlush(otherTechTask);
+
+        List<Tareas> techViasTasks = tareasRepository.findByTechnicianIdAndIsActiveTrue(technicianVias.getId());
+
+        assertEquals(2, techViasTasks.size(), "Debe recuperar exactamente las 2 tareas activas del técnico");
+        assertTrue(techViasTasks.stream().allMatch(Tareas::getIsActive));
+        assertTrue(techViasTasks.stream().allMatch(t -> t.getTechnician().getId().equals(technicianVias.getId())));
+    }
 }

@@ -167,7 +167,7 @@ public class IncidentTriageController {
      * @return {@link ResponseEntity} con código HTTP 200 OK y el DTO {@link IncidentResponse} en estado {@code IN_PROGRESS}.
      */
     @PostMapping("/{id}/start-work")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN', 'ADMIN')")
     public ResponseEntity<IncidentResponse> startWork(
             @PathVariable("id") Long id,
             Authentication authentication) {
@@ -184,7 +184,7 @@ public class IncidentTriageController {
      * @return {@link ResponseEntity} con código HTTP 200 OK y el DTO {@link IncidentResponse} en estado {@code RESOLVED}.
      */
     @PostMapping("/{id}/resolve")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN', 'ADMIN')")
     public ResponseEntity<IncidentResponse> resolveIncident(
             @PathVariable("id") Long id,
             @RequestBody(required = false) @Valid ResolveIncidentRequest request,

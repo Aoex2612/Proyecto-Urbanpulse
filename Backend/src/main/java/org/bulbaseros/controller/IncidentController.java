@@ -84,14 +84,18 @@ public class IncidentController {
      * Recupera todas las incidencias urbanas activas en la plataforma para su representacion en el mapa interactivo.
      * <p>
      * Excluye del resultado los estados finales de ciclo de vida (CLOSED y REJECTED).
-     * Requiere que la peticion provenga de un usuario autenticado con cualquier rol valido.
+     * Aplica segregación de incidencias según el perfil autenticado: si es un técnico en campo (TECHNICIAN),
+     * devuelve exclusivamente aquellas donde posea una asignación técnica activa (RF-25).
+     * Para operadores, administradores o ciudadanos, devuelve la totalidad de las incidencias activas.
      * </p>
      *
+     * @param authentication Contexto de autenticación de Spring Security para determinar la identidad y rol del usuario.
      * @return {@link ResponseEntity} con codigo HTTP 200 OK y la lista de {@link IncidentResponse} activas.
      */
     @GetMapping
-    public ResponseEntity<List<IncidentResponse>> getActiveIncidents() {
-        List<IncidentResponse> incidents = incidentService.getActiveIncidents();
+    public ResponseEntity<List<IncidentResponse>> getActiveIncidents(Authentication authentication) {
+        String userEmail = authentication != null ? authentication.getName() : null;
+        List<IncidentResponse> incidents = incidentService.getActiveIncidents(userEmail);
         return ResponseEntity.ok(incidents);
     }
 

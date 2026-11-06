@@ -52,4 +52,12 @@ public interface TareasRepository extends JpaRepository<Tareas, Long> {
      * @return Lista de asignaciones activas pertenecientes al departamento especificado.
      */
     List<Tareas> findByIncidentIdAndDepartmentIdAndIsActiveTrue(Long incidentId, Long departmentId);
+
+    /**
+     * Recupera todas las asignaciones que se encuentran activas para un técnico dado (RF-25).
+     *
+     * @param technicianId Identificador único del usuario técnico.
+     * @return Lista de asignaciones activas ({@code is_active = true}) asociadas al técnico.
+     */
+    List<Tareas> findByTechnicianIdAndIsActiveTrue(Long technicianId);
 }
