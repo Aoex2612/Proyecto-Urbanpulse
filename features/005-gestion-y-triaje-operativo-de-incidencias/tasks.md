@@ -35,12 +35,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 4.7 Implementar cierre definitivo (`closeIncident`) y reapertura (`reopenIncident`) para operadores/administradores, inactivando asignaciones al cerrar vía `AssignmentService` y registrando motivos.
 - [x] 4.8 Crear pruebas unitarias exhaustivas con Mockito en `IncidentTriageServiceTest` validando transiciones legales, estados bloqueados y auditoría de cambios.
 
-## [ ] Tarea 5: Controladores REST, Seguridad RBAC y Documentación OpenAPI en Backend - Depende de Tarea 4 - RF: RF-1 al RF-24
-- [ ] 5.1 Crear `IncidentTriageController` en `org.bulbaseros.controller` exponiendo endpoints de cálculo y actualización de prioridad, validación, rechazo, reevaluación, inicio de trabajo, resolución, cierre y reapertura, protegidos con anotaciones de seguridad (`hasRole`).
-- [ ] 5.2 Exponer endpoints de asignaciones (`POST /api/incidents/{id}/assignments`, `POST /api/incidents/{id}/assignments/deactivate`) y comentarios (`GET /api/incidents/{id}/comments`, `POST /api/incidents/{id}/comments`, `PUT /api/incidents/{id}/comments/{commentId}`) en `IncidentTriageController`.
-- [ ] 5.3 Crear `DepartmentController` en `org.bulbaseros.controller` exponiendo `GET /api/departments` y `GET /api/departments/{id}/technicians`.
-- [ ] 5.4 Actualizar `SecurityConfig` garantizando las políticas de acceso por roles y rutas seguras.
-- [ ] 5.5 Crear pruebas de integración en `IncidentTriageControllerTest` y `DepartmentControllerTest` con `MockMvc` y `@WithMockUser` verificando respuestas 200, 400, 401 y 403.
+## [x] Tarea 5: Controladores REST, Seguridad RBAC y Documentación OpenAPI en Backend - Depende de Tarea 4 - RF: RF-1 al RF-24
+- [x] 5.1 Crear `IncidentTriageController` en `org.bulbaseros.controller` exponiendo endpoints de cálculo y actualización de prioridad, validación, rechazo, reevaluación, inicio de trabajo, resolución, cierre y reapertura, protegidos con anotaciones de seguridad (`hasRole`).
+- [x] 5.2 Exponer endpoints de asignaciones (`POST /api/incidents/{id}/assignments`, `POST /api/incidents/{id}/assignments/deactivate`) y comentarios (`GET /api/incidents/{id}/comments`, `POST /api/incidents/{id}/comments`, `PUT /api/incidents/{id}/comments/{commentId}`) en `IncidentTriageController`.
+- [x] 5.3 Crear `DepartmentController` en `org.bulbaseros.controller` exponiendo `GET /api/departments` y `GET /api/departments/{id}/technicians`.
+- [x] 5.4 Actualizar `SecurityConfig` garantizando las políticas de acceso por roles y rutas seguras.
+- [x] 5.5 Crear pruebas de integración en `IncidentTriageControllerTest` y `DepartmentControllerTest` con `MockMvc` y `@WithMockUser` verificando respuestas 200, 400, 401 y 403.
 
 ## [ ] Tarea 6: Servicios API y Modales de Triaje y Asignación en Frontend - Depende de Tarea 5 - RF: RF-1, RF-2, RF-8, RF-9, RF-10, RF-11, RF-12
 - [ ] 6.1 Crear servicio cliente `frontend/src/services/triageService.js` con Axios documentado con JSDoc para interactuar con todos los endpoints de triaje, asignación, comentarios, departamentos y técnicos.
