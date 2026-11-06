@@ -18,11 +18,10 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 ## En curso 🔄
 
-_Ninguna feature en curso actualmente._
+- **009 · Analítica urbana y reportes** (`HU22`–`HU25`) — Métricas operativas (MTTT, MTTR, evaluación de SLAs con umbrales 3d/7d/15d/30d), análisis territorial y temporal con gráficos visuales, exportación de informes en PDF y recomendación asistida con grado de confianza (`features/009-analitica-urbana-y-reportes/`).
 
 ## Siguiente 🔜
 
-- **009 · Analítica urbana y reportes** (`HU22`–`HU25`) — Métricas operativas (MTTT, MTTR, evaluación de SLAs con umbrales 3d/7d/15d/30d), análisis territorial y temporal con gráficos visuales, exportación de informes en PDF y recomendación asistida con grado de confianza (`features/009-analitica-urbana-y-reportes/`).
 - **Validación asistida e inferencia de duplicados** — Sugerencia automática de incidencias similares y detección de proximidad espaciotemporal.
 
 ## Backlog / ideas 💡
