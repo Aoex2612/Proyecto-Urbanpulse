@@ -7,6 +7,7 @@ vi.mock('../../services/triageService', () => ({
   default: {
     getDepartments: vi.fn(),
     getTechniciansByDepartment: vi.fn(),
+    getIncidentAssignments: vi.fn(),
     assignDepartmentsAndTechnicians: vi.fn(),
     deactivateAssignments: vi.fn(),
   },
@@ -45,6 +46,7 @@ describe('AssignmentModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     triageService.getDepartments.mockResolvedValue(mockDepartments);
+    triageService.getIncidentAssignments.mockResolvedValue(mockIncident.assignments);
     triageService.getTechniciansByDepartment.mockImplementation((deptId) => {
       if (deptId === 1) return Promise.resolve(mockTechniciansDept1);
       if (deptId === 2) return Promise.resolve(mockTechniciansDept2);

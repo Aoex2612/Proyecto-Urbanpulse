@@ -165,6 +165,18 @@ export const assignDepartmentsAndTechnicians = async (
 };
 
 /**
+ * Recupera el listado de asignaciones activas de una incidencia.
+ *
+ * @param {number|string} incidentId - Identificador único de la incidencia.
+ * @returns {Promise<Array<Object>>} Lista de asignaciones activas de la incidencia.
+ * @throws {import('axios').AxiosError} Si la incidencia no existe o falla la consulta.
+ */
+export const getIncidentAssignments = async (incidentId) => {
+  const response = await api.get(`/api/incidents/${incidentId}/assignments`);
+  return response.data;
+};
+
+/**
  * Desactiva lógicamente asignaciones departamentales o técnicas específicas de una incidencia.
  * Si no restan departamentos activos, revierte automáticamente el estado de la incidencia a VALIDATED.
  *
@@ -266,6 +278,7 @@ const triageService = {
   resolveIncident,
   closeIncident,
   reopenIncident,
+  getIncidentAssignments,
   assignDepartmentsAndTechnicians,
   deactivateAssignments,
   getIncidentComments,

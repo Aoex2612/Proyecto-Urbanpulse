@@ -40,7 +40,7 @@ export default function AssignmentModal({
 
   const closeBtnRef = useRef(null);
 
-  // Sincronizar asignaciones activas desde la incidencia recibida
+  // Sincronizar asignaciones activas desde la incidencia recibida y consultar API
   useEffect(() => {
     if (!isOpen || !incident) {
       return;
@@ -50,14 +50,27 @@ export default function AssignmentModal({
 
     Promise.resolve().then(() => {
       if (isMounted) {
-        const active = (incident.assignments || []).filter((a) => a.isActive !== false);
-        setActiveAssignments(active);
+        const initialActive = (incident.assignments || []).filter((a) => a.isActive !== false);
+        setActiveAssignments(initialActive);
         setSelectedDeptIds([]);
         setSelectedTechIds([]);
         setError(null);
         setFeedback(null);
       }
     });
+
+    if (incident.id && typeof triageService.getIncidentAssignments === 'function') {
+      triageService
+        .getIncidentAssignments(incident.id)
+        .then((data) => {
+          if (isMounted && Array.isArray(data)) {
+            setActiveAssignments(data.filter((a) => a.isActive !== false));
+          }
+        })
+        .catch(() => {
+          // Ignorar si falla, conservando el estado inicial
+        });
+    }
 
     return () => {
       isMounted = false;

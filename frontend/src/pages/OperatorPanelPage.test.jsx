@@ -49,6 +49,7 @@ vi.mock('../services/triageService', () => ({
     updateComment: vi.fn(),
     getDepartments: vi.fn().mockResolvedValue([]),
     getTechniciansByDepartment: vi.fn().mockResolvedValue([]),
+    getIncidentAssignments: vi.fn().mockResolvedValue([]),
   },
 }));
 

@@ -531,6 +531,37 @@ class IncidentTriageControllerTest {
 
     @Test
     @WithMockUser(username = "operator@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/incidents/{id}/assignments autenticado debe retornar 200 OK con asignaciones activas")
+    void shouldReturn200WhenAuthenticatedOnGetAssignments() throws Exception {
+        AssignmentResponse assignment = AssignmentResponse.builder()
+                .id(100L)
+                .departmentId(1L)
+                .departmentName("Alumbrado")
+                .technicianId(10L)
+                .technicianName("Carlos Tecnico")
+                .isActive(true)
+                .assignedAt(OffsetDateTime.now())
+                .build();
+
+        when(assignmentService.getActiveAssignments(1L)).thenReturn(List.of(assignment));
+
+        mockMvc.perform(get("/api/incidents/1/assignments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(100))
+                .andExpect(jsonPath("$[0].departmentName").value("Alumbrado"))
+                .andExpect(jsonPath("$[0].technicianName").value("Carlos Tecnico"))
+                .andExpect(jsonPath("$[0].isActive").value(true));
+    }
+
+    @Test
+    @DisplayName("GET /api/incidents/{id}/assignments sin token debe retornar 401 Unauthorized")
+    void shouldReturn401WhenUnauthenticatedOnGetAssignments() throws Exception {
+        mockMvc.perform(get("/api/incidents/1/assignments"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "operator@urbanpulse.es", roles = "OPERATOR")
     @DisplayName("POST /api/incidents/{id}/assignments/deactivate con rol OPERATOR debe retornar 200 OK")
     void shouldReturn200WhenOperatorOnDeactivateAssignments() throws Exception {
         DeactivateAssignmentRequest request = new DeactivateAssignmentRequest(List.of(1L), null);

@@ -5,6 +5,7 @@ import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.PrioridadIncidencia;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 /**
  * Objeto de transferencia de datos (DTO) que representa la informacion publica y detallada de una incidencia.
@@ -97,6 +98,11 @@ public class IncidentResponse {
      * Barrio o vecindario en el que se ubica la incidencia.
      */
     private String neighborhood;
+
+    /**
+     * Lista de asignaciones activas vinculadas a la incidencia (departamentos y tecnicos).
+     */
+    private List<AssignmentResponse> assignments;
 
     /**
      * Constructor por defecto requerido para deserializacion JSON.
@@ -488,5 +494,23 @@ public class IncidentResponse {
      */
     public void setNeighborhood(String neighborhood) {
         this.neighborhood = neighborhood;
+    }
+
+    /**
+     * Obtiene la lista de asignaciones activas vinculadas a la incidencia.
+     *
+     * @return Lista de {@link AssignmentResponse}.
+     */
+    public List<AssignmentResponse> getAssignments() {
+        return assignments;
+    }
+
+    /**
+     * Establece la lista de asignaciones activas vinculadas a la incidencia.
+     *
+     * @param assignments Lista de {@link AssignmentResponse}.
+     */
+    public void setAssignments(List<AssignmentResponse> assignments) {
+        this.assignments = assignments;
     }
 }

@@ -142,4 +142,38 @@ class IncidentMapperTest {
         assertEquals(1L, dtoList.get(0).getId());
         assertEquals(2L, dtoList.get(1).getId());
     }
+    @Test
+    @DisplayName("Debe mapear asignaciones activas si TareasRepository y AssignmentMapper estan inyectados")
+    void shouldMapActiveAssignmentsWhenRepositoriesInjected() {
+        org.bulbaseros.repository.TareasRepository mockTareasRepo = org.mockito.Mockito.mock(org.bulbaseros.repository.TareasRepository.class);
+        AssignmentMapper mockAssignMapper = org.mockito.Mockito.mock(AssignmentMapper.class);
+        IncidentMapper mapperWithDeps = new IncidentMapper(mockTareasRepo, mockAssignMapper);
+
+        Incidencia entity = new Incidencia();
+        entity.setId(5L);
+        entity.setTitle("Bache");
+        entity.setDescription("Detalle");
+        entity.setCategory("VIAS");
+        entity.setLatitude(36.7);
+        entity.setLongitude(-4.4);
+        entity.setStatus(EstadoIncidencia.ASSIGNED);
+        entity.setPriority(PrioridadIncidencia.HIGH);
+
+        org.bulbaseros.entity.Tareas tarea = new org.bulbaseros.entity.Tareas();
+        tarea.setId(10L);
+        org.bulbaseros.dto.AssignmentResponse assignDto = org.bulbaseros.dto.AssignmentResponse.builder()
+                .id(10L)
+                .departmentName("Obras")
+                .isActive(true)
+                .build();
+
+        org.mockito.Mockito.when(mockTareasRepo.findByIncidentIdAndIsActiveTrue(5L)).thenReturn(List.of(tarea));
+        org.mockito.Mockito.when(mockAssignMapper.toDtoList(List.of(tarea))).thenReturn(List.of(assignDto));
+
+        IncidentResponse response = mapperWithDeps.toDto(entity);
+        assertNotNull(response);
+        assertNotNull(response.getAssignments());
+        assertEquals(1, response.getAssignments().size());
+        assertEquals("Obras", response.getAssignments().get(0).getDepartmentName());
+    }
 }

@@ -228,6 +228,19 @@ public class IncidentTriageController {
     }
 
     /**
+     * Recupera el listado de asignaciones activas de una incidencia urbana.
+     *
+     * @param id Identificador único de la incidencia.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y la lista de asignaciones activas {@link AssignmentResponse}.
+     */
+    @GetMapping("/{id}/assignments")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<AssignmentResponse>> getIncidentAssignments(@PathVariable("id") Long id) {
+        List<AssignmentResponse> response = assignmentService.getActiveAssignments(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Asigna uno o más departamentos y técnicos específicos a una incidencia urbana.
      *
      * @param id             Identificador único de la incidencia.

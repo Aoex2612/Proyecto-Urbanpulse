@@ -9,6 +9,7 @@ import triageService, {
   resolveIncident,
   closeIncident,
   reopenIncident,
+  getIncidentAssignments,
   assignDepartmentsAndTechnicians,
   deactivateAssignments,
   getIncidentComments,
@@ -167,6 +168,18 @@ describe('triageService', () => {
         reason: 'La luminaria vuelve a fallar',
       });
       expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('getIncidentAssignments', () => {
+    it('llama a GET /api/incidents/:id/assignments', async () => {
+      const mockAssignments = [{ id: 1, departmentId: 2, departmentName: 'Obras', isActive: true }];
+      api.get.mockResolvedValueOnce({ data: mockAssignments });
+
+      const result = await getIncidentAssignments(10);
+
+      expect(api.get).toHaveBeenCalledWith('/api/incidents/10/assignments');
+      expect(result).toEqual(mockAssignments);
     });
   });
 
