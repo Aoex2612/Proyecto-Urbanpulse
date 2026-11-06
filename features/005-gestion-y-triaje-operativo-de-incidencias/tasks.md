@@ -49,11 +49,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 6.4 Crear componente `AssignmentModal.jsx` y su hoja de estilos con soporte para selección multidepartamento y selector dependiente de técnicos.
 - [x] 6.5 Crear pruebas unitarias con Vitest en `triageService.test.js`, `PriorityAssistantModal.test.jsx` y `AssignmentModal.test.jsx`.
 
-## [ ] Tarea 7: Muro de Comentarios y Sección de Intervención Técnica en Frontend - Depende de Tarea 6 - RF: RF-13, RF-14, RF-15, RF-16, RF-20, RF-21, RF-22, RF-23, RF-24
-- [ ] 7.1 Crear componente `IncidentCommentsSection.jsx` y estilos asociados, visualizando notas internas vs públicas, fecha de actualización para editados y formulario con selector de visibilidad.
-- [ ] 7.2 Implementar modal/controles para intervención técnica: botón "Iniciar Trabajo" (`IN_PROGRESS`) y modal de resolución con validación de descripción de actuaciones (`RESOLVED`).
-- [ ] 7.3 Actualizar `IncidentDetailModal.jsx` y `MyIncidentsPage.jsx` integrando la visualización de avisos públicos para seguimiento ciudadano.
-- [ ] 7.4 Crear pruebas unitarias con Vitest en `IncidentCommentsSection.test.jsx` comprobando renderizado según rol, bloqueo en cerradas y edición de comentarios.
+## [x] Tarea 7: Muro de Comentarios y Sección de Intervención Técnica en Frontend - Depende de Tarea 6 - RF: RF-13, RF-14, RF-15, RF-16, RF-20, RF-21, RF-22, RF-23, RF-24
+- [x] 7.1 Crear componente `IncidentCommentsSection.jsx` y estilos asociados, visualizando notas internas vs públicas, fecha de actualización para editados y formulario con selector de visibilidad.
+- [x] 7.2 Implementar modal/controles para intervención técnica: botón "Iniciar Trabajo" (`IN_PROGRESS`) y modal de resolución con validación de descripción de actuaciones (`RESOLVED`).
+- [x] 7.3 Actualizar `IncidentDetailModal.jsx` y `MyIncidentsPage.jsx` integrando la visualización de avisos públicos para seguimiento ciudadano.
+- [x] 7.4 Crear pruebas unitarias con Vitest en `IncidentCommentsSection.test.jsx` comprobando renderizado según rol, bloqueo en cerradas y edición de comentarios.
 
 ## [ ] Tarea 8: Integración en Panel Operativo, Pruebas de Integración y Preparación de QA - Depende de Tareas 5, 6 y 7 - RF: Todos (RF-1 al RF-24)
 - [ ] 8.1 Integrar en `OperatorPanelPage.jsx` los modales de la Tarea 6 (asistente de prioridad y asignación departamental).

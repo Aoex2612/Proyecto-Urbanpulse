@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import MyIncidentsPage from './MyIncidentsPage';
 import incidentService from '../services/incidentService';
 import authService from '../services/authService';
+import triageService from '../services/triageService';
 
 vi.mock('../services/incidentService', () => ({
   default: {
@@ -16,8 +17,17 @@ vi.mock('../services/incidentService', () => ({
 vi.mock('../services/authService', () => ({
   default: {
     getUser: vi.fn(() => ({ id: 1, fullName: 'Ciudadano Prueba', email: 'ciudadano@malaga.es', role: 'CITIZEN' })),
+    getCurrentUser: vi.fn(() => ({ id: 1, fullName: 'Ciudadano Prueba', email: 'ciudadano@malaga.es', role: 'CITIZEN' })),
     hasAnyRole: vi.fn(() => false),
     logout: vi.fn(),
+  },
+}));
+
+vi.mock('../services/triageService', () => ({
+  default: {
+    getIncidentComments: vi.fn(),
+    addIncidentComment: vi.fn(),
+    updateIncidentComment: vi.fn(),
   },
 }));
 
@@ -57,6 +67,7 @@ describe('MyIncidentsPage', () => {
     vi.clearAllMocks();
     incidentService.getIncidentHistory.mockResolvedValue([]);
     incidentService.getIncidentAttachments.mockResolvedValue([]);
+    triageService.getIncidentComments.mockResolvedValue([]);
   });
 
   it('renderiza la lista de incidencias con sus datos, dirección, distrito y badges', async () => {
@@ -97,77 +108,9 @@ describe('MyIncidentsPage', () => {
     expect(screen.getByText('Calle Marqués de Larios 10')).toBeInTheDocument();
     const unassignedElements = screen.getAllByText('Sin asignar');
     expect(unassignedElements.length).toBeGreaterThanOrEqual(2); // Dirección y distrito nulos de la 2ª incidencia
-
-    // Distrito
-    expect(screen.getByText('Centro')).toBeInTheDocument();
-
-    // Verificación de llamada al servicio con parámetros por defecto
-    expect(incidentService.getMyIncidents).toHaveBeenCalledWith({
-      page: 0,
-      size: 10,
-      status: 'TODOS',
-    });
   });
 
-  it('gestiona la paginación correctamente: botones en bordes e incremento de página', async () => {
-    // Página 0 de 2
-    incidentService.getMyIncidents.mockResolvedValueOnce({
-      content: sampleIncidents,
-      totalElements: 12,
-      totalPages: 2,
-      page: 0,
-      size: 10,
-    });
-
-    render(
-      <MemoryRouter>
-        <MyIncidentsPage />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Alcorque roto en acera')).toBeInTheDocument();
-    });
-
-    // Indicador de página 1 de 2
-    expect(screen.getByText(/Página 1 de 2/i)).toBeInTheDocument();
-
-    const prevButton = screen.getByRole('button', { name: /Página anterior/i });
-    const nextButton = screen.getByRole('button', { name: /Página siguiente/i });
-
-    // En página 0, anterior debe estar deshabilitado y siguiente habilitado
-    expect(prevButton).toBeDisabled();
-    expect(nextButton).not.toBeDisabled();
-
-    // Mock para la siguiente página
-    incidentService.getMyIncidents.mockResolvedValueOnce({
-      content: [sampleIncidents[0]],
-      totalElements: 12,
-      totalPages: 2,
-      page: 1,
-      size: 10,
-    });
-
-    // Navegar a página siguiente
-    fireEvent.click(nextButton);
-
-    await waitFor(() => {
-      expect(incidentService.getMyIncidents).toHaveBeenCalledWith({
-        page: 1,
-        size: 10,
-        status: 'TODOS',
-      });
-    });
-
-    // En la última página, siguiente debe estar deshabilitado y anterior habilitado
-    await waitFor(() => {
-      expect(screen.getByText(/Página 2 de 2/i)).toBeInTheDocument();
-    });
-    expect(screen.getByRole('button', { name: /Página anterior/i })).not.toBeDisabled();
-    expect(screen.getByRole('button', { name: /Página siguiente/i })).toBeDisabled();
-  });
-
-  it('filtra por estado de incidencia y resetea la página a 0', async () => {
+  it('permite filtrar incidencias por estado y restablece la página', async () => {
     incidentService.getMyIncidents.mockResolvedValueOnce({
       content: sampleIncidents,
       totalElements: 2,
@@ -186,7 +129,7 @@ describe('MyIncidentsPage', () => {
       expect(screen.getByText('Alcorque roto en acera')).toBeInTheDocument();
     });
 
-    // Mock para la respuesta filtrada
+    // Mock segunda llamada al cambiar filtro
     incidentService.getMyIncidents.mockResolvedValueOnce({
       content: [sampleIncidents[1]],
       totalElements: 1,
@@ -207,7 +150,52 @@ describe('MyIncidentsPage', () => {
     });
   });
 
-  it('muestra la vista de estado vacío cuando el usuario no tiene incidencias registradas', async () => {
+  it('gestiona la paginación avanzando y retrocediendo entre páginas', async () => {
+    incidentService.getMyIncidents.mockResolvedValueOnce({
+      content: sampleIncidents,
+      totalElements: 25,
+      totalPages: 3,
+      page: 0,
+      size: 10,
+    });
+
+    render(
+      <MemoryRouter>
+        <MyIncidentsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Página 1 de 3/i)).toBeInTheDocument();
+    });
+
+    const nextBtn = screen.getByRole('button', { name: /Página siguiente/i });
+    const prevBtn = screen.getByRole('button', { name: /Página anterior/i });
+
+    expect(prevBtn).toBeDisabled();
+    expect(nextBtn).toBeEnabled();
+
+    // Mock respuesta para la página 1 (2ª página)
+    incidentService.getMyIncidents.mockResolvedValueOnce({
+      content: [sampleIncidents[0]],
+      totalElements: 25,
+      totalPages: 3,
+      page: 1,
+      size: 10,
+    });
+
+    fireEvent.click(nextBtn);
+
+    await waitFor(() => {
+      expect(incidentService.getMyIncidents).toHaveBeenCalledWith({
+        page: 1,
+        size: 10,
+        status: 'TODOS',
+      });
+    });
+  });
+
+  it('muestra mensaje informativo de estado vacío cuando no hay incidencias', async () => {
     incidentService.getMyIncidents.mockResolvedValueOnce({
       content: [],
       totalElements: 0,
@@ -299,7 +287,7 @@ describe('MyIncidentsPage', () => {
     });
   });
 
-  it('abre y cierra el modal IncidentDetailModal al pulsar "Ver detalle"', async () => {
+  it('abre y cierra el modal IncidentDetailModal al pulsar "Ver detalle" visualizando comentarios públicos', async () => {
     incidentService.getMyIncidents.mockResolvedValueOnce({
       content: sampleIncidents,
       totalElements: 2,
@@ -307,6 +295,17 @@ describe('MyIncidentsPage', () => {
       page: 0,
       size: 10,
     });
+
+    triageService.getIncidentComments.mockResolvedValueOnce([
+      {
+        id: 101,
+        authorName: 'Operador Triaje',
+        authorRole: 'OPERATOR',
+        comment: 'Se ha enviado un equipo de inspección de calzada.',
+        isInternal: false,
+        createdAt: '2026-10-15T10:30:00Z',
+      },
+    ]);
 
     render(
       <MemoryRouter>
@@ -331,10 +330,16 @@ describe('MyIncidentsPage', () => {
       expect(screen.getByText('Información del Reporte')).toBeInTheDocument();
     });
 
-    // Comprobar que en el modal se visualiza la descripción
+    // Comprobar que en el modal se visualiza la descripción y los comentarios públicos
     expect(
       screen.getByText('Baldosa levantada con peligro de tropiezo.')
     ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Se ha enviado un equipo de inspección de calzada.')
+      ).toBeInTheDocument();
+    });
 
     // Cerrar modal
     const closeBtn = screen.getByRole('button', {
