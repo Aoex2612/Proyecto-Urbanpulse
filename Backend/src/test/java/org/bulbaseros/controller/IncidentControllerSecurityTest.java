@@ -116,6 +116,7 @@ class IncidentControllerSecurityTest {
         );
 
         when(incidentService.getActiveIncidents()).thenReturn(List.of(sampleIncident));
+        when(incidentService.getActiveIncidents(any())).thenReturn(List.of(sampleIncident));
         when(incidentService.getIncidentById(1L)).thenReturn(sampleIncident);
         when(incidentService.createIncident(any(CreateIncidentRequest.class), any()))
                 .thenReturn(sampleIncident);

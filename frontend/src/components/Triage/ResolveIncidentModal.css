@@ -1,0 +1,144 @@
+/* ==========================================================================
+   ResolveIncidentModal.css
+   Estilos para el modal de reporte de resolución técnica
+   ========================================================================== */
+
+.resolve-incident-modal-card {
+  max-width: 580px;
+  width: 90%;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.resolve-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.resolve-summary-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resolve-incident-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.resolve-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.resolve-guideline-note {
+  font-size: 0.85rem;
+  color: #475569;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+}
+
+.label-with-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.char-counter {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.counter-insufficient {
+  color: #d97706;
+}
+
+.counter-valid {
+  color: #16a34a;
+}
+
+.form-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+.input-error-border {
+  border-color: #dc2626 !important;
+}
+
+.field-error-message {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin: 0.35rem 0 0 0;
+}
+
+.resolve-error-banner {
+  padding: 0.75rem 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.resolve-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 0.5rem;
+}
+
+.btn-confirm-resolve {
+  background-color: #16a34a;
+  border-color: #16a34a;
+}
+
+.btn-confirm-resolve:hover:not(:disabled) {
+  background-color: #15803d;
+  border-color: #15803d;
+}
+
+.btn-confirm-resolve:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -440,4 +440,36 @@ class IncidentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.address").value("Calle Larios"));
     }
+
+    @Test
+    @WithMockUser(username = "technician@urbanpulse.es", roles = "TECHNICIAN")
+    @DisplayName("GET /api/incidents con rol TECHNICIAN debe consultar incidencias filtradas por técnico (RF-25)")
+    void shouldReturnSegregatedIncidentsForTechnician() throws Exception {
+        IncidentResponse item = createSampleIncidentResponse(201L, "Tubería rota", EstadoIncidencia.ASSIGNED);
+        when(incidentService.getActiveIncidents(eq("technician@urbanpulse.es"))).thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/incidents"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").value(201))
+                .andExpect(jsonPath("$[0].title").value("Tubería rota"));
+
+        verify(incidentService).getActiveIncidents("technician@urbanpulse.es");
+    }
+
+    @Test
+    @WithMockUser(username = "admin@urbanpulse.es", roles = "ADMIN")
+    @DisplayName("GET /api/incidents con rol ADMIN debe invocar servicio pasando identidad de admin")
+    void shouldReturnAllActiveIncidentsForAdmin() throws Exception {
+        IncidentResponse item1 = createSampleIncidentResponse(101L, "Aviso 1", EstadoIncidencia.REPORTED);
+        IncidentResponse item2 = createSampleIncidentResponse(102L, "Aviso 2", EstadoIncidencia.VALIDATED);
+        when(incidentService.getActiveIncidents(eq("admin@urbanpulse.es"))).thenReturn(List.of(item1, item2));
+
+        mockMvc.perform(get("/api/incidents"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(incidentService).getActiveIncidents("admin@urbanpulse.es");
+    }
 }

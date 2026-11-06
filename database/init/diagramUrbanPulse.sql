@@ -85,7 +85,8 @@ CREATE TABLE "incident_comments" (
     "author_id"   bigint NOT NULL,
     "comment"     text NOT NULL,
     "is_internal" boolean DEFAULT true,
-    "created_at"  timestamptz DEFAULT CURRENT_TIMESTAMP
+    "created_at"  timestamptz DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"  timestamptz
 );
 
 CREATE TABLE "urban_assets" (

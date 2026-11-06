@@ -51,7 +51,7 @@ function App() {
         <Route
           path="/operator-panel"
           element={
-            <ProtectedRoute allowedRoles={['OPERATOR', 'ADMIN']}>
+            <ProtectedRoute allowedRoles={['OPERATOR', 'ADMIN', 'TECHNICIAN']}>
               <OperatorPanelPage />
             </ProtectedRoute>
           }

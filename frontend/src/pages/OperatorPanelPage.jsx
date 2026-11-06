@@ -1,33 +1,50 @@
 /**
  * @fileoverview Vista del Panel de Operador y Gestión de Triaje de Incidencias en UrbanPulse.
- * Proporciona a los perfiles con rol `OPERATOR` y `ADMIN` una interfaz de supervisión,
- * priorización y actualización en tiempo real del estado de incidencias reportadas en la base de datos,
- * así como acceso directo a la vista cartográfica (/map).
+ * Proporciona a los perfiles con rol `OPERATOR` y `ADMIN` una interfaz integral de supervisión,
+ * priorización asistida, asignación multidepartamental, resolución técnica, reapertura,
+ * rechazo y colaboración mediante notas internas y avisos públicos conectados en tiempo real a PostgreSQL.
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import incidentService from '../services/incidentService';
+import triageService from '../services/triageService';
 import { formatDateTime } from '../utils/dateUtils';
-import { getStatusLabel, getPriorityLabel, getNextAllowedStatuses } from '../components/Map/mapConstants';
+import { getStatusLabel, getPriorityLabel } from '../components/Map/mapConstants';
+import {
+  PriorityAssistantModal,
+  AssignmentModal,
+  ResolveIncidentModal,
+  ReasonModal,
+} from '../components/Triage';
+import IncidentCommentsSection from '../components/Comments/IncidentCommentsSection';
 import './OperatorPanelPage.css';
 
-
-
 /**
- * Componente principal del Panel de Operador / Centro de Triaje.
+ * Componente principal del Panel de Operador / Centro de Triaje y Operaciones Urbanas.
  *
  * @returns {import('react').JSX.Element} Vista del panel de operador protegida por RBAC conectada a PostgreSQL.
  */
 export default function OperatorPanelPage() {
   const navigate = useNavigate();
   const user = authService.getUser();
+  const isTechnician = user?.role === 'TECHNICIAN';
+  const isAdmin = user?.role === 'ADMIN';
+  const canOperateTriage = isAdmin || user?.role === 'OPERATOR';
+  const canExecuteFieldWork = isAdmin || isTechnician;
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+
+  // Estados para control de modales de triaje
+  const [priorityModalIncident, setPriorityModalIncident] = useState(null);
+  const [assignmentModalIncident, setAssignmentModalIncident] = useState(null);
+  const [resolveModalIncident, setResolveModalIncident] = useState(null);
+  const [reasonModalState, setReasonModalState] = useState(null); // { isOpen, incident, actionType }
+  const [commentsModalIncident, setCommentsModalIncident] = useState(null);
 
   /**
    * Carga el listado de incidencias activas desde la API backend.
@@ -73,28 +90,202 @@ export default function OperatorPanelPage() {
   };
 
   /**
-   * Actualiza el estado de una incidencia en el backend con registro de auditoría.
+   * Valida directamente una incidencia en estado de reporte inicial (REPORTED -> VALIDATED).
    *
-   * @param {number|string} id - Identificador numérico de la incidencia.
-   * @param {string} newStatus - Nuevo estado asignado.
+   * @param {number|string} id - Identificador de la incidencia.
    * @returns {Promise<void>}
    */
-  const handleStatusChange = async (id, newStatus) => {
+  const handleValidate = async (id) => {
     setUpdatingId(id);
     try {
-      await incidentService.updateIncidentStatus(id, {
-        status: newStatus,
-        comment: `Transición a ${newStatus} realizada desde el Centro de Triaje por ${user?.fullName || user?.email}`,
-      });
+      const updated = await triageService.validateIncident(id);
       setIncidents((prev) =>
-        prev.map((inc) => (inc.id === id ? { ...inc, status: newStatus } : inc))
+        prev.map((inc) => (inc.id === id ? { ...inc, ...updated, status: 'VALIDATED' } : inc))
       );
-      setFeedbackMessage(`Incidencia #${id} actualizada exitosamente al estado '${getStatusLabel(newStatus)}'. Transición registrada en auditoría.`);
+      setFeedbackMessage(`Incidencia #${id} validada formalmente en el circuito de operaciones.`);
     } catch (err) {
-      setFeedbackMessage(`Error al actualizar la incidencia #${id}: ${err?.response?.data?.message || 'Operación denegada o error de red.'}`);
+      setFeedbackMessage(`Error al validar la incidencia #${id}: ${err?.response?.data?.message || 'Error de servidor'}`);
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  /**
+   * Inicia los trabajos sobre el terreno (ASSIGNED / REOPENED -> IN_PROGRESS).
+   *
+   * @param {number|string} id - Identificador de la incidencia.
+   * @returns {Promise<void>}
+   */
+  const handleStartWork = async (id) => {
+    setUpdatingId(id);
+    try {
+      const updated = await triageService.startWork(id);
+      setIncidents((prev) =>
+        prev.map((inc) => (inc.id === id ? { ...inc, ...updated, status: 'IN_PROGRESS' } : inc))
+      );
+      setFeedbackMessage(`Trabajos de campo iniciados sobre la incidencia #${id} (estado EN PROGRESO).`);
+    } catch (err) {
+      setFeedbackMessage(`Error al iniciar trabajos en la incidencia #${id}: ${err?.response?.data?.message || 'Error de servidor'}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  /**
+   * Cierra de forma administrativa una incidencia resuelta (RESOLVED -> CLOSED).
+   *
+   * @param {number|string} id - Identificador de la incidencia.
+   * @returns {Promise<void>}
+   */
+  const handleClose = async (id) => {
+    setUpdatingId(id);
+    try {
+      const updated = await triageService.closeIncident(id);
+      setIncidents((prev) =>
+        prev.map((inc) =>
+          inc.id === id
+            ? {
+                ...inc,
+                ...updated,
+                status: 'CLOSED',
+                assignments: (inc.assignments || []).map((a) => ({ ...a, isActive: false })),
+              }
+            : inc
+        )
+      );
+      setFeedbackMessage(`Incidencia #${id} cerrada formal y administrativamente.`);
+    } catch (err) {
+      setFeedbackMessage(`Error al cerrar la incidencia #${id}: ${err?.response?.data?.message || 'Error de servidor'}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  /**
+   * Abre el modal de motivo para rechazar, reabrir o reevaluar una incidencia.
+   *
+   * @param {Object} incident - Datos de la incidencia seleccionada.
+   * @param {'REJECT'|'REOPEN'|'REEVALUATE'} actionType - Acción que requiere motivo.
+   */
+  const openReasonModal = (incident, actionType) => {
+    setReasonModalState({
+      isOpen: true,
+      incident,
+      actionType,
+    });
+  };
+
+  /**
+   * Procesa la confirmación con motivo del diálogo ReasonModal.
+   *
+   * @param {Object} data - Datos devueltos por el modal.
+   * @param {string} data.reason - Motivo obligatorio aportado por el operador.
+   * @param {'REPORTED'|'VALIDATED'} [data.targetStatus] - Estado de destino en reevaluaciones.
+   * @returns {Promise<void>}
+   */
+  const handleReasonSubmit = async ({ reason, targetStatus }) => {
+    if (!reasonModalState?.incident) return;
+    const { incident, actionType } = reasonModalState;
+
+    if (actionType === 'REJECT') {
+      const updated = await triageService.rejectIncident(incident.id, { reason });
+      setIncidents((prev) =>
+        prev.map((item) =>
+          item.id === incident.id
+            ? {
+                ...item,
+                ...updated,
+                status: 'REJECTED',
+                assignments: (item.assignments || []).map((a) => ({ ...a, isActive: false })),
+              }
+            : item
+        )
+      );
+      setFeedbackMessage(`Incidencia #${incident.id} rechazada y asignaciones inactivadas.`);
+    } else if (actionType === 'REOPEN') {
+      const updated = await triageService.reopenIncident(incident.id, { reason });
+      setIncidents((prev) =>
+        prev.map((item) => (item.id === incident.id ? { ...item, ...updated, status: 'REOPENED' } : item))
+      );
+      setFeedbackMessage(`Incidencia #${incident.id} reabierta para nuevas actuaciones.`);
+    } else if (actionType === 'REEVALUATE') {
+      const updated = await triageService.reevaluateIncident(incident.id, { targetStatus, reason });
+      setIncidents((prev) =>
+        prev.map((item) => (item.id === incident.id ? { ...item, ...updated, status: targetStatus } : item))
+      );
+      setFeedbackMessage(`Incidencia #${incident.id} reevaluada y reactivada en estado '${getStatusLabel(targetStatus)}'.`);
+    }
+  };
+
+  /**
+   * Actualiza la incidencia tras guardar una nueva prioridad en PriorityAssistantModal.
+   *
+   * @param {Object} updatedIncident - Objeto de la incidencia con prioridad actualizada.
+   */
+  const handlePriorityUpdated = (updatedIncident) => {
+    setIncidents((prev) =>
+      prev.map((inc) => (inc.id === updatedIncident.id ? { ...inc, ...updatedIncident } : inc))
+    );
+    setFeedbackMessage(
+      `Prioridad de la incidencia #${updatedIncident.id} actualizada exitosamente a '${getPriorityLabel(
+        updatedIncident.priority
+      )}'.`
+    );
+    setPriorityModalIncident(null);
+  };
+
+  /**
+   * Actualiza el listado reactivo de asignaciones tras interactuar con AssignmentModal.
+   *
+   * @param {Array<Object>} updatedAssignments - Lista de asignaciones activas resultantes.
+   */
+  const handleAssignmentsUpdated = (updatedAssignments) => {
+    if (!assignmentModalIncident) return;
+    const incidentId = assignmentModalIncident.id;
+    const activeCount = (updatedAssignments || []).filter((a) => a.isActive !== false).length;
+
+    setIncidents((prev) =>
+      prev.map((inc) => {
+        if (inc.id !== incidentId) return inc;
+        let nextStatus = inc.status;
+        if (inc.status === 'VALIDATED' && activeCount > 0) {
+          nextStatus = 'ASSIGNED';
+        } else if (inc.status === 'ASSIGNED' && activeCount === 0) {
+          nextStatus = 'VALIDATED';
+        }
+        return {
+          ...inc,
+          assignments: updatedAssignments,
+          status: nextStatus,
+        };
+      })
+    );
+    setFeedbackMessage(`Asignaciones de la incidencia #${incidentId} actualizadas exitosamente.`);
+    setAssignmentModalIncident(null);
+  };
+
+  /**
+   * Actualiza el estado reactivo tras resolver una incidencia con memoria técnica.
+   *
+   * @param {Object} updatedIncident - Incidencia en estado RESOLVED.
+   */
+  const handleIncidentResolved = (updatedIncident) => {
+    setIncidents((prev) =>
+      prev.map((inc) => (inc.id === updatedIncident.id ? { ...inc, ...updatedIncident, status: 'RESOLVED' } : inc))
+    );
+    setFeedbackMessage(`Incidencia #${updatedIncident.id} resuelta técnicamente con memoria de actuaciones registrada.`);
+    setResolveModalIncident(null);
+  };
+
+  /**
+   * Obtiene la lista de asignaciones activas para una incidencia.
+   *
+   * @param {Object} incident - Objeto de la incidencia.
+   * @returns {Array<Object>} Lista de asignaciones activas.
+   */
+  const getActiveAssignments = (incident) => {
+    if (!Array.isArray(incident.assignments)) return [];
+    return incident.assignments.filter((a) => a.isActive !== false);
   };
 
   return (
@@ -102,7 +293,7 @@ export default function OperatorPanelPage() {
       <header className="operator-header">
         <div className="operator-brand">
           <h1 className="operator-brand-title">UrbanPulse</h1>
-          <span className="operator-badge">Panel de Operador</span>
+          <span className="operator-badge">{isTechnician ? 'Técnico de Campo' : 'Panel de Operador'}</span>
         </div>
         <div className="operator-header-actions">
           <Link to="/map" className="operator-map-nav-link" title="Explorar incidencias en el mapa">
@@ -114,11 +305,7 @@ export default function OperatorPanelPage() {
           <Link to="/" className="back-to-home-link">
             &larr; Portal Ciudadano
           </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="logout-button"
-          >
+          <button type="button" onClick={handleLogout} className="logout-button">
             Cerrar sesión
           </button>
         </div>
@@ -128,50 +315,86 @@ export default function OperatorPanelPage() {
         <section className="operator-overview-card">
           <div className="overview-header">
             <div className="overview-title-group">
-              <h2>Centro de Triaje y Operaciones Urbanas</h2>
+              <h2>{isTechnician ? 'Mis Asignaciones Técnicas' : 'Centro de Triaje y Operaciones Urbanas'}</h2>
               <p className="overview-subtitle">
-                Supervisión de actuaciones técnicas, validación y priorización de reportes municipales conectados en tiempo real a PostgreSQL.
+                {isTechnician
+                  ? 'Incidencias asignadas para intervención y resolución técnica en campo.'
+                  : 'Supervisión de actuaciones técnicas, validación y priorización de reportes municipales conectados en tiempo real a PostgreSQL.'}
               </p>
             </div>
             <div className="user-badge-info">
-              <span className="user-badge-name">{user?.fullName || 'Operador Municipal'}</span>
-              <span className="user-badge-role">{user?.role || 'OPERATOR'}</span>
+              <span className="user-badge-name">{user?.fullName || (isTechnician ? 'Técnico Municipal' : 'Operador Municipal')}</span>
+              <span className="user-badge-role">{user?.role || (isTechnician ? 'TECHNICIAN' : 'OPERATOR')}</span>
             </div>
           </div>
 
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-label">Pendientes de Triaje</span>
-              <span className="stat-number">
-                {incidents.filter((i) => i.status === 'REPORTED').length}
-              </span>
-              <span className="stat-help">Reportadas sin validar</span>
+          {isTechnician ? (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-label">Pendientes de Inicio</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => ['ASSIGNED', 'REOPENED'].includes(i.status)).length}
+                </span>
+                <span className="stat-help">Asignadas para campo</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">En Intervención</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => i.status === 'IN_PROGRESS').length}
+                </span>
+                <span className="stat-help">Trabajos en curso</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Resueltas</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
+                </span>
+                <span className="stat-help">Completadas en campo</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Total Asignadas</span>
+                <span className="stat-number">{incidents.length}</span>
+                <span className="stat-help">Incidencias en tu cola</span>
+              </div>
             </div>
-            <div className="stat-card">
-              <span className="stat-label">En Tramitación</span>
-              <span className="stat-number">
-                {incidents.filter((i) => ['VALIDATED', 'ASSIGNED', 'IN_PROGRESS'].includes(i.status)).length}
-              </span>
-              <span className="stat-help">Equipos de campo asignados</span>
+          ) : (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-label">Pendientes de Triaje</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => i.status === 'REPORTED').length}
+                </span>
+                <span className="stat-help">Reportadas sin validar</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">En Tramitación</span>
+                <span className="stat-number">
+                  {
+                    incidents.filter((i) => ['VALIDATED', 'ASSIGNED', 'IN_PROGRESS', 'REOPENED'].includes(i.status))
+                      .length
+                  }
+                </span>
+                <span className="stat-help">Equipos de campo asignados</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Resueltas / Cerradas</span>
+                <span className="stat-number">
+                  {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
+                </span>
+                <span className="stat-help">Validaciones completadas</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Total en BD</span>
+                <span className="stat-number">{incidents.length}</span>
+                <span className="stat-help">Incidencias registradas</span>
+              </div>
             </div>
-            <div className="stat-card">
-              <span className="stat-label">Resueltas / Cerradas</span>
-              <span className="stat-number">
-                {incidents.filter((i) => ['RESOLVED', 'CLOSED'].includes(i.status)).length}
-              </span>
-              <span className="stat-help">Validaciones completadas</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Total en BD</span>
-              <span className="stat-number">{incidents.length}</span>
-              <span className="stat-help">Incidencias registradas</span>
-            </div>
-          </div>
+          )}
         </section>
 
         <section className="triage-section">
           <div className="section-header">
-            <h3>Cola de Incidencias en Base de Datos</h3>
+            <h3>{isTechnician ? 'Mis Incidencias Asignadas' : 'Cola de Incidencias en Base de Datos'}</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
                 type="button"
@@ -182,7 +405,6 @@ export default function OperatorPanelPage() {
               >
                 🔄 Refrescar
               </button>
-              
             </div>
           </div>
 
@@ -195,7 +417,7 @@ export default function OperatorPanelPage() {
                 onClick={() => setFeedbackMessage(null)}
                 aria-label="Cerrar notificación"
               >
-                ×
+                &times;
               </button>
             </div>
           )}
@@ -205,15 +427,29 @@ export default function OperatorPanelPage() {
               <p>Cargando incidencias desde PostgreSQL...</p>
             </div>
           ) : error ? (
-            <div style={{ padding: '24px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c' }}>
-              <p><strong>Error:</strong> {error}</p>
-              <button type="button" onClick={fetchIncidents} style={{ marginTop: '8px', padding: '6px 12px', cursor: 'pointer' }}>
+            <div
+              style={{
+                padding: '24px',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                color: '#b91c1c',
+              }}
+            >
+              <p>
+                <strong>Error:</strong> {error}
+              </p>
+              <button
+                type="button"
+                onClick={fetchIncidents}
+                style={{ marginTop: '8px', padding: '6px 12px', cursor: 'pointer' }}
+              >
                 Reintentar
               </button>
             </div>
           ) : incidents.length === 0 ? (
             <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
-              <p>No hay incidencias registradas en la base de datos en este momento.</p>
+              <p>{isTechnician ? 'No tienes incidencias asignadas en este momento.' : 'No hay incidencias registradas en la base de datos en este momento.'}</p>
               <Link to="/map" style={{ color: '#0284c7', textDecoration: 'underline' }}>
                 Ir al mapa para registrar una nueva incidencia
               </Link>
@@ -227,80 +463,334 @@ export default function OperatorPanelPage() {
                     <th>Incidencia</th>
                     <th>Categoría</th>
                     <th>Prioridad</th>
+                    <th>Departamentos</th>
                     <th>Fecha</th>
                     <th>Estado de Triaje</th>
+                    <th>Acciones Operativas</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {incidents.map((incident) => (
-                    <tr key={incident.id}>
-                      <td className="incident-id">#{incident.id}</td>
-                      <td className="incident-title-cell">
-                        <div className="incident-title">{incident.title}</div>
-                        <p className="incident-desc">{incident.description}</p>
-                      </td>
-                      <td>{incident.category}</td>
-                      <td>
-                        <span
-                          className={`badge-priority ${(incident.priority || 'medium').toLowerCase()}`}
-                        >
-                          {getPriorityLabel(incident.priority)}
-                        </span>
-                      </td>
-                      <td>{formatDateTime(incident.createdAt)}</td>
-                      <td>
-                        {(() => {
-                          const allowedNext = getNextAllowedStatuses(incident.status);
-                          if (allowedNext.length === 0) {
-                            return (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  backgroundColor: incident.status === 'REJECTED' ? '#fee2e2' : '#f3f4f6',
-                                  color: incident.status === 'REJECTED' ? '#dc2626' : '#4b5563',
-                                }}
+                  {incidents.map((incident) => {
+                    const activeAssignments = getActiveAssignments(incident);
+                    const isProcessing = updatingId === incident.id;
+
+                    return (
+                      <tr key={incident.id} className={`incident-row incident-status-${incident.status?.toLowerCase()}`}>
+                        <td className="incident-id">#{incident.id}</td>
+                        <td className="incident-title-cell">
+                          <div className="incident-title">{incident.title}</div>
+                          <p className="incident-desc">{incident.description}</p>
+                        </td>
+                        <td>{incident.category}</td>
+                        <td>
+                          <div className="priority-cell-wrapper">
+                            <span className={`badge-priority ${(incident.priority || 'medium').toLowerCase()}`}>
+                              {getPriorityLabel(incident.priority)}
+                            </span>
+                            {canOperateTriage && (
+                              <button
+                                type="button"
+                                className="btn-priority-assistant"
+                                onClick={() => setPriorityModalIncident(incident)}
+                                title="Calcular o modificar prioridad asistida"
+                                aria-label={`Prioridad asistida para incidencia #${incident.id}`}
                               >
-                                {getStatusLabel(incident.status)} (Final)
-                              </span>
-                            );
-                          }
-                          return (
-                            <select
-                              aria-label={`Cambiar estado de #${incident.id}`}
-                              className="status-select"
-                              value=""
-                              disabled={updatingId === incident.id}
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  handleStatusChange(incident.id, e.target.value);
-                                }
-                              }}
-                            >
-                              <option value="" disabled>
-                                Actual: {getStatusLabel(incident.status)}
-                              </option>
-                              {allowedNext.map((nextStatus) => (
-                                <option key={nextStatus} value={nextStatus}>
-                                  Avanzar a: {getStatusLabel(nextStatus)}
-                                </option>
+                                ⚡ Asistente
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          {activeAssignments.length > 0 ? (
+                            <div className="dept-badges-container">
+                              {activeAssignments.map((a, idx) => (
+                                <span
+                                  key={a.id || idx}
+                                  className="badge-dept"
+                                  title={a.technicianName ? `Técnico: ${a.technicianName}` : 'Departamento activo'}
+                                >
+                                  {a.departmentName || `Dpto. #${a.departmentId}`}
+                                  {a.technicianName && <span className="badge-dept-tech"> · {a.technicianName}</span>}
+                                </span>
                               ))}
-                            </select>
-                          );
-                        })()}
-                      </td>
-                    </tr>
-                  ))}
+                            </div>
+                          ) : (
+                            <span className="badge-unassigned">Sin asignar</span>
+                          )}
+                        </td>
+                        <td>{formatDateTime(incident.createdAt)}</td>
+                        <td>
+                          <span className={`badge-status badge-status-${incident.status?.toLowerCase()}`}>
+                            {getStatusLabel(incident.status)}
+                          </span>
+                        </td>
+                        <td className="triage-actions-cell">
+                          <div className="action-buttons-group">
+                            {/* Botones contextuales según estado */}
+                            {incident.status === 'REPORTED' && canOperateTriage && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-validate"
+                                  onClick={() => handleValidate(incident.id)}
+                                  disabled={isProcessing}
+                                  aria-label={`Validar incidencia #${incident.id}`}
+                                >
+                                  Validar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-reject"
+                                  onClick={() => openReasonModal(incident, 'REJECT')}
+                                  disabled={isProcessing}
+                                  aria-label={`Rechazar incidencia #${incident.id}`}
+                                >
+                                  Rechazar
+                                </button>
+                              </>
+                            )}
+
+                            {incident.status === 'VALIDATED' && canOperateTriage && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-assign"
+                                  onClick={() => setAssignmentModalIncident(incident)}
+                                  disabled={isProcessing}
+                                  aria-label={`Asignar departamentos a #${incident.id}`}
+                                >
+                                  Asignar Departamentos/Técnicos
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-reevaluate"
+                                  onClick={() => openReasonModal(incident, 'REEVALUATE')}
+                                  disabled={isProcessing}
+                                  aria-label={`Reevaluar incidencia #${incident.id}`}
+                                >
+                                  Reevaluar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-reject"
+                                  onClick={() => openReasonModal(incident, 'REJECT')}
+                                  disabled={isProcessing}
+                                  aria-label={`Rechazar incidencia #${incident.id}`}
+                                >
+                                  Rechazar
+                                </button>
+                              </>
+                            )}
+
+                            {(incident.status === 'ASSIGNED' || incident.status === 'REOPENED') && (
+                              <>
+                                {canExecuteFieldWork && (
+                                  <button
+                                    type="button"
+                                    className="btn-action-triage btn-triage-start"
+                                    onClick={() => handleStartWork(incident.id)}
+                                    disabled={isProcessing}
+                                    aria-label={`Iniciar trabajo en incidencia #${incident.id}`}
+                                  >
+                                    Iniciar Trabajo
+                                  </button>
+                                )}
+                                {canOperateTriage && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="btn-action-triage btn-triage-assign"
+                                      onClick={() => setAssignmentModalIncident(incident)}
+                                      disabled={isProcessing}
+                                      aria-label={`Asignar o reasignar departamentos a #${incident.id}`}
+                                    >
+                                      Asignar / Reasignar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn-action-triage btn-triage-reject"
+                                      onClick={() => openReasonModal(incident, 'REJECT')}
+                                      disabled={isProcessing}
+                                      aria-label={`Rechazar incidencia #${incident.id}`}
+                                    >
+                                      Rechazar
+                                    </button>
+                                  </>
+                                )}
+                              </>
+                            )}
+
+                            {incident.status === 'IN_PROGRESS' && (
+                              <>
+                                {canExecuteFieldWork && (
+                                  <button
+                                    type="button"
+                                    className="btn-action-triage btn-triage-resolve"
+                                    onClick={() => setResolveModalIncident(incident)}
+                                    disabled={isProcessing}
+                                    aria-label={`Resolver incidencia #${incident.id}`}
+                                  >
+                                    Resolver
+                                  </button>
+                                )}
+                                {canOperateTriage && (
+                                  <button
+                                    type="button"
+                                    className="btn-action-triage btn-triage-assign"
+                                    onClick={() => setAssignmentModalIncident(incident)}
+                                    disabled={isProcessing}
+                                    aria-label={`Asignar o reasignar departamentos a #${incident.id}`}
+                                  >
+                                    Asignar / Reasignar
+                                  </button>
+                                )}
+                              </>
+                            )}
+
+                            {incident.status === 'RESOLVED' && canOperateTriage && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-close"
+                                  onClick={() => handleClose(incident.id)}
+                                  disabled={isProcessing}
+                                  aria-label={`Cerrar incidencia #${incident.id}`}
+                                >
+                                  Cerrar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-action-triage btn-triage-reopen"
+                                  onClick={() => openReasonModal(incident, 'REOPEN')}
+                                  disabled={isProcessing}
+                                  aria-label={`Reabrir incidencia #${incident.id}`}
+                                >
+                                  Reabrir
+                                </button>
+                              </>
+                            )}
+
+                            {incident.status === 'REJECTED' && canOperateTriage && (
+                              <button
+                                type="button"
+                                className="btn-action-triage btn-triage-reevaluate"
+                                onClick={() => openReasonModal(incident, 'REEVALUATE')}
+                                disabled={isProcessing}
+                                aria-label={`Reevaluar incidencia rechazada #${incident.id}`}
+                              >
+                                Reevaluar
+                              </button>
+                            )}
+
+                            {/* Botón universal para consultar y gestionar comentarios y notas */}
+                            <button
+                              type="button"
+                              className="btn-action-triage btn-triage-comments"
+                              onClick={() => setCommentsModalIncident(incident)}
+                              aria-label={`Ver y redactar comentarios de la incidencia #${incident.id}`}
+                            >
+                              💬 Comentarios
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </section>
-
       </main>
+
+      {/* Modal 1: Asistente de Prioridad Asistida */}
+      {priorityModalIncident && (
+        <PriorityAssistantModal
+          isOpen={Boolean(priorityModalIncident)}
+          incident={priorityModalIncident}
+          onClose={() => setPriorityModalIncident(null)}
+          onPriorityUpdated={handlePriorityUpdated}
+          onConfirm={handlePriorityUpdated}
+        />
+      )}
+
+      {/* Modal 2: Asignación Multidepartamental y de Técnicos */}
+      {assignmentModalIncident && (
+        <AssignmentModal
+          isOpen={Boolean(assignmentModalIncident)}
+          incident={assignmentModalIncident}
+          onClose={() => setAssignmentModalIncident(null)}
+          onAssignmentsUpdated={handleAssignmentsUpdated}
+        />
+      )}
+
+      {/* Modal 3: Reporte de Resolución Técnica */}
+      {resolveModalIncident && (
+        <ResolveIncidentModal
+          isOpen={Boolean(resolveModalIncident)}
+          incident={resolveModalIncident}
+          onClose={() => setResolveModalIncident(null)}
+          onIncidentResolved={handleIncidentResolved}
+        />
+      )}
+
+      {/* Modal 4: Captura de Motivo Obligatorio (Rechazar, Reabrir, Reevaluar) */}
+      {reasonModalState?.isOpen && (
+        <ReasonModal
+          isOpen={Boolean(reasonModalState?.isOpen)}
+          incident={reasonModalState?.incident}
+          actionType={reasonModalState?.actionType}
+          onClose={() => setReasonModalState(null)}
+          onSubmit={handleReasonSubmit}
+        />
+      )}
+
+      {/* Modal 5: Muro de Comentarios y Actuaciones */}
+      {commentsModalIncident && (
+        <div
+          className="modal-backdrop comments-modal-backdrop"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setCommentsModalIncident(null);
+            }
+          }}
+        >
+          <div
+            className="modal-card comments-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="comments-modal-title"
+          >
+            <header className="modal-header comments-modal-header">
+              <div>
+                <h3 id="comments-modal-title" className="modal-title">
+                  Muro de Comentarios — Incidencia #{commentsModalIncident.id}
+                </h3>
+                <p className="modal-subtitle">
+                  {commentsModalIncident.title} &bull; Estado: {getStatusLabel(commentsModalIncident.status)}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setCommentsModalIncident(null)}
+                aria-label="Cerrar muro de comentarios"
+              >
+                &times;
+              </button>
+            </header>
+            <div className="comments-modal-body">
+              <IncidentCommentsSection
+                incidentId={commentsModalIncident.id}
+                incidentStatus={commentsModalIncident.status}
+                isClosedOrRejected={['CLOSED', 'REJECTED'].includes(commentsModalIncident.status)}
+                currentUser={user}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

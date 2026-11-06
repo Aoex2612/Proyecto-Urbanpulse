@@ -17,7 +17,17 @@ import org.bulbaseros.mappers.IncidentMapper;
 import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Tareas;
+import org.bulbaseros.repository.TareasRepository;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Tareas;
+import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -79,6 +89,11 @@ public class IncidentService {
     private final MalagaOpenDataService malagaOpenDataService;
 
     /**
+     * Repositorio de datos JPA para la gestion de tareas y asignaciones operativas ({@link Tareas}).
+     */
+    private final TareasRepository tareasRepository;
+
+    /**
      * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
      * de incidencias en UrbanPulse:
      * <ul>
@@ -112,18 +127,68 @@ public class IncidentService {
      * @param statusChangeMapper      Mapeador de cambios de estado a DTOs.
      * @param malagaOpenDataService   Servicio de integracion territorial con datos abiertos de Malaga.
      */
+    @Autowired
     public IncidentService(IncidenciaRepository incidenciaRepository,
                            CambiosEstadoRepository cambiosEstadoRepository,
                            UserRepository userRepository,
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
-                           MalagaOpenDataService malagaOpenDataService) {
+                           MalagaOpenDataService malagaOpenDataService,
+                           @Autowired(required = false) TareasRepository tareasRepository) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
         this.incidentMapper = incidentMapper;
         this.statusChangeMapper = statusChangeMapper;
         this.malagaOpenDataService = malagaOpenDataService;
+        this.tareasRepository = tareasRepository;
+    }
+
+    public IncidentService(IncidenciaRepository incidenciaRepository,
+                           CambiosEstadoRepository cambiosEstadoRepository,
+                           UserRepository userRepository,
+                           IncidentMapper incidentMapper,
+                           StatusChangeMapper statusChangeMapper,
+                           MalagaOpenDataService malagaOpenDataService) {
+        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null);
+    }
+
+    /**
+     * Recupera las incidencias urbanas activas en la plataforma según el perfil del usuario autenticado (RF-25).
+     * <p>
+     * Si el usuario autenticado posee rol {@link RolUsuario#TECHNICIAN}, se segregan y devuelven únicamente
+     * aquellas incidencias que tienen una asignación técnica activa vinculada a su identificador, excluyendo
+     * estados finales ({@link EstadoIncidencia#CLOSED} y {@link EstadoIncidencia#REJECTED}).
+     * Para usuarios con rol {@link RolUsuario#ADMIN}, {@link RolUsuario#OPERATOR}, ciudadanos o consultas sin contexto,
+     * se retornan todas las incidencias urbanas activas.
+     * </p>
+     *
+     * @param userEmail Dirección de correo electrónico del usuario autenticado (opcional).
+     * @return Lista de DTOs {@link IncidentResponse} correspondientes a las incidencias activas autorizadas.
+     */
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> getActiveIncidents(String userEmail) {
+        if (userEmail != null && !userEmail.trim().isEmpty() && tareasRepository != null) {
+            Optional<Usuario> userOpt = userRepository.findByEmail(userEmail);
+            if (userOpt.isPresent() && userOpt.get().getRole() == RolUsuario.TECHNICIAN) {
+                List<Tareas> activeTasks = tareasRepository.findByTechnicianIdAndIsActiveTrue(userOpt.get().getId());
+                if (activeTasks == null || activeTasks.isEmpty()) {
+                    return List.of();
+                }
+                Set<Long> incidentIds = activeTasks.stream()
+                        .filter(t -> t.getIncident() != null && t.getIncident().getId() != null)
+                        .map(t -> t.getIncident().getId())
+                        .collect(Collectors.toSet());
+                if (incidentIds.isEmpty()) {
+                    return List.of();
+                }
+                List<Incidencia> activeAssigned = incidenciaRepository.findAllById(incidentIds).stream()
+                        .filter(i -> i.getStatus() != EstadoIncidencia.CLOSED && i.getStatus() != EstadoIncidencia.REJECTED)
+                        .toList();
+                return incidentMapper.toDtoList(activeAssigned);
+            }
+        }
+        return getActiveIncidents();
     }
 
     /**

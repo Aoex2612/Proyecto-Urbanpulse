@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.bulbaseros.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,7 +25,7 @@ import java.util.Map;
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.1
+ * @version 1.2
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -112,6 +113,37 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja excepciones de acceso denegado por insuficiencia de permisos o roles RBAC en métodos protegidos.
+     * <p>
+     * Retorna HTTP 403 Forbidden acompañado del DTO {@link ErrorResponse}.
+     * </p>
+     *
+     * @param ex      Excepción {@link AccessDeniedException} capturada.
+     * @param request Petición HTTP recibida.
+     * @return {@link ResponseEntity} con estado 403 y el DTO {@link ErrorResponse}.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        String message = "Acceso denegado: permisos insuficientes";
+        Object customMessage = request.getAttribute("access_denied_message");
+        if (customMessage instanceof String str && !str.isBlank()) {
+            message = str;
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    /**
      * Maneja excepciones de entidad de incidencia no encontrada en el sistema.
      * <p>
      * Retorna HTTP 404 Not Found acompañado del mensaje explicativo de la excepción.
@@ -188,18 +220,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Maneja excepciones de argumentos ilegales o no válidos.
+     * Maneja excepciones de argumentos ilegales o estados no válidos en el flujo de negocio.
      * <p>
      * Retorna HTTP 400 Bad Request acompañado del mensaje descriptivo del fallo.
      * </p>
      *
-     * @param ex      Excepción {@link IllegalArgumentException} capturada.
+     * @param ex      Excepción de runtime capturada ({@link IllegalArgumentException} o {@link IllegalStateException}).
      * @param request Petición HTTP recibida.
      * @return {@link ResponseEntity} con estado 400 y el DTO {@link ErrorResponse}.
      */
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex,
+            RuntimeException ex,
             HttpServletRequest request
     ) {
         ErrorResponse errorResponse = new ErrorResponse(

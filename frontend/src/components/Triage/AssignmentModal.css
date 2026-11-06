@@ -1,0 +1,317 @@
+/* Estilos para el Modal de Asignación Multidepartamental */
+
+.assignment-modal-card {
+  width: 100%;
+  max-width: 680px;
+  background-color: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 14px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.assignment-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border, #e5e4e7);
+}
+
+.assignment-modal-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0284c7;
+  margin-bottom: 4px;
+}
+
+.assignment-modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+}
+
+.assignment-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-height: calc(85vh - 140px);
+  overflow-y: auto;
+}
+
+.assignment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.assignment-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assignment-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h, #08060d);
+  margin: 0;
+}
+
+.assignment-section-hint {
+  font-size: 12px;
+  color: var(--text, #6b7280);
+}
+
+/* Lista de asignaciones activas existentes */
+.active-assignments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.active-assignment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--code-bg, #f8f9fa);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.active-assignment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.active-assignment-dept {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h, #08060d);
+}
+
+.active-assignment-tech {
+  font-size: 12px;
+  color: var(--text, #6b7280);
+}
+
+.active-assignment-deactivate-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: transparent;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.active-assignment-deactivate-btn:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #ef4444;
+}
+
+.active-assignment-deactivate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Selección de departamentos */
+.departments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.department-card-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  background-color: var(--bg, #ffffff);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.department-card-label:hover {
+  border-color: #0284c7;
+  background-color: rgba(2, 132, 199, 0.03);
+}
+
+.department-card-label.selected {
+  border-color: #0284c7;
+  background-color: rgba(2, 132, 199, 0.08);
+}
+
+.department-checkbox {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: #0284c7;
+  cursor: pointer;
+}
+
+.department-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.department-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h, #08060d);
+}
+
+.department-card-desc {
+  font-size: 12px;
+  color: var(--text, #6b7280);
+  line-height: 1.35;
+}
+
+/* Sección de técnicos dependientes */
+.technicians-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 10px;
+  background-color: var(--code-bg, #fbfbfa);
+}
+
+.department-tech-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.department-tech-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.technicians-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.technician-chip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 20px;
+  background-color: var(--bg, #ffffff);
+  font-size: 13px;
+  color: var(--text-h, #08060d);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.technician-chip-label:hover {
+  border-color: #0284c7;
+}
+
+.technician-chip-label.selected {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.technician-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: #0284c7;
+  cursor: pointer;
+}
+
+.technician-chip-label.selected .technician-checkbox {
+  accent-color: #ffffff;
+}
+
+.technicians-loading,
+.technicians-empty {
+  font-size: 13px;
+  color: var(--text, #6b7280);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.assignment-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border, #e5e4e7);
+  background-color: var(--code-bg, #fbfbfa);
+}
+
+.assignment-btn-secondary {
+  padding: 9px 16px;
+  background-color: transparent;
+  border: 1px solid var(--border, #e5e4e7);
+  color: var(--text, #4b5563);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.assignment-btn-secondary:hover:not(:disabled) {
+  background-color: #e5e7eb;
+  color: var(--text-h, #111827);
+}
+
+.assignment-btn-primary {
+  padding: 9px 18px;
+  background-color: #0284c7;
+  border: 1px solid transparent;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.assignment-btn-primary:hover:not(:disabled) {
+  background-color: #0369a1;
+}
+
+.assignment-btn-primary:disabled,
+.assignment-btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.assignment-feedback-banner {
+  padding: 10px 14px;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 13px;
+  border-radius: 8px;
+}

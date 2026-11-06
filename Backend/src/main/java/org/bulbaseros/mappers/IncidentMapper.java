@@ -1,8 +1,12 @@
 package org.bulbaseros.mappers;
 
+import org.bulbaseros.dto.AssignmentResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.PageResponse;
 import org.bulbaseros.entity.Incidencia;
+import org.bulbaseros.entity.Tareas;
+import org.bulbaseros.repository.TareasRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +18,33 @@ import java.util.List;
  * y DTOs {@link IncidentResponse}, asi como envoltorios paginados {@link PageResponse}.
  *
  * @author UrbanPulse Team
- * @version 1.0
+ * @version 1.1
  */
 @Component
 public class IncidentMapper extends BaseMapper<Incidencia, IncidentResponse> {
+
+    private final TareasRepository tareasRepository;
+    private final AssignmentMapper assignmentMapper;
+
+    /**
+     * Constructor por defecto para pruebas unitarias desacopladas sin dependencias de persistencia.
+     */
+    public IncidentMapper() {
+        this(null, null);
+    }
+
+    /**
+     * Constructor principal con inyeccion de dependencias para mapeo de asignaciones activas.
+     *
+     * @param tareasRepository repositorio de tareas y asignaciones operativas.
+     * @param assignmentMapper mapeador de tareas a {@link AssignmentResponse}.
+     */
+    @Autowired
+    public IncidentMapper(@Autowired(required = false) TareasRepository tareasRepository,
+                          @Autowired(required = false) AssignmentMapper assignmentMapper) {
+        this.tareasRepository = tareasRepository;
+        this.assignmentMapper = assignmentMapper;
+    }
 
     /**
      * Convierte una entidad {@link Incidencia} en su correspondiente DTO {@link IncidentResponse}.
@@ -34,7 +61,7 @@ public class IncidentMapper extends BaseMapper<Incidencia, IncidentResponse> {
         Long citizenId = (entity.getCitizen() != null) ? entity.getCitizen().getId() : null;
         String citizenName = (entity.getCitizen() != null) ? entity.getCitizen().getFullName() : null;
 
-        return new IncidentResponse(
+        IncidentResponse dto = new IncidentResponse(
                 entity.getId(),
                 entity.getTitle(),
                 entity.getDescription(),
@@ -52,6 +79,13 @@ public class IncidentMapper extends BaseMapper<Incidencia, IncidentResponse> {
                 entity.getDistrict(),
                 entity.getNeighborhood()
         );
+
+        if (tareasRepository != null && assignmentMapper != null && entity.getId() != null) {
+            List<Tareas> activeTasks = tareasRepository.findByIncidentIdAndIsActiveTrue(entity.getId());
+            dto.setAssignments(assignmentMapper.toDtoList(activeTasks));
+        }
+
+        return dto;
     }
 
     /**

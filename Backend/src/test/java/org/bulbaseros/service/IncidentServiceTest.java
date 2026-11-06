@@ -18,6 +18,8 @@ import org.bulbaseros.mappers.IncidentMapper;
 import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
+import org.bulbaseros.entity.Tareas;
+import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -83,6 +85,9 @@ class IncidentServiceTest {
      */
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private TareasRepository tareasRepository;
 
     /**
      * Mock del servicio de integracion con datos abiertos de Malaga.
@@ -185,6 +190,67 @@ class IncidentServiceTest {
         assertEquals(2L, result.get(1).getId());
         assertEquals(EstadoIncidencia.IN_PROGRESS, result.get(1).getStatus());
 
+        verify(incidenciaRepository).findByStatusNotIn(any());
+    }
+
+    @Test
+    @DisplayName("getActiveIncidents: para rol TECHNICIAN debe retornar únicamente incidencias asignadas activas (RF-25)")
+    void shouldReturnOnlyAssignedIncidentsForTechnician() {
+        Usuario technician = new Usuario("tech@urbanpulse.es", "hash", "Técnico Campo", RolUsuario.TECHNICIAN);
+        technician.setId(33L);
+
+        Incidencia inc1 = new Incidencia("Bache calzada", "Bache profundo", "Vías", 36.72, -4.42, testCitizen);
+        inc1.setId(10L);
+        inc1.setStatus(EstadoIncidencia.ASSIGNED);
+
+        Tareas task1 = new Tareas();
+        task1.setId(101L);
+        task1.setIncident(inc1);
+        task1.setIsActive(true);
+
+        when(userRepository.findByEmail("tech@urbanpulse.es")).thenReturn(Optional.of(technician));
+        when(tareasRepository.findByTechnicianIdAndIsActiveTrue(33L)).thenReturn(List.of(task1));
+        when(incidenciaRepository.findAllById(any())).thenReturn(List.of(inc1));
+
+        List<IncidentResponse> result = incidentService.getActiveIncidents("tech@urbanpulse.es");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(10L, result.get(0).getId());
+        verify(incidenciaRepository, never()).findByStatusNotIn(any());
+    }
+
+    @Test
+    @DisplayName("getActiveIncidents: para rol TECHNICIAN sin asignaciones activas debe retornar lista vacía (RF-25)")
+    void shouldReturnEmptyListWhenTechnicianHasNoActiveAssignments() {
+        Usuario technician = new Usuario("tech@urbanpulse.es", "hash", "Técnico Campo", RolUsuario.TECHNICIAN);
+        technician.setId(33L);
+
+        when(userRepository.findByEmail("tech@urbanpulse.es")).thenReturn(Optional.of(technician));
+        when(tareasRepository.findByTechnicianIdAndIsActiveTrue(33L)).thenReturn(List.of());
+
+        List<IncidentResponse> result = incidentService.getActiveIncidents("tech@urbanpulse.es");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(incidenciaRepository, never()).findAllById(any());
+        verify(incidenciaRepository, never()).findByStatusNotIn(any());
+    }
+
+    @Test
+    @DisplayName("getActiveIncidents: para rol OPERATOR o ADMIN debe retornar todas las incidencias activas")
+    void shouldReturnAllActiveIncidentsWhenUserIsOperatorOrAdmin() {
+        Usuario operator = new Usuario("operador@urbanpulse.es", "hash", "Operador", RolUsuario.OPERATOR);
+        operator.setId(22L);
+
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(operator));
+        when(incidenciaRepository.findByStatusNotIn(any())).thenReturn(List.of(testIncident));
+
+        List<IncidentResponse> result = incidentService.getActiveIncidents("operador@urbanpulse.es");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(tareasRepository, never()).findByTechnicianIdAndIsActiveTrue(any());
         verify(incidenciaRepository).findByStatusNotIn(any());
     }
 

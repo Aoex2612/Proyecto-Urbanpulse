@@ -1,7 +1,8 @@
 /**
  * @fileoverview Modal de detalle exhaustivo de incidencia urbana para UrbanPulse.
  * Despliega la información completa de la incidencia seleccionada (título, categoría,
- * descripción, estado, prioridad, coordenadas, fecha de reporte y galería de fotografías adjuntas)
+ * descripción, estado, prioridad, coordenadas, fecha de reporte y galería de fotografías adjuntas),
+ * integra el muro interactivo de comentarios y avisos públicos para seguimiento ciudadano y personal municipal,
  * y, si el usuario en sesión dispone de rol administrativo (ADMIN), consulta e integra de forma condicional
  * la línea temporal de auditoría (StatusTimeline) con las transiciones históricas de estado.
  */
@@ -16,6 +17,7 @@ import {
 } from './mapConstants';
 import { formatDate } from '../../utils/dateUtils';
 import StatusTimeline from '../Timeline/StatusTimeline';
+import { IncidentCommentsSection } from '../Comments';
 import './Map.css';
 
 /**
@@ -321,6 +323,16 @@ export default function IncidentDetailModal({
               </div>
             </section>
           )}
+
+          {/* Muro de Comentarios, Notas Internas y Avisos Públicos */}
+          <IncidentCommentsSection
+            incidentId={incident.id}
+            incidentStatus={incident.status}
+            isClosedOrRejected={
+              incident.status === 'CLOSED' || incident.status === 'REJECTED'
+            }
+            currentUser={effectiveUser}
+          />
 
           {/* Sección de Auditoría Transversal (Visualización Condicional por Rol) */}
           {isAuditAllowed && (
