@@ -392,3 +392,272 @@
   border-color: var(--accent, #aa3bff);
   color: var(--accent, #aa3bff);
 }
+
+
+/* ==========================================================================
+   Estilos de Triaje Operativo Avanzado (Feature 005)
+   ========================================================================== */
+
+.priority-cell-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.btn-priority-assistant {
+  background-color: transparent;
+  color: #7c3aed;
+  border: 1px dashed #c4b5fd;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-priority-assistant:hover {
+  background-color: #f5f3ff;
+  border-color: #7c3aed;
+  color: #6d28d9;
+}
+
+/* Badges de Departamentos Asignados */
+.dept-badges-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 180px;
+}
+
+.badge-dept {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-dept-tech {
+  color: #475569;
+  font-weight: 400;
+}
+
+.badge-unassigned {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Badges de Estado */
+.badge-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.badge-status-reported {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-status-validated {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-status-assigned {
+  background-color: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.badge-status-in_progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-status-resolved {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-status-reopened {
+  background-color: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.badge-status-closed {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.badge-status-rejected {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Grupo de botones de acción de triaje */
+.triage-actions-cell {
+  min-width: 200px;
+}
+
+.action-buttons-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-action-triage {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-action-triage:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Acciones específicas */
+.btn-triage-validate {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.btn-triage-validate:hover:not(:disabled) {
+  background-color: #0369a1;
+}
+
+.btn-triage-reject {
+  background-color: transparent;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.btn-triage-reject:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #dc2626;
+}
+
+.btn-triage-assign {
+  background-color: #7c3aed;
+  color: #ffffff;
+}
+
+.btn-triage-assign:hover:not(:disabled) {
+  background-color: #6d28d9;
+}
+
+.btn-triage-start {
+  background-color: #059669;
+  color: #ffffff;
+}
+
+.btn-triage-start:hover:not(:disabled) {
+  background-color: #047857;
+}
+
+.btn-triage-resolve {
+  background-color: #16a34a;
+  color: #ffffff;
+}
+
+.btn-triage-resolve:hover:not(:disabled) {
+  background-color: #15803d;
+}
+
+.btn-triage-close {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+.btn-triage-close:hover:not(:disabled) {
+  background-color: #1e293b;
+}
+
+.btn-triage-reopen {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+
+.btn-triage-reopen:hover:not(:disabled) {
+  background-color: #c2410c;
+}
+
+.btn-triage-reevaluate {
+  background-color: transparent;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+}
+
+.btn-triage-reevaluate:hover:not(:disabled) {
+  background-color: #f0f9ff;
+  border-color: #0284c7;
+}
+
+.btn-triage-comments {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-triage-comments:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Modal de Comentarios desplegable */
+.comments-modal-card {
+  max-width: 720px;
+  width: 92%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.comments-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.comments-modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}

@@ -55,19 +55,19 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 7.3 Actualizar `IncidentDetailModal.jsx` y `MyIncidentsPage.jsx` integrando la visualización de avisos públicos para seguimiento ciudadano.
 - [x] 7.4 Crear pruebas unitarias con Vitest en `IncidentCommentsSection.test.jsx` comprobando renderizado según rol, bloqueo en cerradas y edición de comentarios.
 
-## [ ] Tarea 8: Integración en Panel Operativo, Pruebas de Integración y Preparación de QA - Depende de Tareas 5, 6 y 7 - RF: Todos (RF-1 al RF-24)
-- [ ] 8.1 Integrar en `OperatorPanelPage.jsx` los modales de la Tarea 6 (asistente de prioridad y asignación departamental).
-- [ ] 8.2 Integrar en `OperatorPanelPage.jsx` los controles de intervención y resolución técnica de la Tarea 7 y el muro de comentarios.
-- [ ] 8.3 Integrar botones de acción contextuales según estado (Validar, Rechazar, Reevaluar, Asignar, Resolver, Cerrar, Reabrir) y badges de departamentos asignados.
-- [ ] 8.4 Crear prueba de integración en `OperatorPanelPage.test.jsx` validando la secuencia completa de triaje y visualización reactiva.
-- [ ] 8.5 Ejecutar verificación completa de tests en Backend (`cd Backend && mvn clean test`) asegurando 100% de tests en verde y reporte JaCoCo.
-- [ ] 8.6 Ejecutar suite de pruebas de Frontend (`cd frontend && npm test`) y linter (`npm run lint`) garantizando 0 errores y advertencias.
-- [ ] 8.7 Redactar documento técnico y guía de pruebas de la feature en `docs/005-gestion-y-triaje-operativo-de-incidencias/qa-note.md` para la posterior fase de validación (`sdd-validate`).
+## [x] Tarea 8: Integración en Panel Operativo, Pruebas de Integración y Preparación de QA - Depende de Tareas 5, 6 y 7 - RF: Todos (RF-1 al RF-24)
+- [x] 8.1 Integrar en `OperatorPanelPage.jsx` los modales de la Tarea 6 (asistente de prioridad y asignación departamental).
+- [x] 8.2 Integrar en `OperatorPanelPage.jsx` los controles de intervención y resolución técnica de la Tarea 7 y el muro de comentarios.
+- [x] 8.3 Integrar botones de acción contextuales según estado (Validar, Rechazar, Reevaluar, Asignar, Resolver, Cerrar, Reabrir) y badges de departamentos asignados.
+- [x] 8.4 Crear prueba de integración en `OperatorPanelPage.test.jsx` validando la secuencia completa de triaje y visualización reactiva.
+- [x] 8.5 Ejecutar verificación completa de tests en Backend (`cd Backend && mvn clean test`) asegurando 100% de tests en verde y reporte JaCoCo.
+- [x] 8.6 Ejecutar suite de pruebas de Frontend (`cd frontend && npm test`) y linter (`npm run lint`) garantizando 0 errores y advertencias.
+- [x] 8.7 Redactar documento técnico y guía de pruebas de la feature en `docs/005-gestion-y-triaje-operativo-de-incidencias/qa-note.md` para la posterior fase de validación (`sdd-validate`).
 
 ---
 ## Mantenimiento (checklist recurrente)
 
-- [ ] Verificar que ninguna operación de cambio de estado omita la inserción obligatoria en `status_changes`.
-- [ ] Comprobar que los comentarios con `is_internal = true` nunca sean serializados en respuestas dirigidas a ciudadanos.
-- [ ] Asegurar que toda asignación técnica activa pertenezca siempre a un departamento activo de la misma incidencia.
-- [ ] Validar que las transiciones a `RESOLVED` en incidencias no menores mantengan la obligatoriedad de la descripción.
+- [x] Verificar que ninguna operación de cambio de estado omita la inserción obligatoria en `status_changes`.
+- [x] Comprobar que los comentarios con `is_internal = true` nunca sean serializados en respuestas dirigidas a ciudadanos.
+- [x] Asegurar que toda asignación técnica activa pertenezca siempre a un departamento activo de la misma incidencia.
+- [x] Validar que las transiciones a `RESOLVED` en incidencias no menores mantengan la obligatoriedad de la descripción.
