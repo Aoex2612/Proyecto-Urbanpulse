@@ -1,8 +1,8 @@
 /**
  * @fileoverview Servicio de gestión de incidencias urbanas, auditoría y adjuntos multimedia para UrbanPulse.
  * Proporciona métodos para consultar incidencias activas en el mapa, obtener detalles,
- * crear nuevas incidencias, actualizar el estado de una incidencia, consultar su historial de cambios
- * y subir/consultar archivos multimedia adjuntos (imágenes JPEG/PNG).
+ * crear nuevas incidencias, actualizar el estado de una incidencia, consultar su historial de cambios,
+ * subir/consultar archivos multimedia adjuntos (imágenes JPEG/PNG) y consultar comentarios públicos ciudadanos.
  */
 
 import api from './api';
@@ -155,6 +155,19 @@ export const getIncidentAttachments = async (incidentId) => {
   return response.data;
 };
 
+/**
+ * Consulta el listado de comentarios públicos asociados a una incidencia para el seguimiento ciudadano transparente.
+ * En el backend, si el usuario autenticado es ciudadano, la API filtra automáticamente solo los comentarios no internos.
+ *
+ * @param {number|string} incidentId - Identificador único de la incidencia.
+ * @returns {Promise<Array<{id: number, incidentId: number, authorId: number, authorName: string, authorRole: string, comment: string, isInternal: boolean, createdAt: string, updatedAt: string|null}>>} Lista de comentarios públicos de la incidencia.
+ * @throws {import('axios').AxiosError} Si ocurre un error durante la petición o falta autorización.
+ */
+export const getIncidentPublicComments = async (incidentId) => {
+  const response = await api.get(`/api/incidents/${incidentId}/comments`);
+  return response.data;
+};
+
 const incidentService = {
   getAllIncidents,
   getIncidentById,
@@ -166,6 +179,7 @@ const incidentService = {
   getIncidentHistory,
   uploadIncidentAttachment,
   getIncidentAttachments,
+  getIncidentPublicComments,
 };
 
 export default incidentService;

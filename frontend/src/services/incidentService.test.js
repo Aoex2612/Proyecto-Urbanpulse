@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import incidentService, {
   getMyIncidents,
   reverseGeocode,
+  getIncidentPublicComments,
 } from './incidentService';
 import api from './api';
 
@@ -99,6 +100,37 @@ describe('incidentService', () => {
         district: 'Centro',
         neighborhood: null,
       });
+    });
+  });
+
+  describe('getIncidentPublicComments', () => {
+    it('consulta los comentarios de una incidencia mediante GET /api/incidents/{id}/comments', async () => {
+      const mockComments = [
+        {
+          id: 101,
+          incidentId: 42,
+          authorName: 'Operador Triaje',
+          comment: 'Se ha enviado una brigada de mantenimiento.',
+          isInternal: false,
+          createdAt: '2026-11-06T10:00:00Z',
+        },
+      ];
+
+      api.get.mockResolvedValueOnce({ data: mockComments });
+
+      const result = await getIncidentPublicComments(42);
+
+      expect(api.get).toHaveBeenCalledTimes(1);
+      expect(api.get).toHaveBeenCalledWith('/api/incidents/42/comments');
+      expect(result).toEqual(mockComments);
+    });
+
+    it('está accesible mediante la exportación default incidentService.getIncidentPublicComments', async () => {
+      api.get.mockResolvedValueOnce({ data: [] });
+
+      const result = await incidentService.getIncidentPublicComments(7);
+      expect(api.get).toHaveBeenCalledWith('/api/incidents/7/comments');
+      expect(result).toEqual([]);
     });
   });
 });

@@ -42,12 +42,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 5.4 Actualizar `SecurityConfig` garantizando las políticas de acceso por roles y rutas seguras.
 - [x] 5.5 Crear pruebas de integración en `IncidentTriageControllerTest` y `DepartmentControllerTest` con `MockMvc` y `@WithMockUser` verificando respuestas 200, 400, 401 y 403.
 
-## [ ] Tarea 6: Servicios API y Modales de Triaje y Asignación en Frontend - Depende de Tarea 5 - RF: RF-1, RF-2, RF-8, RF-9, RF-10, RF-11, RF-12
-- [ ] 6.1 Crear servicio cliente `frontend/src/services/triageService.js` con Axios documentado con JSDoc para interactuar con todos los endpoints de triaje, asignación, comentarios, departamentos y técnicos.
-- [ ] 6.2 Ampliar `frontend/src/services/incidentService.js` con método `getIncidentPublicComments(incidentId)` para el seguimiento ciudadano.
-- [ ] 6.3 Crear componente `PriorityAssistantModal.jsx` y su hoja de estilos para la selección de factores de riesgo, cálculo en tiempo real y confirmación de prioridad.
-- [ ] 6.4 Crear componente `AssignmentModal.jsx` y su hoja de estilos con soporte para selección multidepartamento y selector dependiente de técnicos.
-- [ ] 6.5 Crear pruebas unitarias con Vitest en `triageService.test.js`, `PriorityAssistantModal.test.jsx` y `AssignmentModal.test.jsx`.
+## [x] Tarea 6: Servicios API y Modales de Triaje y Asignación en Frontend - Depende de Tarea 5 - RF: RF-1, RF-2, RF-8, RF-9, RF-10, RF-11, RF-12
+- [x] 6.1 Crear servicio cliente `frontend/src/services/triageService.js` con Axios documentado con JSDoc para interactuar con todos los endpoints de triaje, asignación, comentarios, departamentos y técnicos.
+- [x] 6.2 Ampliar `frontend/src/services/incidentService.js` con método `getIncidentPublicComments(incidentId)` para el seguimiento ciudadano.
+- [x] 6.3 Crear componente `PriorityAssistantModal.jsx` y su hoja de estilos para la selección de factores de riesgo, cálculo en tiempo real y confirmación de prioridad.
+- [x] 6.4 Crear componente `AssignmentModal.jsx` y su hoja de estilos con soporte para selección multidepartamento y selector dependiente de técnicos.
+- [x] 6.5 Crear pruebas unitarias con Vitest en `triageService.test.js`, `PriorityAssistantModal.test.jsx` y `AssignmentModal.test.jsx`.
 
 ## [ ] Tarea 7: Muro de Comentarios y Sección de Intervención Técnica en Frontend - Depende de Tarea 6 - RF: RF-13, RF-14, RF-15, RF-16, RF-20, RF-21, RF-22, RF-23, RF-24
 - [ ] 7.1 Crear componente `IncidentCommentsSection.jsx` y estilos asociados, visualizando notas internas vs públicas, fecha de actualización para editados y formulario con selector de visibilidad.
