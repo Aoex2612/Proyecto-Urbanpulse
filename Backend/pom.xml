@@ -86,6 +86,12 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.13.0</version>
+            <scope>test</scope>
+        </dependency>
         <!-- Base de datos H2 en modo PostgreSQL para desarrollo local sin Docker y pruebas -->
         <dependency>
             <groupId>com.h2database</groupId>

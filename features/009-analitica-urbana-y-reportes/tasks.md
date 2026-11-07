@@ -29,10 +29,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 4.4 Garantizar la resiliencia ante conjuntos sin incidencias (cero registros), retornando métricas a 0 sin divisiones por cero (`NaN` / `Infinity`).
 - [x] 4.5 Crear pruebas unitarias exhaustivas con Mockito en `AnalyticsServiceTest` cubriendo todos los umbrales de SLA, filtros temporales y casos límite.
 
-## [ ] Tarea 5: Controlador REST y Seguridad RBAC en Backend - Depende de Tareas 1 a 4 - RF: RF-1 al RF-11, RF-14, RF-15, RF-16, RF-19, RF-20, RF-21
-- [ ] 5.1 Crear `AnalyticsController` en `org.bulbaseros.controller` exponiendo `GET /api/analytics/summary` con parámetros de filtro opcionales y `GET /api/analytics/recommend-department`.
-- [ ] 5.2 Actualizar `SecurityConfig` para proteger las rutas `/api/analytics/**` permitiendo acceso a `ANALYST`, `ADMIN` y `OPERATOR`, y denegando a `CITIZEN` y `TECHNICIAN`.
-- [ ] 5.3 Crear pruebas de integración en `AnalyticsControllerTest` con `MockMvc` y `@WithMockUser` verificando respuestas 200 OK, payload consolidado y código 403 Forbidden para roles no autorizados.
+## [x] Tarea 5: Controlador REST y Seguridad RBAC en Backend - Depende de Tareas 1 a 4 - RF: RF-1 al RF-11, RF-14, RF-15, RF-16, RF-19, RF-20, RF-21
+- [x] 5.1 Crear `AnalyticsController` en `org.bulbaseros.controller` exponiendo `GET /api/analytics/summary` con parámetros de filtro opcionales y `GET /api/analytics/recommend-department`.
+- [x] 5.2 Actualizar `SecurityConfig` para proteger las rutas `/api/analytics/**` permitiendo acceso a `ANALYST`, `ADMIN` y `OPERATOR`, y denegando a `CITIZEN` y `TECHNICIAN`.
+- [x] 5.3 Crear pruebas de integración en `AnalyticsControllerTest` con `MockMvc` y `@WithMockUser` verificando respuestas 200 OK, payload consolidado y código 403 Forbidden para roles no autorizados.
 
 ## [ ] Tarea 6: Servicios API y Módulo de Exportación a PDF en Frontend - Depende de Tarea 5 - RF: RF-12, RF-13, RF-14
 - [ ] 6.1 Crear servicio cliente `frontend/src/services/analyticsService.js` con métodos Axios para interactuar con los endpoints de analítica y recomendación.

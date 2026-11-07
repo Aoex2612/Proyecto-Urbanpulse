@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.OffsetDateTime;
 
@@ -36,11 +37,13 @@ public class AnalyticsFilterRequest {
     /**
      * Fecha y hora inicial del rango temporal personalizado (opcional).
      */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private OffsetDateTime startDate;
 
     /**
      * Fecha y hora final del rango temporal personalizado (opcional).
      */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private OffsetDateTime endDate;
 
     /**
