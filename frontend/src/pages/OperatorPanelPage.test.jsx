@@ -401,7 +401,7 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
     expect(screen.getByText('Total Asignadas')).toBeInTheDocument();
 
     // Botones de técnico presentes para su incidencia asignada y en progreso
-    expect(screen.getByRole('button', { name: 'Iniciar trabajo en incidencia #3' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Iniciar trabajo en incidencia #3' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Resolver incidencia #4' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ver y redactar comentarios de la incidencia #3' })).toBeInTheDocument();
 
@@ -425,7 +425,7 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
     renderPanel();
 
     expect(await screen.findByText('Centro de Triaje y Operaciones Urbanas')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Validar incidencia #1' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Validar incidencia #1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Asignar departamentos a #2' })).toBeInTheDocument();
 
     // No debe mostrar Iniciar Trabajo ni Resolver a operadores
