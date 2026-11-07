@@ -22,12 +22,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 3.3 Implementar cálculo de confianza promedio y tasa de adopción de sugerencias departamentales por los operadores.
 - [x] 3.4 Crear pruebas unitarias con Mockito en `IntelligentRecommendationServiceTest` evaluando alta confianza, baja confianza (< 50%) y textos ambiguos o escuetos.
 
-## [ ] Tarea 4: Servicio Central de Analítica, Evaluación de SLAs y Agregaciones - Depende de Tareas 1, 2 y 3 - RF: RF-1 al RF-11, RF-18
-- [ ] 4.1 Implementar en `AnalyticsService` el cálculo de Tiempo Medio de Triaje (MTTT) y Tiempo Medio de Resolución (MTTR) en horas a partir de las marcas temporales de auditoría.
-- [ ] 4.2 Implementar la matriz determinista de evaluación de cumplimiento de SLA por prioridad: `CRITICAL` (3 días), `HIGH` (7 días), `MEDIUM` (15 días) y `LOW` (30 días), detectando tanto incidencias en curso fuera de plazo como resueltas fuera de plazo.
-- [ ] 4.3 Implementar cálculo de agregaciones dinámicas por Distrito, por Barrio, por Departamento y por Categoría según el filtro aplicado.
-- [ ] 4.4 Garantizar la resiliencia ante conjuntos sin incidencias (cero registros), retornando métricas a 0 sin divisiones por cero (`NaN` / `Infinity`).
-- [ ] 4.5 Crear pruebas unitarias exhaustivas con Mockito en `AnalyticsServiceTest` cubriendo todos los umbrales de SLA, filtros temporales y casos límite.
+## [x] Tarea 4: Servicio Central de Analítica, Evaluación de SLAs y Agregaciones - Depende de Tareas 1, 2 y 3 - RF: RF-1 al RF-11, RF-18
+- [x] 4.1 Implementar en `AnalyticsService` el cálculo de Tiempo Medio de Triaje (MTTT) y Tiempo Medio de Resolución (MTTR) en horas a partir de las marcas temporales de auditoría.
+- [x] 4.2 Implementar la matriz determinista de evaluación de cumplimiento de SLA por prioridad: `CRITICAL` (3 días), `HIGH` (7 días), `MEDIUM` (15 días) y `LOW` (30 días), detectando tanto incidencias en curso fuera de plazo como resueltas fuera de plazo.
+- [x] 4.3 Implementar cálculo de agregaciones dinámicas por Distrito, por Barrio, por Departamento y por Categoría según el filtro aplicado.
+- [x] 4.4 Garantizar la resiliencia ante conjuntos sin incidencias (cero registros), retornando métricas a 0 sin divisiones por cero (`NaN` / `Infinity`).
+- [x] 4.5 Crear pruebas unitarias exhaustivas con Mockito en `AnalyticsServiceTest` cubriendo todos los umbrales de SLA, filtros temporales y casos límite.
 
 ## [ ] Tarea 5: Controlador REST y Seguridad RBAC en Backend - Depende de Tareas 1 a 4 - RF: RF-1 al RF-11, RF-14, RF-15, RF-16, RF-19, RF-20, RF-21
 - [ ] 5.1 Crear `AnalyticsController` en `org.bulbaseros.controller` exponiendo `GET /api/analytics/summary` con parámetros de filtro opcionales y `GET /api/analytics/recommend-department`.
