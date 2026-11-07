@@ -2,7 +2,7 @@
 
 .operator-container {
   width: 100%;
-  max-width: 1040px;
+  max-width: 1480px;
   margin: 0 auto;
   padding: 24px 20px;
   box-sizing: border-box;
@@ -215,14 +215,18 @@
 }
 
 .incidents-table-wrapper {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .incidents-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 1060px;
 }
+
 
 .incidents-table th {
   text-align: left;
@@ -234,6 +238,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border, #e5e4e7);
+  white-space: nowrap;
 }
 
 .incidents-table td {
@@ -520,7 +525,7 @@
 
 /* Grupo de botones de acción de triaje */
 .triage-actions-cell {
-  min-width: 200px;
+  min-width: 240px;
 }
 
 .action-buttons-group {
