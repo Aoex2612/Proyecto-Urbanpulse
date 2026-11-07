@@ -16,11 +16,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 2.3 Añadir consultas en `TareasRepository` para computar incidencias activas e históricas por departamento municipal.
 - [x] 2.4 Crear pruebas `@DataJpaTest` en `AnalyticsRepositoriesTest` validando consultas temporales, agregaciones por distrito y comportamiento ante conjuntos vacíos.
 
-## [ ] Tarea 3: Servicio de Asistencia Inteligente y Recomendación con Grado de Confianza - Depende de Tareas 1 y 2 - RF: RF-14, RF-15, RF-16, RF-17, RF-18
-- [ ] 3.1 Implementar `IntelligentRecommendationService` en `org.bulbaseros.service` con motor heurístico léxico ponderado y cálculo de grado de certeza porcentual (0% a 100%).
-- [ ] 3.2 Implementar lógica de activación del distintivo de advertencia explícita para recomendaciones con confianza inferior al 50%.
-- [ ] 3.3 Implementar cálculo de confianza promedio y tasa de adopción de sugerencias departamentales por los operadores.
-- [ ] 3.4 Crear pruebas unitarias con Mockito en `IntelligentRecommendationServiceTest` evaluando alta confianza, baja confianza (< 50%) y textos ambiguos o escuetos.
+## [x] Tarea 3: Servicio de Asistencia Inteligente y Recomendación con Grado de Confianza - Depende de Tareas 1 y 2 - RF: RF-14, RF-15, RF-16, RF-17, RF-18
+- [x] 3.1 Implementar `IntelligentRecommendationService` en `org.bulbaseros.service` con motor heurístico léxico ponderado y cálculo de grado de certeza porcentual (0% a 100%).
+- [x] 3.2 Implementar lógica de activación del distintivo de advertencia explícita para recomendaciones con confianza inferior al 50%.
+- [x] 3.3 Implementar cálculo de confianza promedio y tasa de adopción de sugerencias departamentales por los operadores.
+- [x] 3.4 Crear pruebas unitarias con Mockito en `IntelligentRecommendationServiceTest` evaluando alta confianza, baja confianza (< 50%) y textos ambiguos o escuetos.
 
 ## [ ] Tarea 4: Servicio Central de Analítica, Evaluación de SLAs y Agregaciones - Depende de Tareas 1, 2 y 3 - RF: RF-1 al RF-11, RF-18
 - [ ] 4.1 Implementar en `AnalyticsService` el cálculo de Tiempo Medio de Triaje (MTTT) y Tiempo Medio de Resolución (MTTR) en horas a partir de las marcas temporales de auditoría.
