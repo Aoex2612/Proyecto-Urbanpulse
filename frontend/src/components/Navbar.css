@@ -1,0 +1,113 @@
+/* Estilos para el componente Navbar de UrbanPulse (RF-19) */
+
+.navbar {
+  width: 100%;
+  background-color: var(--bg, #ffffff);
+  border-bottom: 1px solid var(--border, #e5e4e7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-logo {
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  letter-spacing: -0.02em;
+}
+
+.navbar-logo-text {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.navbar-role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0369a1;
+  background-color: #e0f2fe;
+  border-radius: 9999px;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-link {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text, #4b5563);
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.navbar-link:hover {
+  color: var(--text-h, #111827);
+  background-color: var(--hover-bg, #f3f4f6);
+}
+
+.navbar-link.active {
+  color: #0284c7;
+  font-weight: 600;
+  background-color: #f0f9ff;
+}
+
+.navbar-link.analytics-link {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.navbar-link.analytics-link:hover {
+  background-color: #f0fdfa;
+  color: #0f766e;
+}
+
+.navbar-link.analytics-link.active {
+  color: #0f766e;
+  background-color: #ccfbf1;
+}
+
+.navbar-logout-btn {
+  margin-left: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #dc2626;
+  background-color: transparent;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navbar-logout-btn:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}

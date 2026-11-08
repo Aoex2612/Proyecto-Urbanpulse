@@ -1,0 +1,272 @@
+/* Estilos para las Tarjetas de Métricas Ejecutivas (AnalyticsKpiCards) */
+
+.analytics-kpi-container {
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 1200px) {
+  .analytics-kpi-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.analytics-kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 18px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  min-height: 148px;
+  box-sizing: border-box;
+}
+
+.analytics-kpi-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.analytics-kpi-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.analytics-kpi-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: #f1f5f9;
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.icon-wrap-sparkle {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}
+
+.analytics-kpi-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.analytics-kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #475569);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.analytics-kpi-body {
+  margin-bottom: 12px;
+}
+
+.analytics-kpi-value {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-h, #0f172a);
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.analytics-kpi-metric-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.analytics-kpi-subtext {
+  font-size: 12px;
+  color: var(--text, #64748b);
+  margin: 0;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.analytics-kpi-separator {
+  color: #cbd5e1;
+}
+
+.analytics-kpi-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.kpi-pill-resolved {
+  color: #047857;
+  background-color: #ecfdf5;
+}
+
+.kpi-pill-pending {
+  color: #b45309;
+  background-color: #fffbeb;
+}
+
+.kpi-pill-compliant {
+  color: #047857;
+  background-color: #ecfdf5;
+}
+
+.kpi-pill-breached {
+  color: #b91c1c;
+  background-color: #fef2f2;
+}
+
+.analytics-kpi-health-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.analytics-kpi-badge-caption {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Salud de SLA */
+.kpi-sla-good .analytics-kpi-health-badge {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.kpi-sla-warning .analytics-kpi-health-badge {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.kpi-sla-danger .analytics-kpi-health-badge {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.kpi-sla-neutral .analytics-kpi-health-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+.analytics-kpi-footer {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+  margin-top: auto;
+}
+
+.analytics-kpi-help {
+  font-size: 11px;
+  color: var(--text-muted, #94a3b8);
+  display: block;
+  line-height: 1.3;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .analytics-kpi-card {
+    background-color: #1e2028;
+    border-color: #2e303a;
+    box-shadow: none;
+  }
+
+  .analytics-kpi-card:hover {
+    border-color: #3f4250;
+  }
+
+  .analytics-kpi-icon-wrap {
+    background-color: #2b2d39;
+    color: #cbd5e1;
+  }
+
+  .icon-wrap-sparkle {
+    background-color: #2e1065;
+    color: #c084fc;
+  }
+
+  .analytics-kpi-value {
+    color: #f8fafc;
+  }
+
+  .analytics-kpi-label {
+    color: #cbd5e1;
+  }
+
+  .analytics-kpi-subtext {
+    color: #94a3b8;
+  }
+
+  .analytics-kpi-footer {
+    border-top-color: #282a36;
+  }
+
+  .analytics-kpi-help {
+    color: #64748b;
+  }
+
+  .kpi-pill-resolved {
+    color: #34d399;
+    background-color: rgba(5, 150, 105, 0.2);
+  }
+
+  .kpi-pill-pending {
+    color: #fbbf24;
+    background-color: rgba(217, 119, 6, 0.2);
+  }
+
+  .kpi-pill-compliant {
+    color: #34d399;
+    background-color: rgba(5, 150, 105, 0.2);
+  }
+
+  .kpi-pill-breached {
+    color: #f87171;
+    background-color: rgba(220, 38, 38, 0.2);
+  }
+
+  .kpi-sla-good .analytics-kpi-health-badge {
+    background-color: rgba(6, 95, 70, 0.3);
+    color: #6ee7b7;
+    border-color: #065f46;
+  }
+
+  .kpi-sla-warning .analytics-kpi-health-badge {
+    background-color: rgba(146, 64, 14, 0.3);
+    color: #fcd34d;
+    border-color: #92400e;
+  }
+
+  .kpi-sla-danger .analytics-kpi-health-badge {
+    background-color: rgba(153, 27, 27, 0.3);
+    color: #fca5a5;
+    border-color: #991b1b;
+  }
+}

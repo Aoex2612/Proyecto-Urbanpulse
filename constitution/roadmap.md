@@ -10,14 +10,14 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 4. **003 · Mapa interactivo de incidencias con Leaflet, reporte geolocalizado y auditoría transversal** (`HU03`) — Visualización cartográfica con Leaflet de incidencias urbanas, creación ágil de incidencias marcando coordenadas en el mapa y registro inmutable de auditoría de cambios de estado (`status_changes`) con visualización de línea temporal (`features/003-mapa-incidencias-y-auditoria-transversal/`).
 5. **006 · Adjuntos multimedia en incidencias** (`HU05`) — Subida y asociación de fotos/evidencias a las incidencias reportadas con previsualización reactiva, almacenamiento en disco y galería en detalle (`features/006-adjuntos-multimedia-en-incidencias/`).
 6. **004 · Reporte y seguimiento de incidencias con detección territorial** (`HU04`, `HU06`, `HU15`) — Implementado y validado exitosamente.
+7. **005 · Gestión y triaje operativo de incidencias** (`HU07`–`HU12`) — Validación y rechazo con motivo auditable, asignación multidepartamental y técnica (`assignments`), máquina de estados del ciclo de vida, muro de comentarios (`incident_comments`) y priorización asistida (`features/005-gestion-y-triaje-operativo-de-incidencias/`).
+8. **009 · Analítica urbana y reportes** (`HU22`–`HU25`) — Métricas operativas (MTTT, MTTR, evaluación de SLAs con umbrales 3d/7d/15d/30d), análisis territorial y temporal con gráficos visuales SVG, exportación de informes oficiales en PDF y recomendación asistida con grado de confianza (`features/009-analitica-urbana-y-reportes/`).
 
 ## En mejora 🛠️
 
 
 
 ## En curso 🔄
-
-_Ninguna feature en curso actualmente._
 
 ## Siguiente 🔜
 
