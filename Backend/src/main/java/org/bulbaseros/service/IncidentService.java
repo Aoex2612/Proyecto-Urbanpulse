@@ -20,6 +20,8 @@ import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
+import org.bulbaseros.specification.IncidentSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
@@ -92,6 +94,8 @@ public class IncidentService {
      * Repositorio de datos JPA para la gestion de tareas y asignaciones operativas ({@link Tareas}).
      */
     private final TareasRepository tareasRepository;
+    private final NotificationService notificationService;
+    private final DuplicateDetectionService duplicateDetectionService;
 
     /**
      * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
@@ -134,7 +138,9 @@ public class IncidentService {
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService,
-                           @Autowired(required = false) TareasRepository tareasRepository) {
+                           @Autowired(required = false) TareasRepository tareasRepository,
+                           @Autowired(required = false) NotificationService notificationService,
+                           @Autowired(required = false) DuplicateDetectionService duplicateDetectionService) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
@@ -142,6 +148,8 @@ public class IncidentService {
         this.statusChangeMapper = statusChangeMapper;
         this.malagaOpenDataService = malagaOpenDataService;
         this.tareasRepository = tareasRepository;
+        this.notificationService = notificationService;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -150,7 +158,7 @@ public class IncidentService {
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService) {
-        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null);
+        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null);
     }
 
     /**
@@ -306,6 +314,16 @@ public class IncidentService {
         incidencia.setUpdatedAt(OffsetDateTime.now());
 
         Incidencia savedIncident = incidenciaRepository.save(incidencia);
+
+        if (duplicateDetectionService != null) {
+            List<Incidencia> potentialDuplicates = duplicateDetectionService.findPotentialDuplicates(
+                    savedIncident.getLatitude(), savedIncident.getLongitude(),
+                    savedIncident.getCategory(), savedIncident.getTitle(),
+                    savedIncident.getDescription(), savedIncident.getId()
+            );
+            duplicateDetectionService.notifyPotentialDuplicates(savedIncident, potentialDuplicates);
+        }
+
         return incidentMapper.toDto(savedIncident);
     }
 
@@ -373,6 +391,8 @@ public class IncidentService {
         );
         cambio.setCreatedAt(OffsetDateTime.now());
         cambiosEstadoRepository.save(cambio);
+
+        sendStatusNotificationsFromService(updatedIncident, fromStatus, toStatus.name());
 
         return new IncidentStatusResponse(
                 id,
@@ -472,5 +492,53 @@ public class IncidentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Las coordenadas están fuera de Málaga");
         }
         return malagaOpenDataService.resolveLocation(latitude, longitude);
+    }
+
+    /**
+     * Envía notificaciones de cambio de estado al ciudadano propietario y técnicos asignados activos.
+     *
+     * @param incident   Incidencia actualizada.
+     * @param fromStatus Nombre del estado anterior.
+     * @param toStatus   Nombre del estado nuevo.
+     */
+    private void sendStatusNotificationsFromService(Incidencia incident, String fromStatus, String toStatus) {
+        if (notificationService == null) {
+            return;
+        }
+        String title = "Incidencia #" + incident.getId() + " actualizada a " + toStatus;
+        String message = "La incidencia '" + incident.getTitle() + "' ha cambiado de estado de " + fromStatus + " a " + toStatus + ".";
+
+        if (incident.getCitizen() != null) {
+            notificationService.createNotification(incident.getCitizen(), incident, "STATUS_CHANGE", title, message);
+        }
+
+        if (tareasRepository != null) {
+            List<Tareas> activeTasks = tareasRepository.findByIncidentIdAndIsActiveTrue(incident.getId());
+            for (Tareas task : activeTasks) {
+                if (task.getTechnician() != null) {
+                    notificationService.createNotification(task.getTechnician(), incident, "STATUS_CHANGE", title, message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Busca incidencias aplicando filtros multicriterio mediante JPA Specifications.
+     *
+     * @param text          Texto libre para buscar en título y descripción.
+     * @param category      Categoría de la incidencia.
+     * @param start         Fecha de inicio del rango.
+     * @param end           Fecha de fin del rango.
+     * @param status        Estado del ciclo de vida (ignorado si includeStatus es false).
+     * @param includeStatus Si true aplica el filtro de estado; si false lo omite (para CITIZEN).
+     * @return Lista de DTOs {@link IncidentResponse} que cumplen los criterios de búsqueda.
+     */
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> searchIncidents(String text, String category,
+                                                   OffsetDateTime start, OffsetDateTime end,
+                                                   EstadoIncidencia status, boolean includeStatus) {
+        Specification<Incidencia> spec = IncidentSpecifications.build(text, category, start, end, status, includeStatus);
+        List<Incidencia> results = incidenciaRepository.findAll(spec);
+        return incidentMapper.toDtoList(results);
     }
 }

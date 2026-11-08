@@ -10,7 +10,12 @@ import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.EstadoIncidencia;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.entity.Usuario;
+import org.bulbaseros.repository.UserRepository;
 import org.bulbaseros.service.AttachmentService;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.OffsetDateTime;
 import org.bulbaseros.service.IncidentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +63,7 @@ public class IncidentController {
      * Servicio de logica de negocio para la gestion y almacenamiento de archivos adjuntos.
      */
     private final AttachmentService attachmentService;
+    private final UserRepository userRepository;
 
     /**
      * Constructor para compatibilidad con pruebas unitarias que no requieran servicio de adjuntos.
@@ -65,7 +71,11 @@ public class IncidentController {
      * @param incidentService Servicio de logica de negocio transaccional de incidencias.
      */
     public IncidentController(IncidentService incidentService) {
-        this(incidentService, null);
+        this(incidentService, null, null);
+    }
+
+    public IncidentController(IncidentService incidentService, AttachmentService attachmentService) {
+        this(incidentService, attachmentService, null);
     }
 
     /**
@@ -73,11 +83,15 @@ public class IncidentController {
      *
      * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
      * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
+     * @param userRepository    Repositorio de usuarios para control de roles en búsqueda.
      */
     @Autowired
-    public IncidentController(IncidentService incidentService, @Autowired(required = false) AttachmentService attachmentService) {
+    public IncidentController(IncidentService incidentService,
+                              @Autowired(required = false) AttachmentService attachmentService,
+                              @Autowired(required = false) UserRepository userRepository) {
         this.incidentService = incidentService;
         this.attachmentService = attachmentService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -274,5 +288,50 @@ public class IncidentController {
     public ResponseEntity<List<AttachmentResponse>> getAttachments(@PathVariable Long id) {
         List<AttachmentResponse> attachments = attachmentService.getAttachmentsByIncidentId(id);
         return ResponseEntity.ok(attachments);
+    }
+
+    /**
+     * Busca incidencias aplicando filtros multicriterio: texto libre, categoría, rango de fechas
+     * y estado del ciclo de vida (HU-19).
+     * <p>
+     * El filtro por estado ({@code status}) se encuentra restringido a perfiles internos; si la petición
+     * es realizada por un ciudadano ({@link RolUsuario#CITIZEN}), el parámetro es ignorado automáticamente.
+     * </p>
+     *
+     * @param text      Texto libre en título o descripción (opcional).
+     * @param category  Categoría temática de la incidencia (opcional).
+     * @param startDate Fecha inicial del rango de creación (opcional).
+     * @param endDate   Fecha final del rango de creación (opcional).
+     * @param status    Estado de triaje de la incidencia (opcional, ignorado para CITIZEN).
+     * @param auth      Contexto de autenticación del usuario.
+     * @return Lista de incidencias que satisfacen los criterios combinados.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<IncidentResponse>> searchIncidents(
+            @RequestParam(required = false) String text,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime endDate,
+            @RequestParam(required = false) EstadoIncidencia status,
+            Authentication auth) {
+
+        boolean includeStatus = false;
+        if (auth != null && auth.isAuthenticated()) {
+            boolean hasCitizenRole = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_CITIZEN") || a.getAuthority().equals("CITIZEN"));
+            if (!hasCitizenRole && userRepository != null) {
+                java.util.Optional<Usuario> userOpt = userRepository.findByEmail(auth.getName());
+                if (userOpt.isPresent()) {
+                    includeStatus = userOpt.get().getRole() != RolUsuario.CITIZEN;
+                } else {
+                    includeStatus = true;
+                }
+            } else {
+                includeStatus = !hasCitizenRole;
+            }
+        }
+
+        List<IncidentResponse> results = incidentService.searchIncidents(text, category, startDate, endDate, status, includeStatus);
+        return ResponseEntity.ok(results);
     }
 }

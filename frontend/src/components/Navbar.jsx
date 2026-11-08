@@ -6,6 +6,7 @@
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
+import NotificationBell from './Notifications/NotificationBell';
 import './Navbar.css';
 
 /**
@@ -102,6 +103,8 @@ export default function Navbar({ onNavClick }) {
               Analítica
             </Link>
           )}
+
+          <NotificationBell />
 
           <button
             type="button"

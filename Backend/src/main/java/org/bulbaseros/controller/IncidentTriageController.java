@@ -339,4 +339,21 @@ public class IncidentTriageController {
     private String extractUserEmail(Authentication authentication) {
         return authentication != null ? authentication.getName() : null;
     }
+
+    /**
+     * Confirma que una incidencia es duplicada de otra preexistente y la rechaza automáticamente (RF-11).
+     *
+     * @param id             Identificador único de la incidencia que se marca como duplicada.
+     * @param authentication Contexto de autenticación del operador o administrador.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y el DTO {@link IncidentResponse} en estado {@code REJECTED}.
+     */
+    @PostMapping("/{id}/mark-duplicate")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<IncidentResponse> markAsDuplicate(
+            @PathVariable("id") Long id,
+            Authentication authentication) {
+        RejectIncidentRequest request = new RejectIncidentRequest("Incidencia confirmada como duplicada de otra existente en el sistema");
+        IncidentResponse response = incidentTriageService.rejectIncident(id, request, extractUserEmail(authentication));
+        return ResponseEntity.ok(response);
+    }
 }
