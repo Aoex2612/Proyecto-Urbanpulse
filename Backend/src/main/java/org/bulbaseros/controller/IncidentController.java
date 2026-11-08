@@ -416,5 +416,4 @@ public class IncidentController {
         List<IncidentResponse> results = incidentService.searchIncidents(text, category, startDate, endDate, status, includeStatus);
         return ResponseEntity.ok(results);
     }
-    }
 }
