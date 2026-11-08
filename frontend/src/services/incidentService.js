@@ -168,6 +168,34 @@ export const getIncidentPublicComments = async (incidentId) => {
   return response.data;
 };
 
+/**
+ * Confirma formalmente la vinculación de un activo urbano a una incidencia.
+ * Operación restringida a usuarios con roles operativos (OPERATOR o ADMIN).
+ *
+ * @param {number|string} incidentId - Identificador numérico de la incidencia.
+ * @param {number|string} assetId - Identificador numérico del activo urbano asociado.
+ * @returns {Promise<Object>} Promesa con los datos del activo asociado y estado de confirmación actualizado (HTTP 200).
+ * @throws {import('axios').AxiosError} Si el usuario carece de permisos (HTTP 403), no existe la incidencia o el activo (HTTP 404).
+ */
+export const confirmIncidentAsset = async (incidentId, assetId) => {
+  const response = await api.post(`/api/incidents/${incidentId}/assets/${assetId}/confirm`);
+  return response.data;
+};
+
+/**
+ * Desvincula o elimina la asociación de un activo urbano de una incidencia.
+ * Operación restringida a usuarios con roles operativos (OPERATOR o ADMIN).
+ *
+ * @param {number|string} incidentId - Identificador numérico de la incidencia.
+ * @param {number|string} assetId - Identificador numérico del activo urbano a desvincular.
+ * @returns {Promise<void>} Promesa vacía tras la desvinculación satisfactoria (HTTP 200).
+ * @throws {import('axios').AxiosError} Si el usuario carece de permisos (HTTP 403), no existe la asociación (HTTP 404).
+ */
+export const removeIncidentAsset = async (incidentId, assetId) => {
+  const response = await api.delete(`/api/incidents/${incidentId}/assets/${assetId}`);
+  return response.data;
+};
+
 const incidentService = {
   getAllIncidents,
   getIncidentById,
@@ -180,6 +208,8 @@ const incidentService = {
   uploadIncidentAttachment,
   getIncidentAttachments,
   getIncidentPublicComments,
+  confirmIncidentAsset,
+  removeIncidentAsset,
 };
 
 export default incidentService;

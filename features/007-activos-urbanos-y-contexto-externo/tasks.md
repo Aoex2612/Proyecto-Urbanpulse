@@ -49,11 +49,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 7: Componentes Frontend para Activos Urbanos y Contexto Externo — depende de Tarea 2, Tarea 6 — RF: RF-3, RF-4, RF-5, RF-10
-- [ ] Actualizar cliente API en `frontend/src/services/incidentService.js` con funciones de confirmación y eliminación de asociaciones de activos.
-- [ ] Crear componente `IncidentAssetCard.jsx` para mostrar activos vinculados (nombre, tipo, distancia en metros, confianza y botón de confirmación/desvinculación para operadores).
-- [ ] Crear componente `IncidentContextCard.jsx` para mostrar datos meteorológicos (temperatura, precipitación, viento) y estado del tráfico.
-- [ ] Integrar ambos componentes en el modal/vista de detalle `IncidentDetailModal.jsx`.
-- [ ] Tests en Vitest para `IncidentAssetCard.test.jsx` e `IncidentContextCard.test.jsx`.
+- [x] Actualizar cliente API en `frontend/src/services/incidentService.js` con funciones de confirmación y eliminación de asociaciones de activos. (Cubre RF-3, RF-4)
+- [x] Crear componente `IncidentAssetCard.jsx` para mostrar activos vinculados (nombre, tipo, distancia en metros, confianza y botón de confirmación/desvinculación para operadores). (Cubre RF-3, RF-4, RF-5)
+- [x] Crear componente `IncidentContextCard.jsx` para mostrar datos meteorológicos (temperatura, precipitación, viento) y estado del tráfico. (Cubre RF-10)
+- [x] Integrar ambos componentes en el modal/vista de detalle `IncidentDetailModal.jsx`. (Cubre RF-5, RF-10)
+- [x] Tests en Vitest para `IncidentAssetCard.test.jsx` e `IncidentContextCard.test.jsx`. (Cubre RF-3, RF-4, RF-5, RF-10)
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 8: Verificación Global, Documentación y Cobertura — depende de Tarea 5, Tarea 6, Tarea 7 — RF: Todos
