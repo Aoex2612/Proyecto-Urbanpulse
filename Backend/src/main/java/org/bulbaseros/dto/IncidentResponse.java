@@ -105,6 +105,16 @@ public class IncidentResponse {
     private List<AssignmentResponse> assignments;
 
     /**
+     * Lista de activos urbanos geolocalizados proximos o asociados a la incidencia.
+     */
+    private List<IncidentAssetResponse> urbanAssets;
+
+    /**
+     * Lista de observaciones contextuales externas (meteorologia, trafico) registradas para la incidencia.
+     */
+    private List<ExternalObservationResponse> urbanContext;
+
+    /**
      * Constructor por defecto requerido para deserializacion JSON.
      */
     public IncidentResponse() {
@@ -512,5 +522,41 @@ public class IncidentResponse {
      */
     public void setAssignments(List<AssignmentResponse> assignments) {
         this.assignments = assignments;
+    }
+
+    /**
+     * Obtiene la lista de activos urbanos vinculados o sugeridos para la incidencia.
+     *
+     * @return Lista de {@link IncidentAssetResponse}.
+     */
+    public List<IncidentAssetResponse> getUrbanAssets() {
+        return urbanAssets;
+    }
+
+    /**
+     * Establece la lista de activos urbanos vinculados o sugeridos para la incidencia.
+     *
+     * @param urbanAssets Lista de {@link IncidentAssetResponse}.
+     */
+    public void setUrbanAssets(List<IncidentAssetResponse> urbanAssets) {
+        this.urbanAssets = urbanAssets;
+    }
+
+    /**
+     * Obtiene la lista de observaciones contextuales externas vinculadas a la incidencia.
+     *
+     * @return Lista de {@link ExternalObservationResponse}.
+     */
+    public List<ExternalObservationResponse> getUrbanContext() {
+        return urbanContext;
+    }
+
+    /**
+     * Establece la lista de observaciones contextuales externas vinculadas a la incidencia.
+     *
+     * @param urbanContext Lista de {@link ExternalObservationResponse}.
+     */
+    public void setUrbanContext(List<ExternalObservationResponse> urbanContext) {
+        this.urbanContext = urbanContext;
     }
 }

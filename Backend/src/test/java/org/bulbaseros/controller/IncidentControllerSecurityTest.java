@@ -2,6 +2,7 @@ package org.bulbaseros.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
@@ -11,6 +12,7 @@ import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.security.JwtService;
 import org.bulbaseros.service.IncidentService;
+import org.bulbaseros.service.UrbanAssetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -34,8 +37,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -88,6 +95,12 @@ class IncidentControllerSecurityTest {
      */
     @MockitoBean
     private IncidentService incidentService;
+
+    /**
+     * Mock del servicio de activos urbanos para comprobar las operaciones de confirmación y desvinculación.
+     */
+    @MockitoBean
+    private UrbanAssetService urbanAssetService;
 
     /**
      * Instancia inyectada del controlador para pruebas de invocacion unitaria directa.
@@ -636,5 +649,147 @@ class IncidentControllerSecurityTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    // -------------------------------------------------------------------------
+    // GESTIÓN DE ACTIVOS URBANOS (CONFIRMAR Y DESVINCULAR) — TAREA 6 (RF-3, RF-4, RF-7)
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("POST /api/incidents/{incidentId}/assets/{assetId}/confirm sin autenticación debe responder 401 Unauthorized")
+    void shouldRejectAnonymousConfirmAssetWith401() throws Exception {
+        mockMvc.perform(post("/api/incidents/1/assets/10/confirm"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    @Test
+    @WithMockUser(username = "citizen@urbanpulse.es", roles = "CITIZEN")
+    @DisplayName("POST /api/incidents/{incidentId}/assets/{assetId}/confirm con rol CITIZEN debe responder 403 Forbidden")
+    void shouldRejectCitizenConfirmAssetWith403() throws Exception {
+        mockMvc.perform(post("/api/incidents/1/assets/10/confirm"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    @Test
+    @WithMockUser(username = "operator@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("POST /api/incidents/{incidentId}/assets/{assetId}/confirm con rol OPERATOR debe responder 200 OK y activo confirmado")
+    void shouldAllowOperatorToConfirmAssetWith200() throws Exception {
+        IncidentAssetResponse confirmed = IncidentAssetResponse.builder()
+                .assetId(10L)
+                .assetCode("SEM-MAL-001")
+                .type("SEMAFORO")
+                .name("Semáforo Larios")
+                .latitude(36.7213)
+                .longitude(-4.4214)
+                .distanceMeters(12.5)
+                .confidenceScore(0.85)
+                .isConfirmed(true)
+                .build();
+
+        when(urbanAssetService.confirmAssetAssociation(1L, 10L)).thenReturn(confirmed);
+
+        mockMvc.perform(post("/api/incidents/1/assets/10/confirm"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.assetId").value(10))
+                .andExpect(jsonPath("$.assetCode").value("SEM-MAL-001"))
+                .andExpect(jsonPath("$.isConfirmed").value(true));
+
+        verify(urbanAssetService).confirmAssetAssociation(1L, 10L);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@urbanpulse.es", roles = "ADMIN")
+    @DisplayName("POST /api/incidents/{incidentId}/assets/{assetId}/confirm con rol ADMIN debe responder 200 OK")
+    void shouldAllowAdminToConfirmAssetWith200() throws Exception {
+        IncidentAssetResponse confirmed = IncidentAssetResponse.builder()
+                .assetId(10L)
+                .assetCode("SEM-MAL-001")
+                .type("SEMAFORO")
+                .name("Semáforo Larios")
+                .latitude(36.7213)
+                .longitude(-4.4214)
+                .distanceMeters(12.5)
+                .confidenceScore(0.85)
+                .isConfirmed(true)
+                .build();
+
+        when(urbanAssetService.confirmAssetAssociation(1L, 10L)).thenReturn(confirmed);
+
+        mockMvc.perform(post("/api/incidents/1/assets/10/confirm"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isConfirmed").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = "operator@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("POST /api/incidents/{incidentId}/assets/{assetId}/confirm si la asociación no existe debe responder 404 Not Found (RF-7)")
+    void shouldReturn404WhenConfirmingNonExistingAssetAssociation() throws Exception {
+        when(urbanAssetService.confirmAssetAssociation(1L, 999L))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró la asociación entre la incidencia 1 y el activo 999"));
+
+        mockMvc.perform(post("/api/incidents/1/assets/999/confirm"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("No se encontró la asociación entre la incidencia 1 y el activo 999"));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/incidents/{incidentId}/assets/{assetId} sin autenticación debe responder 401 Unauthorized")
+    void shouldRejectAnonymousDeleteAssetWith401() throws Exception {
+        mockMvc.perform(delete("/api/incidents/1/assets/10"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    @Test
+    @WithMockUser(username = "citizen@urbanpulse.es", roles = "CITIZEN")
+    @DisplayName("DELETE /api/incidents/{incidentId}/assets/{assetId} con rol CITIZEN debe responder 403 Forbidden")
+    void shouldRejectCitizenDeleteAssetWith403() throws Exception {
+        mockMvc.perform(delete("/api/incidents/1/assets/10"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    @Test
+    @WithMockUser(username = "operator@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("DELETE /api/incidents/{incidentId}/assets/{assetId} con rol OPERATOR debe responder 200 OK")
+    void shouldAllowOperatorToDeleteAssetWith200() throws Exception {
+        doNothing().when(urbanAssetService).removeAssetAssociation(1L, 10L);
+
+        mockMvc.perform(delete("/api/incidents/1/assets/10"))
+                .andExpect(status().isOk());
+
+        verify(urbanAssetService).removeAssetAssociation(1L, 10L);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@urbanpulse.es", roles = "ADMIN")
+    @DisplayName("DELETE /api/incidents/{incidentId}/assets/{assetId} con rol ADMIN debe responder 200 OK")
+    void shouldAllowAdminToDeleteAssetWith200() throws Exception {
+        doNothing().when(urbanAssetService).removeAssetAssociation(1L, 10L);
+
+        mockMvc.perform(delete("/api/incidents/1/assets/10"))
+                .andExpect(status().isOk());
+
+        verify(urbanAssetService).removeAssetAssociation(1L, 10L);
+    }
+
+    @Test
+    @WithMockUser(username = "operator@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("DELETE /api/incidents/{incidentId}/assets/{assetId} si la asociación no existe debe responder 404 Not Found")
+    void shouldReturn404WhenDeletingNonExistingAssetAssociation() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe asociación entre la incidencia 1 y el activo 999 para eliminar"))
+                .when(urbanAssetService).removeAssetAssociation(1L, 999L);
+
+        mockMvc.perform(delete("/api/incidents/1/assets/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("No existe asociación entre la incidencia 1 y el activo 999 para eliminar"));
     }
 }

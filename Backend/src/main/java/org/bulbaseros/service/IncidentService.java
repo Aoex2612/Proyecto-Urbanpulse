@@ -1,6 +1,8 @@
 package org.bulbaseros.service;
 
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.ExternalObservationResponse;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
@@ -22,14 +24,9 @@ import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.specification.IncidentSpecifications;
 import org.springframework.data.jpa.domain.Specification;
-import org.bulbaseros.entity.RolUsuario;
-import org.bulbaseros.entity.Tareas;
-import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,11 +51,14 @@ import java.util.stream.Collectors;
  * el alta de incidencias vinculadas al ciudadano emisor, la modificacion de estados de triaje
  * con registro inmutable de auditoria en una unica transaccion atómica, y la recuperacion
  * del historial cronologico de transiciones para inspeccion administrativa.
+ * Incorpora enriquecimiento territorial automático, asociación por proximidad de activos urbanos
+ * y captura de contexto externo (meteorología y tráfico) bajo degradación controlada absoluta (RF-1, RF-5, RF-8, RF-10, RF-15).
  * </p>
  *
  * @author UrbanPulse Team
  * @version 1.0
  */
+@Slf4j
 @Service
 public class IncidentService {
 
@@ -98,6 +100,16 @@ public class IncidentService {
     private final DuplicateDetectionService duplicateDetectionService;
 
     /**
+     * Servicio de cálculo de proximidad y gestión de activos urbanos vinculados (RF-1, RF-5).
+     */
+    private final UrbanAssetService urbanAssetService;
+
+    /**
+     * Servicio de captura y consulta de observaciones de contexto externo meteorológico y vial (RF-8, RF-10, RF-15).
+     */
+    private final ExternalContextService externalContextService;
+
+    /**
      * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
      * de incidencias en UrbanPulse:
      * <ul>
@@ -124,12 +136,17 @@ public class IncidentService {
     /**
      * Constructor con inyeccion de dependencias para el servicio de incidencias.
      *
-     * @param incidenciaRepository    Repositorio JPA de incidencias urbanas.
-     * @param cambiosEstadoRepository Repositorio JPA de transiciones de estado de auditoria.
-     * @param userRepository          Repositorio JPA de usuarios del sistema.
-     * @param incidentMapper          Mapeador de incidencias a DTOs.
-     * @param statusChangeMapper      Mapeador de cambios de estado a DTOs.
-     * @param malagaOpenDataService   Servicio de integracion territorial con datos abiertos de Malaga.
+     * @param incidenciaRepository       Repositorio JPA de incidencias urbanas.
+     * @param cambiosEstadoRepository    Repositorio JPA de transiciones de estado de auditoria.
+     * @param userRepository             Repositorio JPA de usuarios del sistema.
+     * @param incidentMapper             Mapeador de incidencias a DTOs.
+     * @param statusChangeMapper         Mapeador de cambios de estado a DTOs.
+     * @param malagaOpenDataService      Servicio de integracion territorial con datos abiertos de Malaga.
+     * @param tareasRepository           Repositorio opcional de tareas operativas y asignaciones.
+     * @param urbanAssetService          Servicio opcional de activos urbanos y cálculo de proximidad.
+     * @param externalContextService     Servicio opcional de ingesta y consulta de contexto externo.
+     * @param notificationService        Servicio opcional de notificaciones in-app.
+     * @param duplicateDetectionService  Servicio opcional de detección y notificación de duplicados.
      */
     @Autowired
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -139,6 +156,8 @@ public class IncidentService {
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService,
                            @Autowired(required = false) TareasRepository tareasRepository,
+                           @Autowired(required = false) UrbanAssetService urbanAssetService,
+                           @Autowired(required = false) ExternalContextService externalContextService,
                            @Autowired(required = false) NotificationService notificationService,
                            @Autowired(required = false) DuplicateDetectionService duplicateDetectionService) {
         this.incidenciaRepository = incidenciaRepository;
@@ -148,6 +167,8 @@ public class IncidentService {
         this.statusChangeMapper = statusChangeMapper;
         this.malagaOpenDataService = malagaOpenDataService;
         this.tareasRepository = tareasRepository;
+        this.urbanAssetService = urbanAssetService;
+        this.externalContextService = externalContextService;
         this.notificationService = notificationService;
         this.duplicateDetectionService = duplicateDetectionService;
     }
@@ -158,7 +179,7 @@ public class IncidentService {
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService) {
-        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null);
+        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null, null, null);
     }
 
     /**
@@ -218,6 +239,10 @@ public class IncidentService {
 
     /**
      * Obtiene los datos detallados de una incidencia urbana a partir de su identificador unico.
+     * <p>
+     * Enriquecida con las asignaciones activas, los activos urbanos vinculados o sugeridos
+     * y las observaciones contextuales externas (meteorología y tráfico) bajo degradación controlada (RF-5, RF-10, RF-15).
+     * </p>
      *
      * @param id Identificador unico de la incidencia a recuperar.
      * @return DTO {@link IncidentResponse} con la informacion completa de la incidencia.
@@ -229,9 +254,34 @@ public class IncidentService {
         if (id == null) {
             throw new IllegalArgumentException("El identificador de la incidencia no puede ser nulo");
         }
-        return incidenciaRepository.findById(id)
-                .map(incidentMapper::toDto)
+        Incidencia incidencia = incidenciaRepository.findById(id)
                 .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con id: " + id));
+
+        IncidentResponse response = incidentMapper.toDto(incidencia);
+
+        // Enriquecer con activos urbanos vinculados (RF-5) bajo degradación controlada
+        if (urbanAssetService != null) {
+            try {
+                List<IncidentAssetResponse> assets = urbanAssetService.getAssetsByIncidentId(id);
+                response.setUrbanAssets(assets != null ? assets : Collections.emptyList());
+            } catch (Exception ex) {
+                log.warn("IncidentService: Error no bloqueante al recuperar activos urbanos para incidencia {}: {}", id, ex.getMessage());
+                response.setUrbanAssets(Collections.emptyList());
+            }
+        }
+
+        // Enriquecer con observaciones de contexto externo (RF-10, RF-15) bajo degradación controlada
+        if (externalContextService != null) {
+            try {
+                List<ExternalObservationResponse> context = externalContextService.getContextByIncidentId(id);
+                response.setUrbanContext(context != null ? context : Collections.emptyList());
+            } catch (Exception ex) {
+                log.warn("IncidentService: Error no bloqueante al recuperar contexto externo para incidencia {}: {}", id, ex.getMessage());
+                response.setUrbanContext(Collections.emptyList());
+            }
+        }
+
+        return response;
     }
 
     /**
@@ -244,11 +294,14 @@ public class IncidentService {
      * Inicializa los valores por defecto del ciclo de vida (estado {@link EstadoIncidencia#REPORTED},
      * prioridad {@link PrioridadIncidencia#MEDIUM} y marcas temporales actuales) y persiste la entidad
      * en la base de datos relacional.
+     * Tras la persistencia exitosa, orquesta la asociación de activos urbanos próximos (RF-1, RF-5)
+     * y la captura de contexto meteorológico y vial (RF-8, RF-10) bajo degradación controlada absoluta (RF-15),
+     * garantizando que ante fallos en estos servicios la incidencia retorne siempre HTTP 201 Created.
      * </p>
      *
      * @param request   DTO con los datos validados del reporte (titulo, descripcion, categoria y coordenadas).
      * @param userEmail Correo electronico del usuario autenticado extraido del token JWT.
-     * @return DTO {@link IncidentResponse} con los datos persistidos de la incidencia creada.
+     * @return DTO {@link IncidentResponse} con los datos persistidos de la incidencia creada y sus enriquecimientos.
      * @throws IllegalArgumentException si la peticion recibida o el correo electronico son nulos o vacios.
      * @throws ResponseStatusException  con estado 400 si las coordenadas estan fuera del termino municipal de Malaga,
      *                                  o con estado 404 si el usuario autenticado no existe en la base de datos.
@@ -324,7 +377,39 @@ public class IncidentService {
             duplicateDetectionService.notifyPotentialDuplicates(savedIncident, potentialDuplicates);
         }
 
-        return incidentMapper.toDto(savedIncident);
+        IncidentResponse response = incidentMapper.toDto(savedIncident);
+
+        // Asociación defensiva de activos urbanos próximos (RF-1, RF-5, RF-15)
+        List<IncidentAssetResponse> assets = Collections.emptyList();
+        if (urbanAssetService != null) {
+            try {
+                assets = urbanAssetService.associateNearbyAssets(savedIncident);
+                if (assets == null) {
+                    assets = Collections.emptyList();
+                }
+            } catch (Exception ex) {
+                log.warn("IncidentService: Fallo al asociar activos urbanos próximos para la incidencia {}: {}", savedIncident.getId(), ex.getMessage());
+                assets = Collections.emptyList();
+            }
+        }
+        response.setUrbanAssets(assets);
+
+        // Captura defensiva de contexto meteorológico y vial (RF-8, RF-10, RF-15)
+        List<ExternalObservationResponse> context = Collections.emptyList();
+        if (externalContextService != null) {
+            try {
+                context = externalContextService.captureAndSaveContext(savedIncident);
+                if (context == null) {
+                    context = Collections.emptyList();
+                }
+            } catch (Exception ex) {
+                log.warn("IncidentService: Fallo al capturar contexto externo para la incidencia {}: {}", savedIncident.getId(), ex.getMessage());
+                context = Collections.emptyList();
+            }
+        }
+        response.setUrbanContext(context);
+
+        return response;
     }
 
     /**

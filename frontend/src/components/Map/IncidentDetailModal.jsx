@@ -18,6 +18,8 @@ import {
 import { formatDate } from '../../utils/dateUtils';
 import StatusTimeline from '../Timeline/StatusTimeline';
 import { IncidentCommentsSection } from '../Comments';
+import IncidentAssetCard from './IncidentAssetCard';
+import IncidentContextCard from './IncidentContextCard';
 import './Map.css';
 
 /**
@@ -51,6 +53,8 @@ export default function IncidentDetailModal({
       ? authService.getCurrentUser()
       : authService.getUser());
   const isAuditAllowed = canViewAuditHistory(effectiveUser?.role);
+  const canManageAssets =
+    effectiveUser?.role === 'OPERATOR' || effectiveUser?.role === 'ADMIN';
 
   // Cierre memorizado para su invocación en eventos de teclado y clics
   const handleDismiss = useCallback(() => {
@@ -323,6 +327,18 @@ export default function IncidentDetailModal({
               </div>
             </section>
           )}
+
+          {/* Activos Urbanos Vinculados (HU16) */}
+          <IncidentAssetCard
+            incidentId={incident.id}
+            assets={incident.urbanAssets || []}
+            canManage={canManageAssets}
+          />
+
+          {/* Contexto Ambiental y de Tráfico (HU17) */}
+          <IncidentContextCard
+            observations={incident.urbanContext || []}
+          />
 
           {/* Muro de Comentarios, Notas Internas y Avisos Públicos */}
           <IncidentCommentsSection

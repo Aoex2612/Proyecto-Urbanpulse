@@ -193,6 +193,75 @@ Permite al operador municipal validar o rechazar una incidencia en estado `REPOR
 
 ---
 
+### 2.5. POST /api/incidents/{incidentId}/assets/{assetId}/confirm (Confirmación Manual de Activo Urbano - RF-3, RF-7)
+Permite a un operador municipal (`OPERATOR`) o administrador (`ADMIN`) validar y confirmar manualmente la vinculación de un activo urbano candidato o sugerido por proximidad geodésica.
+
+#### Cabeceras
+- `Authorization`: `Bearer <token_jwt>` (Rol `OPERATOR` o `ADMIN`)
+- `Content-Type`: `application/json`
+
+#### Parámetros de Ruta
+| Parámetro | Tipo | Obligatorio | Descripción |
+| :--- | :--- | :---: | :--- |
+| `incidentId` | Long | **Sí** | Identificador unívoco de la incidencia (`BIGSERIAL`). |
+| `assetId` | Long | **Sí** | Identificador unívoco del activo urbano (`BIGSERIAL`). |
+
+#### Payload
+No requiere cuerpo en la petición (Request Body vacío).
+
+#### Respuesta del Backend (200 OK)
+Devuelve el DTO `IncidentAssetResponse` con el indicador `isConfirmed = true`:
+```json
+{
+  "assetId": 501,
+  "assetCode": "SEM-MAL-00142",
+  "type": "SEMAFORO",
+  "name": "Semáforo Calle Larios cruce Alameda",
+  "latitude": 36.71965,
+  "longitude": -4.42005,
+  "distanceMeters": 6.8,
+  "confidenceScore": 0.86,
+  "isConfirmed": true
+}
+```
+
+#### Respuestas de Error
+- **`401 Unauthorized`**: Ausencia de token de autenticación o token expirado.
+- **`403 Forbidden`**: Petición realizada por un usuario sin permisos suficientes (por ejemplo, rol `CITIZEN`).
+- **`404 Not Found`**: La incidencia o la asociación entre la incidencia y el activo no existe en el sistema.
+
+---
+
+### 2.6. DELETE /api/incidents/{incidentId}/assets/{assetId} (Desvinculación de Activo Urbano - RF-4, RF-7)
+Permite a un operador municipal (`OPERATOR`) o administrador (`ADMIN`) desvincular y eliminar la asociación de un activo urbano erróneo o irrelevante vinculado a una incidencia.
+
+#### Cabeceras
+- `Authorization`: `Bearer <token_jwt>` (Rol `OPERATOR` o `ADMIN`)
+
+#### Parámetros de Ruta
+| Parámetro | Tipo | Obligatorio | Descripción |
+| :--- | :--- | :---: | :--- |
+| `incidentId` | Long | **Sí** | Identificador unívoco de la incidencia (`BIGSERIAL`). |
+| `assetId` | Long | **Sí** | Identificador unívoco del activo urbano (`BIGSERIAL`). |
+
+#### Respuesta del Backend (200 OK)
+Devuelve `200 OK` (o confirmación de eliminación exitosa):
+```json
+{
+  "message": "Asset association removed successfully",
+  "incidentId": 101,
+  "assetId": 501
+}
+```
+*(O alternativamente cuerpo vacío con código `200 OK`)*.
+
+#### Respuestas de Error
+- **`401 Unauthorized`**: Ausencia de token de autenticación.
+- **`403 Forbidden`**: Petición efectuada por rol no operativo (`CITIZEN`).
+- **`404 Not Found`**: La incidencia o la asociación de activo indicada no existe.
+
+---
+
 ## 3. RESUMEN DE CAMPOS DEVUELTOS POR LA API Y SU SIGNIFICADO
 
 | Campo Devuelto | Tipo | Origen / Cálculo | Por qué se devuelve |
@@ -204,3 +273,61 @@ Permite al operador municipal validar o rechazar una incidencia en estado `REPOR
 | `district` / `neighborhood` | String / Null | Calculado por cruce espacial o nulo | Permite agrupar incidencias territorialmente. |
 | `createdAt` / `updatedAt` | String (ISO-8601) | Marcas temporales de servidor en UTC | Auditoría cronológica de creación y última actualización. |
 | `attachments` | Array | Registros asociados en la tabla `attachments` | Listado de URLs de fotos para visualización en carrusel o visor de imágenes. |
+| `urbanAssets` | Array | DTO `IncidentAssetResponse` derivado de `incident_assets` | Lista de activos de infraestructura municipal cercanos (<= 50m) o asociados. |
+| `urbanContext` | Array | DTO `ExternalObservationResponse` derivado de `incident_context_observations` | Lecturas meteorológicas y de tráfico capturadas al momento de creación. |
+
+---
+
+## 4. MODELOS DE TRANSFERENCIA DE DATOS (DTOS) PARA ACTIVOS Y CONTEXTO EXTERNO
+
+### 4.1. IncidentAssetResponse
+Representa los datos de un activo urbano catalogado y la métrica espacial respecto a la incidencia.
+
+```json
+{
+  "assetId": 501,
+  "assetCode": "SEM-MAL-00142",
+  "type": "SEMAFORO",
+  "name": "Semáforo Calle Larios cruce Alameda",
+  "latitude": 36.71965,
+  "longitude": -4.42005,
+  "distanceMeters": 6.8,
+  "confidenceScore": 0.86,
+  "isConfirmed": true
+}
+```
+
+| Atributo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `assetId` | Long | ID del activo en el inventario municipal (`urban_assets.id`). |
+| `assetCode` | String | Código de referencia municipal (ej. `SEM-MAL-00142`). |
+| `type` | String | Tipo o categoría del activo (ej. `SEMAFORO`, `CONTENEDOR`, `FUENTE`, `ALUMBRADO`). |
+| `name` | String | Denominación o nombre descriptivo del activo. |
+| `latitude` | Double | Latitud geográfica WGS84 del activo. |
+| `longitude` | Double | Longitud geográfica WGS84 del activo. |
+| `distanceMeters` | Double | Distancia geodésica calculada mediante la fórmula de Haversine en metros. |
+| `confidenceScore` | Double | Puntuación de confianza normalizada entre 0.0 y 1.0 (calculada como $1.0 - \frac{d}{50}$). |
+| `isConfirmed` | Boolean | `true` si un operador ha validado la relación; `false` si es una sugerencia automática por proximidad. |
+
+### 4.2. ExternalObservationResponse
+Representa las observaciones contextuales ambientales y de tráfico obtenidas de fuentes externas en el instante del reporte.
+
+```json
+{
+  "id": 12,
+  "source": "OPEN_METEO",
+  "metricType": "TEMPERATURE_C",
+  "valueNum": 23.4,
+  "valueText": null,
+  "observedAt": "2026-10-20T18:30:00Z"
+}
+```
+
+| Atributo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id` | Long | Identificador de la observación registrada. |
+| `source` | String | Fuente externa proveedora (`OPEN_METEO`, `DGT_TRAFFIC`, `MUNICIPAL_SENSORS`). |
+| `metricType` | String | Identificador de la métrica (`TEMPERATURE_C`, `PRECIPITATION_MM`, `WIND_SPEED_KMH`, `TRAFFIC_LEVEL`). |
+| `valueNum` | Double | Magnitud numérica cuantitativa de la métrica (grados Celsius, mm lluvia, km/h viento). |
+| `valueText` | String | Descripción cualitativa o categórica (ej. nivel de tráfico `FLUID`, `HEAVY`). |
+| `observedAt` | String (ISO-8601) | Marca temporal de la captura del dato con zona horaria UTC. |

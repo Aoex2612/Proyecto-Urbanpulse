@@ -2,6 +2,7 @@ package org.bulbaseros.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.PageResponse;
 import org.bulbaseros.dto.ReverseGeocodeResponse;
@@ -10,6 +11,7 @@ import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.security.JwtService;
 import org.bulbaseros.service.IncidentService;
+import org.bulbaseros.service.UrbanAssetService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +76,9 @@ class IncidentControllerTest {
 
     @MockitoBean
     private IncidentService incidentService;
+
+    @MockitoBean
+    private UrbanAssetService urbanAssetService;
 
     @Autowired
     private IncidentController incidentController;
@@ -471,6 +476,63 @@ class IncidentControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(incidentService).getActiveIncidents("admin@urbanpulse.es");
+    }
+
+    @Test
+    @DisplayName("Invocación directa de confirmAssetAssociation sin urbanAssetService debe arrojar 501 Not Implemented")
+    void shouldThrow501WhenUrbanAssetServiceNullOnConfirm() {
+        IncidentService mockService = mock(IncidentService.class);
+        IncidentController controller = new IncidentController(mockService);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> controller.confirmAssetAssociation(1L, 2L));
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Invocación directa de removeAssetAssociation sin urbanAssetService debe arrojar 501 Not Implemented")
+    void shouldThrow501WhenUrbanAssetServiceNullOnRemove() {
+        IncidentService mockService = mock(IncidentService.class);
+        IncidentController controller = new IncidentController(mockService);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> controller.removeAssetAssociation(1L, 2L));
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Invocación directa de confirmAssetAssociation debe delegar en urbanAssetService")
+    void shouldDelegateConfirmAssetAssociationDirectly() {
+        IncidentService mockService = mock(IncidentService.class);
+        UrbanAssetService mockAssetService = mock(UrbanAssetService.class);
+        IncidentController controller = new IncidentController(mockService, null, mockAssetService);
+
+        IncidentAssetResponse expected = IncidentAssetResponse.builder()
+                .assetId(5L)
+                .isConfirmed(true)
+                .build();
+        when(mockAssetService.confirmAssetAssociation(1L, 5L)).thenReturn(expected);
+
+        ResponseEntity<IncidentAssetResponse> response = controller.confirmAssetAssociation(1L, 5L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(5L, response.getBody().getAssetId());
+        assertEquals(true, response.getBody().getIsConfirmed());
+        verify(mockAssetService).confirmAssetAssociation(1L, 5L);
+    }
+
+    @Test
+    @DisplayName("Invocación directa de removeAssetAssociation debe delegar en urbanAssetService")
+    void shouldDelegateRemoveAssetAssociationDirectly() {
+        IncidentService mockService = mock(IncidentService.class);
+        UrbanAssetService mockAssetService = mock(UrbanAssetService.class);
+        IncidentController controller = new IncidentController(mockService, null, mockAssetService);
+
+        ResponseEntity<Void> response = controller.removeAssetAssociation(1L, 5L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(mockAssetService).removeAssetAssociation(1L, 5L);
     }
 
     @Test
