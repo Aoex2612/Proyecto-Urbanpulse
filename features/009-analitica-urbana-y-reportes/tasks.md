@@ -40,13 +40,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 6.3 Crear componente `ExportPdfButton.jsx` con botón de descarga interactivo, feedback visual durante la generación y bloqueo reactivo (`disabled`) si no hay datos.
 - [x] 6.4 Crear pruebas unitarias con Vitest en `analyticsService.test.js` y `reportUtils.test.js`.
 
-## [ ] Tarea 7: Componentes del Panel de Analítica y Gráficos Visuales en Frontend - Depende de Tarea 6 - RF: RF-1 al RF-11, RF-18
-- [ ] 7.1 Crear componente `AnalyticsKpiCards.jsx` y su hoja de estilos con tarjetas visuales para Total de incidencias, MTTT, MTTR y % Cumplimiento de SLA.
-- [ ] 7.2 Crear componente `AnalyticsDateFilter.jsx` con botones de filtro rápido (Hoy, 7d, 30d, 3m, 6m, Año, Año específico) y selectores de Distrito y Barrio.
-- [ ] 7.3 Crear componentes gráficos `TerritorialChart.jsx` y `SlaComplianceChart.jsx` renderizando gráficos visuales interactivos en SVG nativo.
-- [ ] 7.4 Crear componente `EmptyAnalyticsState.jsx` con estado visual amigable e informativo para rangos sin incidencias registradas.
-- [ ] 7.5 Crear página principal `AnalyticsPage.jsx` y estilos asociados en `AnalyticsPage.css` integrando los componentes anteriores y la tabla de datos.
-- [ ] 7.6 Crear pruebas unitarias con Vitest en `AnalyticsPage.test.jsx`, `AnalyticsKpiCards.test.jsx` y `EmptyAnalyticsState.test.jsx`.
+## [x] Tarea 7: Componentes del Panel de Analítica y Gráficos Visuales en Frontend - Depende de Tarea 6 - RF: RF-1 al RF-11, RF-18
+- [x] 7.1 Crear componente `AnalyticsKpiCards.jsx` y su hoja de estilos con tarjetas visuales para Total de incidencias, MTTT, MTTR y % Cumplimiento de SLA.
+- [x] 7.2 Crear componente `AnalyticsDateFilter.jsx` con botones de filtro rápido (Hoy, 7d, 30d, 3m, 6m, Año, Año específico) y selectores de Distrito y Barrio.
+- [x] 7.3 Crear componentes gráficos `TerritorialChart.jsx` y `SlaComplianceChart.jsx` renderizando gráficos visuales interactivos en SVG nativo.
+- [x] 7.4 Crear componente `EmptyAnalyticsState.jsx` con estado visual amigable e informativo para rangos sin incidencias registradas.
+- [x] 7.5 Crear página principal `AnalyticsPage.jsx` y estilos asociados en `AnalyticsPage.css` integrando los componentes anteriores y la tabla de datos.
+- [x] 7.6 Crear pruebas unitarias con Vitest en `AnalyticsPage.test.jsx`, `AnalyticsKpiCards.test.jsx` y `EmptyAnalyticsState.test.jsx`.
 
 ## [ ] Tarea 8: Integración de Asistencia Inteligente en Triaje, Navegación y Verificación Global - Depende de Tareas 5, 6 y 7 - RF: Todos (RF-1 al RF-21)
 - [ ] 8.1 Actualizar `AssignmentModal.jsx` para invocar el servicio de recomendación, preseleccionar automáticamente el departamento sugerido, mostrar badge persistente de opción recomendada y advertencia para confianza < 50%.
