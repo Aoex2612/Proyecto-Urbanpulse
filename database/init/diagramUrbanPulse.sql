@@ -122,6 +122,17 @@ CREATE TABLE "incident_contexts" (
     PRIMARY KEY ("incident_id", "observation_id")
 );
 
+CREATE TABLE "notifications" (
+    "id"          BIGSERIAL PRIMARY KEY,
+    "user_id"     bigint NOT NULL,
+    "incident_id" bigint NOT NULL,
+    "type"        varchar(50) NOT NULL,
+    "title"       varchar(150) NOT NULL,
+    "message"     text NOT NULL,
+    "is_read"     boolean DEFAULT false NOT NULL,
+    "created_at"  timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
 -- ---------------------------------------------------------------------------
 -- 2. FOREIGN KEYS
 -- ---------------------------------------------------------------------------
@@ -201,6 +212,16 @@ ALTER TABLE "incident_contexts"
     REFERENCES "external_observations" ("id") ON DELETE CASCADE
     DEFERRABLE INITIALLY IMMEDIATE;
 
+ALTER TABLE "notifications"
+    ADD FOREIGN KEY ("user_id")
+    REFERENCES "users" ("id") ON DELETE CASCADE
+    DEFERRABLE INITIALLY IMMEDIATE;
+
+ALTER TABLE "notifications"
+    ADD FOREIGN KEY ("incident_id")
+    REFERENCES "incidents" ("id") ON DELETE CASCADE
+    DEFERRABLE INITIALLY IMMEDIATE;
+
 -- ---------------------------------------------------------------------------
 -- 3. ÍNDICES DE RENDIMIENTO
 -- ---------------------------------------------------------------------------
@@ -211,6 +232,8 @@ CREATE INDEX idx_incidents_district    ON "incidents" ("district");
 CREATE INDEX idx_incidents_citizen_id  ON "incidents" ("citizen_id");
 CREATE INDEX idx_assignments_active    ON "assignments" ("is_active");
 CREATE INDEX idx_observations_observed ON "external_observations" ("observed_at");
+CREATE INDEX idx_notifications_user_id ON "notifications" ("user_id");
+CREATE INDEX idx_notifications_is_read ON "notifications" ("is_read");
 
 -- ---------------------------------------------------------------------------
 -- 4. TRIGGER — actualizar incidents.updated_at automáticamente
@@ -642,3 +665,4 @@ SELECT setval('status_changes_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "status
 SELECT setval('assignments_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "assignments"));
 SELECT setval('incident_comments_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "incident_comments"));
 SELECT setval('urban_assets_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "urban_assets"));
+SELECT setval('notifications_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "notifications"));

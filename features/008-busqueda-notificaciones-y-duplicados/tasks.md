@@ -3,11 +3,11 @@
 _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas pequeñas y concretas; marca `[x]` al completarlas._
 
 ## [ ] Tarea 1: Modelo Relacional, Entidad `Notification`, Repositorio Spring Data JPA y Mapeadores - RF: RF-12, RF-14, RF-16, RNF-Persistencia e Integridad
-- [ ] 1.1 Diseñar e incorporar el script DDL para la tabla `notifications` en `database/init/diagramUrbanPulse.sql` con claves foráneas (`user_id`, `incident_id`), columnas requeridas (`type`, `title`, `message`, `is_read`, `created_at`) e índices de optimización (`user_id`, `is_read`) - RF: RF-12.
-- [ ] 1.2 Crear entidad JPA `Notification` en `Backend/src/main/java/org/bulbaseros/entity/Notification.java` documentada con Javadoc, anotaciones de Lombok (`@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`) y ciclo `@PrePersist` - RF: RF-12.
-- [ ] 1.3 Crear repositorio JPA `NotificationRepository` en `org.bulbaseros.repository` con métodos de consulta `findByUserIdOrderByCreatedAtDesc`, `countByUserIdAndIsReadFalse` y `findByIdAndUserId` - RF: RF-13, RF-14, RF-16.
-- [ ] 1.4 Crear DTO desacoplado `NotificationResponse` en `org.bulbaseros.dto` y mapeador `NotificationMapper` en `org.bulbaseros.mappers` extendiendo `BaseMapper<Notification, NotificationResponse>` con Javadoc riguroso - RF: RF-14, RF-16.
-- [ ] 1.5 Crear pruebas `@DataJpaTest` en `NotificationRepositoryTest` y pruebas unitarias de mapeo en `NotificationMapperTest` validando persistencia, conteo de pendientes y conversión DTO - RF: RF-12, RF-14, RF-16.
+- [x] 1.1 Diseñar e incorporar el script DDL para la tabla `notifications` en `database/init/diagramUrbanPulse.sql` con claves foráneas (`user_id`, `incident_id`), columnas requeridas (`type`, `title`, `message`, `is_read`, `created_at`) e índices de optimización (`user_id`, `is_read`) - RF: RF-12.
+- [x] 1.2 Crear entidad JPA `Notification` en `Backend/src/main/java/org/bulbaseros/entity/Notification.java` documentada con Javadoc, anotaciones de Lombok (`@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`) y ciclo `@PrePersist` - RF: RF-12.
+- [x] 1.3 Crear repositorio JPA `NotificationRepository` en `org.bulbaseros.repository` con métodos de consulta `findByUserIdOrderByCreatedAtDesc`, `countByUserIdAndIsReadFalse` y `findByIdAndUserId` - RF: RF-13, RF-14, RF-16.
+- [x] 1.4 Crear DTO desacoplado `NotificationResponse` en `org.bulbaseros.dto` y mapeador `NotificationMapper` en `org.bulbaseros.mappers` extendiendo `BaseMapper<Notification, NotificationResponse>` con Javadoc riguroso - RF: RF-14, RF-16.
+- [x] 1.5 Crear pruebas `@DataJpaTest` en `NotificationRepositoryTest` y pruebas unitarias de mapeo en `NotificationMapperTest` validando persistencia, conteo de pendientes y conversión DTO - RF: RF-12, RF-14, RF-16.
 - [ ] 1.6 Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 2: Servicio de Notificaciones y Controlador REST con Seguridad RBAC - Depende de Tarea 1 - RF: RF-12, RF-13, RF-14, RF-16, RF-17, RNF-Control de Acceso y Privacidad
