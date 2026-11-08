@@ -1,6 +1,6 @@
 # Spec 009 — Analítica Urbana y Reportes
 
-**Estado:** propuesta
+**Estado:** validada
 
 ## Contexto y objetivo
 Actualmente, los operadores y responsables municipales carecen de un módulo centralizado que evalúe el desempeño global del servicio, supervise el cumplimiento de los tiempos de compromiso de resolución (SLAs) y detecte patrones territoriales o estacionales en la ciudad de Málaga. Esta funcionalidad dota a analistas, administradores y operadores de un panel interactivo de analítica urbana (`/analytics`) con gráficos visuales y métricas clave de rendimiento, desglose espacial y temporal por distritos y barrios, exportación de informes ejecutivos en formato PDF y un motor asistido de recomendación de departamentos con estimación de grado de confianza.
@@ -77,15 +77,15 @@ Actualmente, los operadores y responsables municipales carecen de un módulo cen
 - Exportación a formatos distintos a PDF en esta iteración (como hojas de cálculo XLSX o CSV).
 
 ## Criterios de aceptación
-- [ ] Un usuario con rol `ANALYST`, `ADMIN` u `OPERATOR` puede acceder mediante el enlace "Analítica" en `Navbar` a la ruta `/analytics` y visualizar MTTT, MTTR, cumplimiento de SLA y distribución por departamento y categoría.
-- [ ] Las incidencias se evalúan contra los plazos de SLA por prioridad: 3 días (`CRITICAL`), 7 días (`HIGH`), 15 días (`MEDIUM`) y 30 días (`LOW`).
-- [ ] El usuario puede filtrar y agrupar reactivamente los datos por Distrito, por Barrio y por los rangos temporales predefinidos, visualizándolos en tarjetas y gráficos visuales interactivos.
-- [ ] Ante periodos o distritos sin incidencias, el sistema despliega el estado visual vacío y deshabilita la exportación a PDF.
-- [ ] La exportación a PDF genera un documento estructurado con el resumen ejecutivo de KPIs y el listado tabular de incidencias filtradas.
-- [ ] Al asignar una incidencia, el sistema preselecciona automáticamente el departamento sugerido, conserva una insignia con la recomendación original y su grado de confianza, y advierte explícitamente si este es menor al 50%.
-- [ ] El panel de analítica refleja el grado de confianza promedio del asistente y la tasa de adopción de las recomendaciones.
-- [ ] Peticiones no autenticadas o con rol `CITIZEN` / `TECHNICIAN` reciben HTTP 403 Forbidden y son bloqueadas por el frontend.
-- [ ] Cobertura completa de pruebas unitarias y de integración en backend y frontend para todos los requisitos funcionales.
+- [x] Un usuario con rol `ANALYST`, `ADMIN` u `OPERATOR` puede acceder mediante el enlace "Analítica" en `Navbar` a la ruta `/analytics` y visualizar MTTT, MTTR, cumplimiento de SLA y distribución por departamento y categoría.
+- [x] Las incidencias se evalúan contra los plazos de SLA por prioridad: 3 días (`CRITICAL`), 7 días (`HIGH`), 15 días (`MEDIUM`) y 30 días (`LOW`).
+- [x] El usuario puede filtrar y agrupar reactivamente los datos por Distrito, por Barrio y por los rangos temporales predefinidos, visualizándolos en tarjetas y gráficos visuales interactivos.
+- [x] Ante periodos o distritos sin incidencias, el sistema despliega el estado visual vacío y deshabilita la exportación a PDF.
+- [x] La exportación a PDF genera un documento estructurado con el resumen ejecutivo de KPIs y el listado tabular de incidencias filtradas.
+- [x] Al asignar una incidencia, el sistema preselecciona automáticamente el departamento sugerido, conserva una insignia con la recomendación original y su grado de confianza, y advierte explícitamente si este es menor al 50%.
+- [x] El panel de analítica refleja el grado de confianza promedio del asistente y la tasa de adopción de las recomendaciones.
+- [x] Peticiones no autenticadas o con rol `CITIZEN` / `TECHNICIAN` reciben HTTP 403 Forbidden y son bloqueadas por el frontend.
+- [x] Cobertura completa de pruebas unitarias y de integración en backend y frontend para todos los requisitos funcionales.
 
 ## Dudas abiertas
 _No existen dudas abiertas. Todos los requisitos, interacción visual y casos límite han sido aclarados y acordados durante la entrevista previa._
