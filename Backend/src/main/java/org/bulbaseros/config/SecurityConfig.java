@@ -90,6 +90,7 @@ public class SecurityConfig {
      *   <li>Seguimiento de avisos propios {@code GET /api/incidents/my-incidents} y geocodificación inversa {@code GET /api/incidents/geocode/reverse}: requieren autenticación ({@code authenticated()}).</li>
      *   <li>Módulo de analítica urbana y reportes {@code /api/analytics/**}: restringido a usuarios con rol {@code ANALYST}, {@code ADMIN} u {@code OPERATOR}.</li>
      *   <li>Rutas de departamentos {@code /api/departments/**}: requieren autenticación previa ({@code authenticated()}).</li>
+     *   <li>Rutas de notificaciones in-app {@code /api/notifications/**}: requieren autenticación previa ({@code authenticated()}).</li>
      *   <li>Rutas generales de incidencias {@code /api/incidents/**}: requiere autenticación previa ({@code authenticated()}).</li>
      *   <li>Cualquier otra petición: requiere autenticación previa ({@code authenticated()}).</li>
      * </ul>
@@ -120,6 +121,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/incidents/geocode/reverse").authenticated()
                         .requestMatchers("/api/analytics/**").hasAnyRole("ANALYST", "ADMIN", "OPERATOR")
                         .requestMatchers("/api/departments/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
                         .requestMatchers("/api/incidents/**").authenticated()
                         .anyRequest().authenticated()
                 )
