@@ -34,12 +34,12 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Pruebas unitarias de `CircuitBreakerTest` y `ExternalContextServiceTest` (verificación de fallback y tolerancia a fallos).
 - [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 5: Integración en Creación y Consulta de Incidencias — depende de Tarea 3, Tarea 4 — RF: RF-1, RF-5, RF-8, RF-10, RF-15
-- [ ] Modificar `IncidentService.createIncident` para orquestar la llamada a `UrbanAssetService` y `ExternalContextService`.
-- [ ] Asegurar que el guardado de la incidencia (`HTTP 201 Created`) nunca falle si el enriquecimiento externo experimenta problemas.
-- [ ] Modificar `IncidentService.getIncidentById` para enriquecer `IncidentResponse` con las asociaciones de activos y observaciones contextuales.
-- [ ] Pruebas de integración para el alta de incidencia con y sin servicios externos disponibles.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+## [x] Tarea 5: Integración en Creación y Consulta de Incidencias — depende de Tarea 3, Tarea 4 — RF: RF-1, RF-5, RF-8, RF-10, RF-15
+- [x] Modificar `IncidentService.createIncident` para orquestar la llamada a `UrbanAssetService` y `ExternalContextService`.
+- [x] Asegurar que el guardado de la incidencia (`HTTP 201 Created`) nunca falle si el enriquecimiento externo experimenta problemas.
+- [x] Modificar `IncidentService.getIncidentById` para enriquecer `IncidentResponse` con las asociaciones de activos y observaciones contextuales.
+- [x] Pruebas de integración para el alta de incidencia con y sin servicios externos disponibles.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 6: Endpoints REST y Seguridad RBAC para Gestión de Activos — depende de Tarea 3, Tarea 5 — RF: RF-3, RF-4, RF-7
 - [ ] Exponer endpoint `POST /api/incidents/{incidentId}/assets/{assetId}/confirm` restringido a roles `OPERATOR` y `ADMIN`.

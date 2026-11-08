@@ -1,6 +1,8 @@
 package org.bulbaseros.service;
 
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.ExternalObservationResponse;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
@@ -88,6 +90,12 @@ class IncidentServiceTest {
 
     @Mock
     private TareasRepository tareasRepository;
+
+    @Mock
+    private UrbanAssetService urbanAssetService;
+
+    @Mock
+    private ExternalContextService externalContextService;
 
     /**
      * Mock del servicio de integracion con datos abiertos de Malaga.
@@ -910,5 +918,157 @@ class IncidentServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
 
         verify(malagaOpenDataService, never()).resolveLocation(any(), any());
+    }
+
+    // =========================================================================================
+    // Pruebas de integración de Activos Urbanos y Contexto Externo (RF-1, RF-5, RF-8, RF-10, RF-15)
+    // =========================================================================================
+
+    @Test
+    @DisplayName("Debería crear incidencia y enriquecer con activos cercanos y contexto exitosamente")
+    void shouldCreateIncidentWithAssetsAndContextSuccessfully() {
+        CreateIncidentRequest req = new CreateIncidentRequest(
+                "Farola fundida en Larios",
+                "Farola no enciende de noche",
+                "ALUMBRADO",
+                36.7213,
+                -4.4214,
+                5.0,
+                "Calle Marqués de Larios, 1",
+                "Centro",
+                "Centro Histórico"
+        );
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenAnswer(invocation -> {
+            Incidencia inc = invocation.getArgument(0);
+            inc.setId(55L);
+            return inc;
+        });
+
+        IncidentAssetResponse assetDto = new IncidentAssetResponse(
+                55L, 101L, "Farola Larios 1", "FAROLA", "CALLE_LARIOS_01",
+                12.5, 0.85, false, OffsetDateTime.now()
+        );
+        when(urbanAssetService.associateNearbyAssets(any(Incidencia.class))).thenReturn(List.of(assetDto));
+
+        ExternalObservationResponse weatherDto = new ExternalObservationResponse(
+                1L, "Open-Meteo", "TEMPERATURE", 21.5, "21.5 °C", OffsetDateTime.now()
+        );
+        when(externalContextService.captureAndSaveContext(any(Incidencia.class))).thenReturn(List.of(weatherDto));
+
+        IncidentResponse response = incidentService.createIncident(req, "ciudadano@urbanpulse.es");
+
+        assertNotNull(response);
+        assertEquals(55L, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertEquals(1, response.getUrbanAssets().size());
+        assertEquals("Farola Larios 1", response.getUrbanAssets().get(0).getName());
+
+        assertNotNull(response.getUrbanContext());
+        assertEquals(1, response.getUrbanContext().size());
+        assertEquals("TEMPERATURE", response.getUrbanContext().get(0).getMetricType());
+
+        verify(urbanAssetService).associateNearbyAssets(any(Incidencia.class));
+        verify(externalContextService).captureAndSaveContext(any(Incidencia.class));
+    }
+
+    @Test
+    @DisplayName("Debería crear incidencia con degradación controlada cuando fallan activos y contexto externo (RF-15)")
+    void shouldCreateIncidentWithFallbackWhenAssetOrContextFails() {
+        CreateIncidentRequest req = new CreateIncidentRequest(
+                "Farola rota",
+                "Cristal roto en luminaria",
+                "ALUMBRADO",
+                36.7213,
+                -4.4214,
+                5.0,
+                "Calle Marqués de Larios, 1",
+                "Centro",
+                "Centro Histórico"
+        );
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenAnswer(invocation -> {
+            Incidencia inc = invocation.getArgument(0);
+            inc.setId(77L);
+            return inc;
+        });
+
+        // Simular que el servicio de activos arroja una excepción inesperada de base de datos o timeout
+        when(urbanAssetService.associateNearbyAssets(any(Incidencia.class)))
+                .thenThrow(new RuntimeException("Simulated database timeout in asset lookup"));
+
+        // Simular que el servicio de contexto lanza un error
+        when(externalContextService.captureAndSaveContext(any(Incidencia.class)))
+                .thenThrow(new RuntimeException("Remote weather API service unavailable"));
+
+        IncidentResponse response = incidentService.createIncident(req, "ciudadano@urbanpulse.es");
+
+        // La incidencia se debe crear sin propagar excepciones (HTTP 201 Created equivalente)
+        assertNotNull(response);
+        assertEquals(77L, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertTrue(response.getUrbanAssets().isEmpty(), "urbanAssets debe ser lista vacía ante degradación");
+        assertNotNull(response.getUrbanContext());
+        assertTrue(response.getUrbanContext().isEmpty(), "urbanContext debe ser lista vacía ante degradación");
+
+        verify(incidenciaRepository).save(any(Incidencia.class));
+    }
+
+    @Test
+    @DisplayName("Debería recuperar incidencia por ID e incorporar activos y contexto asociados (RF-5, RF-10)")
+    void shouldGetIncidentByIdWithAssetsAndContext() {
+        Long incidentId = 88L;
+        testIncident.setId(incidentId);
+
+        when(incidenciaRepository.findById(incidentId)).thenReturn(Optional.of(testIncident));
+
+        IncidentAssetResponse assetDto = new IncidentAssetResponse(
+                incidentId, 202L, "Contenedor Vidrio", "CONTENEDOR", "CONT-VIDRIO-01",
+                18.0, 0.76, true, OffsetDateTime.now()
+        );
+        when(urbanAssetService.getAssetsByIncidentId(incidentId)).thenReturn(List.of(assetDto));
+
+        ExternalObservationResponse contextDto = new ExternalObservationResponse(
+                2L, "Malaga-Traffic", "TRAFFIC_LEVEL", 1.0, "FLUIDO", OffsetDateTime.now()
+        );
+        when(externalContextService.getContextByIncidentId(incidentId)).thenReturn(List.of(contextDto));
+
+        IncidentResponse response = incidentService.getIncidentById(incidentId);
+
+        assertNotNull(response);
+        assertEquals(incidentId, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertEquals(1, response.getUrbanAssets().size());
+        assertEquals("Contenedor Vidrio", response.getUrbanAssets().get(0).getName());
+        assertTrue(response.getUrbanAssets().get(0).getIsConfirmed());
+
+        assertNotNull(response.getUrbanContext());
+        assertEquals(1, response.getUrbanContext().size());
+        assertEquals("Malaga-Traffic", response.getUrbanContext().get(0).getSource());
+
+        verify(urbanAssetService).getAssetsByIncidentId(incidentId);
+        verify(externalContextService).getContextByIncidentId(incidentId);
+    }
+
+    @Test
+    @DisplayName("Debería recuperar incidencia por ID con degradación elegante si falla consulta de activos o contexto")
+    void shouldGetIncidentByIdWithGracefulDegradationWhenSubservicesFail() {
+        Long incidentId = 99L;
+        testIncident.setId(incidentId);
+
+        when(incidenciaRepository.findById(incidentId)).thenReturn(Optional.of(testIncident));
+        when(urbanAssetService.getAssetsByIncidentId(incidentId)).thenThrow(new RuntimeException("Asset repository down"));
+        when(externalContextService.getContextByIncidentId(incidentId)).thenThrow(new RuntimeException("Context repository down"));
+
+        IncidentResponse response = incidentService.getIncidentById(incidentId);
+
+        assertNotNull(response);
+        assertEquals(incidentId, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertTrue(response.getUrbanAssets().isEmpty());
+        assertNotNull(response.getUrbanContext());
+        assertTrue(response.getUrbanContext().isEmpty());
     }
 }
