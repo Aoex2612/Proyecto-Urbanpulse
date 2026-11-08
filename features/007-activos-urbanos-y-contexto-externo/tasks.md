@@ -9,13 +9,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Agregar fixtures de datos iniciales en BD/tests (activos de Málaga: semáforos, fuentes, contenedores).
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 2: DTOs y Mappers Desacoplados — depende de Tarea 1 — RF: RF-5, RF-10
-- [ ] Crear `IncidentAssetResponse` con atributos de activo, distancia en metros, nivel de confianza y flag de confirmación.
-- [ ] Crear `ExternalObservationResponse` con atributos de fuente, métrica, valor y marca temporal.
-- [ ] Implementar `UrbanAssetMapper` y `UrbanContextMapper` en el paquete `org.bulbaseros.mappers`.
-- [ ] Extender `IncidentResponse` para incorporar las listas `urbanAssets` y `urbanContext`.
-- [ ] Tests unitarios de mappers para verificar la conversión bidireccional y el aislamiento del dominio JPA.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+## [x] Tarea 2: DTOs y Mappers Desacoplados — depende de Tarea 1 — RF: RF-5, RF-10
+- [x] Crear `IncidentAssetResponse` con atributos de activo, distancia en metros, nivel de confianza y flag de confirmación.
+- [x] Crear `ExternalObservationResponse` con atributos de fuente, métrica, valor y marca temporal.
+- [x] Implementar `UrbanAssetMapper` y `UrbanContextMapper` en el paquete `org.bulbaseros.mappers`.
+- [x] Extender `IncidentResponse` para incorporar las listas `urbanAssets` y `urbanContext`.
+- [x] Tests unitarios de mappers para verificar la conversión bidireccional y el aislamiento del dominio JPA.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 3: Lógica de Cálculo de Proximidad y Servicio de Activos (HU16) — depende de Tarea 1, Tarea 2 — RF: RF-1, RF-2, RF-3, RF-4, RF-6, RF-7
 - [ ] Implementar `UrbanAssetService` con cálculo geodésico de Haversine (`distanceInMeters`).
