@@ -77,13 +77,26 @@ export default function OperatorPanelPage() {
       }
     });
 
-  
+    if (canOperateTriage && notificationService?.getNotifications) {
+      notificationService
+        .getNotifications()
+        .then((notifs) => {
+          if (isMounted && Array.isArray(notifs)) {
+            const dupIds = new Set(
+              notifs
+                .filter((n) => n.type === 'DUPLICATE_SUGGESTION' && n.incidentId)
+                .map((n) => n.incidentId)
+            );
+            setDuplicateIncidentIds(dupIds);
+          }
+        })
+        .catch(() => {});
+    }
 
-
-  return () => {
+    return () => {
       isMounted = false;
     };
-  }, [fetchIncidents]);
+  }, [fetchIncidents, canOperateTriage]);
 
   /**
    * Manejador para el cierre de sesión seguro del operador.
