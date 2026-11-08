@@ -52,4 +52,4 @@ La solución amplía la plataforma UrbanPulse permitiendo asociar evidencias fot
 - `incidentService.js`: Funciones REST multipart.
 - `CreateIncidentModal.jsx`: Selector de archivos, previsualización, descarte y subida.
 - `IncidentDetailModal.jsx`: Galería visual de adjuntos.
-- `Map.css`: Estilos visuales.
+- `Map.css`: Estilos visuales
