@@ -1,0 +1,226 @@
+/* Estilos para el Panel de Filtros Analíticos (AnalyticsDateFilter) */
+
+.analytics-filter-panel {
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.analytics-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.analytics-filter-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.analytics-filter-group-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h, #0f172a);
+}
+
+.analytics-preset-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background-color: #f8fafc;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.analytics-preset-chip {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.analytics-preset-chip:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.analytics-preset-chip.is-active {
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
+}
+
+.analytics-preset-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.analytics-preset-chip:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 1px;
+}
+
+.analytics-filter-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analytics-filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h, #0f172a);
+  white-space: nowrap;
+}
+
+.analytics-select {
+  font-size: 13px;
+  color: var(--text-h, #0f172a);
+  background-color: #ffffff;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 6px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  min-width: 160px;
+}
+
+.analytics-select:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.analytics-select:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.year-control .analytics-select {
+  min-width: 90px;
+}
+
+.territorial-row {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.analytics-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s ease;
+}
+
+.analytics-reset-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.analytics-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.analytics-reset-btn:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.analytics-reset-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .analytics-filter-panel {
+    background-color: #1e2028;
+    border-color: #2e303a;
+    box-shadow: none;
+  }
+
+  .analytics-filter-group-label,
+  .analytics-filter-label {
+    color: #f1f5f9;
+  }
+
+  .analytics-preset-chips {
+    background-color: #15161d;
+    border-color: #2e303a;
+  }
+
+  .analytics-preset-chip {
+    color: #94a3b8;
+  }
+
+  .analytics-preset-chip:hover:not(:disabled) {
+    background-color: #2e303a;
+    color: #f1f5f9;
+  }
+
+  .analytics-preset-chip.is-active {
+    background-color: #38bdf8;
+    color: #0f172a;
+  }
+
+  .analytics-select {
+    background-color: #15161d;
+    border-color: #3b3d4a;
+    color: #f1f5f9;
+  }
+
+  .analytics-select:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  }
+
+  .analytics-select:disabled {
+    background-color: #22232c;
+    color: #64748b;
+    border-color: #2e303a;
+  }
+
+  .territorial-row {
+    border-top-color: #282a36;
+  }
+
+  .analytics-reset-btn {
+    border-color: #3b3d4a;
+    color: #94a3b8;
+  }
+
+  .analytics-reset-btn:hover:not(:disabled) {
+    background-color: #22232c;
+    border-color: #64748b;
+    color: #f1f5f9;
+  }
+}

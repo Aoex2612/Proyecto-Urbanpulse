@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import triageService from '../../services/triageService';
+import analyticsService from '../../services/analyticsService';
 import './AssignmentModal.css';
 
 /**
@@ -37,6 +38,7 @@ export default function AssignmentModal({
   const [deactivatingId, setDeactivatingId] = useState(null);
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [recommendation, setRecommendation] = useState(null);
 
   const closeBtnRef = useRef(null);
 
@@ -56,6 +58,7 @@ export default function AssignmentModal({
         setSelectedTechIds([]);
         setError(null);
         setFeedback(null);
+        setRecommendation(null);
       }
     });
 
@@ -71,6 +74,57 @@ export default function AssignmentModal({
           // Ignorar si falla, conservando el estado inicial
         });
     }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, incident]);
+
+  // Consultar recomendación de departamento asistida por analítica (RF-15, RF-16, RF-17)
+  useEffect(() => {
+    if (!isOpen || !incident) {
+      return;
+    }
+
+    let isMounted = true;
+
+    analyticsService
+      .getDepartmentRecommendation({
+        incidentId: incident.id,
+        title: incident.title,
+        description: incident.description,
+        category: incident.category,
+      })
+      .then((data) => {
+        if (!isMounted || !data) return;
+        setRecommendation(data);
+        if (data.suggestedDepartmentId != null) {
+          const suggestedId = Number(data.suggestedDepartmentId);
+          const alreadyAssigned = (incident.assignments || []).some(
+            (a) => a.isActive !== false && Number(a.departmentId) === suggestedId
+          );
+          if (!alreadyAssigned) {
+            setSelectedDeptIds((prev) =>
+              prev.includes(suggestedId) ? prev : [...prev, suggestedId]
+            );
+            // Pre-cargar técnicos para el departamento sugerido
+            triageService
+              .getTechniciansByDepartment(suggestedId)
+              .then((techs) => {
+                if (isMounted) {
+                  setTechniciansByDept((prev) => ({
+                    ...prev,
+                    [suggestedId]: techs || [],
+                  }));
+                }
+              })
+              .catch(() => {});
+          }
+        }
+      })
+      .catch(() => {
+        // En caso de error en el motor de analítica, degradación controlada sin bloquear el modal
+      });
 
     return () => {
       isMounted = false;
@@ -350,6 +404,39 @@ export default function AssignmentModal({
               </div>
             )}
 
+            {/* Asistencia Inteligente: Recomendación de Departamento (RF-15, RF-16, RF-17) */}
+            {recommendation && recommendation.suggestedDepartmentName && (
+              <div
+                className="recommendation-badge-container"
+                role="region"
+                aria-label="Recomendación inteligente de departamento"
+              >
+                <div className="recommendation-badge-main">
+                  <span className="recommendation-badge-icon" aria-hidden="true">
+                    💡
+                  </span>
+                  <div className="recommendation-badge-content">
+                    <span className="recommendation-badge-title">
+                      Sugerencia Inteligente: <strong>{recommendation.suggestedDepartmentName}</strong> ({recommendation.confidencePercentage}%)
+                    </span>
+                    {recommendation.reasoning && (
+                      <p className="recommendation-badge-reasoning">{recommendation.reasoning}</p>
+                    )}
+                  </div>
+                </div>
+                {(recommendation.isLowConfidenceWarning || recommendation.confidencePercentage < 50) && (
+                  <div className="recommendation-low-confidence-warning" role="alert">
+                    <span className="warning-icon" aria-hidden="true">
+                      ⚠️
+                    </span>
+                    <span>
+                      Atención: Nivel de confianza bajo (&lt; 50%). Requiere confirmación rigurosa del operador.
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Catálogo de departamentos */}
             <div className="assignment-section">
               <div className="assignment-section-header">
@@ -367,6 +454,9 @@ export default function AssignmentModal({
                 <div className="departments-grid">
                   {departments.map((dept) => {
                     const isSelected = selectedDeptIds.includes(dept.id);
+                    const isRecommended =
+                      recommendation?.suggestedDepartmentId != null &&
+                      Number(recommendation.suggestedDepartmentId) === dept.id;
                     return (
                       <label
                         key={dept.id}
@@ -380,7 +470,14 @@ export default function AssignmentModal({
                           aria-label={`Seleccionar departamento ${dept.name}`}
                         />
                         <div className="department-card-content">
-                          <span className="department-card-name">{dept.name}</span>
+                          <div className="department-card-title-row">
+                            <span className="department-card-name">{dept.name}</span>
+                            {isRecommended && (
+                              <span className="department-suggested-pill">
+                                Recomendado ({recommendation.confidencePercentage}%)
+                              </span>
+                            )}
+                          </div>
                           {dept.description && (
                             <span className="department-card-desc">{dept.description}</span>
                           )}

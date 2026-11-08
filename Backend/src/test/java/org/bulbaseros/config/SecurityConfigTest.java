@@ -253,4 +253,78 @@ class SecurityConfigTest {
                 .andExpect(status().is(not(401)))
                 .andExpect(status().is(not(403)));
     }
+
+    /**
+     * Verifica que peticiones no autenticadas a /api/analytics/** respondan 401 Unauthorized.
+     */
+    @Test
+    @DisplayName("Petición sin autenticación a GET /api/analytics/summary debe responder 401 Unauthorized")
+    void shouldRejectUnauthenticatedAccessToAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    /**
+     * Verifica que usuarios con rol CITIZEN en /api/analytics/** reciban 403 Forbidden.
+     */
+    @Test
+    @WithMockUser(roles = "CITIZEN")
+    @DisplayName("Usuario con rol CITIZEN en GET /api/analytics/summary debe recibir 403 Forbidden")
+    void shouldRejectCitizenRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    /**
+     * Verifica que usuarios con rol TECHNICIAN en /api/analytics/** reciban 403 Forbidden.
+     */
+    @Test
+    @WithMockUser(roles = "TECHNICIAN")
+    @DisplayName("Usuario con rol TECHNICIAN en GET /api/analytics/summary debe recibir 403 Forbidden")
+    void shouldRejectTechnicianRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    /**
+     * Verifica que usuarios con rol ANALYST sean autorizados para acceder a /api/analytics/**.
+     */
+    @Test
+    @WithMockUser(roles = "ANALYST")
+    @DisplayName("Usuario con rol ANALYST debe ser autorizado en GET /api/analytics/summary")
+    void shouldAuthorizeAnalystRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que usuarios con rol ADMIN sean autorizados para acceder a /api/analytics/**.
+     */
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("Usuario con rol ADMIN debe ser autorizado en GET /api/analytics/summary")
+    void shouldAuthorizeAdminRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que usuarios con rol OPERATOR sean autorizados para acceder a /api/analytics/**.
+     */
+    @Test
+    @WithMockUser(roles = "OPERATOR")
+    @DisplayName("Usuario con rol OPERATOR debe ser autorizado en GET /api/analytics/summary")
+    void shouldAuthorizeOperatorRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
 }

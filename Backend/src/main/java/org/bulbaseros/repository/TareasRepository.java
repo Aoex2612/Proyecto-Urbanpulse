@@ -4,6 +4,7 @@ import org.bulbaseros.entity.Tareas;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -60,4 +61,36 @@ public interface TareasRepository extends JpaRepository<Tareas, Long> {
      * @return Lista de asignaciones activas ({@code is_active = true}) asociadas al técnico.
      */
     List<Tareas> findByTechnicianIdAndIsActiveTrue(Long technicianId);
+
+    /**
+     * Recupera todas las asignaciones vinculadas a una coleccion de identificadores de incidencias.
+     *
+     * @param incidentIds Coleccion de identificadores unicos de incidencias.
+     * @return Lista de asignaciones pertenecientes a las incidencias indicadas.
+     */
+    List<Tareas> findByIncidentIdIn(Collection<Long> incidentIds);
+
+    /**
+     * Recupera todas las asignaciones que se encuentran activas vinculadas a una coleccion de incidencias.
+     *
+     * @param incidentIds Coleccion de identificadores unicos de incidencias.
+     * @return Lista de asignaciones activas vinculadas a dichas incidencias.
+     */
+    List<Tareas> findByIncidentIdInAndIsActiveTrue(Collection<Long> incidentIds);
+
+    /**
+     * Recupera todas las asignaciones pertenecientes a un departamento municipal concreto.
+     *
+     * @param departmentId Identificador unico del departamento.
+     * @return Lista total de asignaciones del departamento.
+     */
+    List<Tareas> findByDepartmentId(Long departmentId);
+
+    /**
+     * Recupera todas las asignaciones activas pertenecientes a un departamento municipal especifico.
+     *
+     * @param departmentId Identificador unico del departamento.
+     * @return Lista de asignaciones activas del departamento.
+     */
+    List<Tareas> findByDepartmentIdAndIsActiveTrue(Long departmentId);
 }

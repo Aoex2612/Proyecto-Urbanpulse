@@ -20,6 +20,7 @@ export default function HomePage() {
   const location = useLocation();
   const user = authService.getUser();
   const hasOperatorAccess = authService.hasAnyRole(['OPERATOR', 'ADMIN', 'TECHNICIAN']);
+  const hasAnalyticsAccess = authService.hasAnyRole(['ANALYST', 'ADMIN', 'OPERATOR']);
   const isTechnician = user?.role === 'TECHNICIAN';
   const operatorPanelLabel = isTechnician ? 'Mis Asignaciones' : 'Panel de Operador';
 
@@ -96,6 +97,16 @@ export default function HomePage() {
               onClick={handleNavClick}
             >
               {operatorPanelLabel}
+            </Link>
+          )}
+          {hasAnalyticsAccess && (
+            <Link
+              to="/analytics"
+              className="home-analytics-nav-link"
+              onClick={handleNavClick}
+              title="Ir al panel de analítica urbana y reportes"
+            >
+              Analítica
             </Link>
           )}
           <button
@@ -182,6 +193,24 @@ export default function HomePage() {
                 onClick={handleNavClick}
               >
                 {isTechnician ? 'Ver Mis Asignaciones →' : 'Acceder al Panel de Operador →'}
+              </Link>
+            </div>
+          )}
+
+          {hasAnalyticsAccess && (
+            <div className="feature-card analytics-feature-card">
+              <div className="analytics-feature-tag">Módulo Analítico Estratégico</div>
+              <h3>Analítica Urbana y Reportes</h3>
+              <p>
+                Supervisa el desempeño global de la ciudad con indicadores clave (MTTT, MTTR, SLAs),
+                análisis territorial y genera informes ejecutivos en formato PDF.
+              </p>
+              <Link
+                to="/analytics"
+                className="analytics-feature-btn"
+                onClick={handleNavClick}
+              >
+                Acceder a Analítica &rarr;
               </Link>
             </div>
           )}

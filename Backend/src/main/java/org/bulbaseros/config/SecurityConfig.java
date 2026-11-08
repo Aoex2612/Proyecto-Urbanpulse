@@ -34,7 +34,7 @@ import java.util.List;
  * integración con el cliente frontend y el codificador de contraseñas mediante BCrypt.</p>
  *
  * @author UrbanPulse Team
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
@@ -88,6 +88,8 @@ public class SecurityConfig {
      *   <li>Consulta cronológica de auditoría {@code GET /api/incidents/{id}/history}: restringida a usuarios con rol {@code ADMIN}.</li>
      *   <li>Operaciones de triaje y estado {@code PATCH /api/incidents/{id}/status}: restringidas a usuarios con rol {@code OPERATOR} o {@code ADMIN}.</li>
      *   <li>Seguimiento de avisos propios {@code GET /api/incidents/my-incidents} y geocodificación inversa {@code GET /api/incidents/geocode/reverse}: requieren autenticación ({@code authenticated()}).</li>
+     *   <li>Módulo de analítica urbana y reportes {@code /api/analytics/**}: restringido a usuarios con rol {@code ANALYST}, {@code ADMIN} u {@code OPERATOR}.</li>
+     *   <li>Rutas de departamentos {@code /api/departments/**}: requieren autenticación previa ({@code authenticated()}).</li>
      *   <li>Rutas generales de incidencias {@code /api/incidents/**}: requiere autenticación previa ({@code authenticated()}).</li>
      *   <li>Cualquier otra petición: requiere autenticación previa ({@code authenticated()}).</li>
      * </ul>
@@ -116,6 +118,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/incidents/my-incidents").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/incidents/geocode/reverse").authenticated()
+                        .requestMatchers("/api/analytics/**").hasAnyRole("ANALYST", "ADMIN", "OPERATOR")
                         .requestMatchers("/api/departments/**").authenticated()
                         .requestMatchers("/api/incidents/**").authenticated()
                         .anyRequest().authenticated()

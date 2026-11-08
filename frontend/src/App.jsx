@@ -13,6 +13,7 @@ import HomePage from './pages/HomePage';
 import OperatorPanelPage from './pages/OperatorPanelPage';
 import MapPage from './pages/MapPage';
 import MyIncidentsPage from './pages/MyIncidentsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -53,6 +54,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['OPERATOR', 'ADMIN', 'TECHNICIAN']}>
               <OperatorPanelPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute allowedRoles={['ANALYST', 'ADMIN', 'OPERATOR']}>
+              <AnalyticsPage />
             </ProtectedRoute>
           }
         />
