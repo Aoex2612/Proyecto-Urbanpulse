@@ -17,13 +17,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Tests unitarios de mappers para verificar la conversión bidireccional y el aislamiento del dominio JPA.
 - [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 3: Lógica de Cálculo de Proximidad y Servicio de Activos (HU16) — depende de Tarea 1, Tarea 2 — RF: RF-1, RF-2, RF-3, RF-4, RF-6, RF-7
-- [ ] Implementar `UrbanAssetService` con cálculo geodésico de Haversine (`distanceInMeters`).
-- [ ] Implementar algoritmo de búsqueda de activos en radio de 50 metros y cálculo de `confidenceScore` normalizado entre 0.0 y 1.0.
-- [ ] Implementar métodos `associateNearbyAssets`, `confirmAssetAssociation` y `removeAssetAssociation`.
-- [ ] Manejo de casos límite: sin activos en el radio (lista vacía), activo inexistente (excepción estructurada 404).
-- [ ] Pruebas unitarias de `UrbanAssetServiceTest` (cálculo de distancias, ordenación por proximidad y fórmulas de confianza).
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+## [x] Tarea 3: Lógica de Cálculo de Proximidad y Servicio de Activos (HU16) — depende de Tarea 1, Tarea 2 — RF: RF-1, RF-2, RF-3, RF-4, RF-6, RF-7
+- [x] Implementar `UrbanAssetService` con cálculo geodésico de Haversine (`distanceInMeters`).
+- [x] Implementar algoritmo de búsqueda de activos en radio de 50 metros y cálculo de `confidenceScore` normalizado entre 0.0 y 1.0.
+- [x] Implementar métodos `associateNearbyAssets`, `confirmAssetAssociation` y `removeAssetAssociation`.
+- [x] Manejo de casos límite: sin activos en el radio (lista vacía), activo inexistente (excepción estructurada 404).
+- [x] Pruebas unitarias de `UrbanAssetServiceTest` (cálculo de distancias, ordenación por proximidad y fórmulas de confianza).
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 4: Patrón Circuit Breaker y Servicio de Ingesta de Contexto Externo con Fallback (HU17, HU18) — depende de Tarea 1, Tarea 2 — RF: RF-8, RF-9, RF-11, RF-12, RF-13, RF-14, RF-15
 - [ ] Implementar componente de resiliencia `CircuitBreaker` (estados CLOSED, OPEN, HALF_OPEN, ventana móvil y cooldown de 30s).
