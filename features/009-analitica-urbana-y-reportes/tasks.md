@@ -34,11 +34,11 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 5.2 Actualizar `SecurityConfig` para proteger las rutas `/api/analytics/**` permitiendo acceso a `ANALYST`, `ADMIN` y `OPERATOR`, y denegando a `CITIZEN` y `TECHNICIAN`.
 - [x] 5.3 Crear pruebas de integración en `AnalyticsControllerTest` con `MockMvc` y `@WithMockUser` verificando respuestas 200 OK, payload consolidado y código 403 Forbidden para roles no autorizados.
 
-## [ ] Tarea 6: Servicios API y Módulo de Exportación a PDF en Frontend - Depende de Tarea 5 - RF: RF-12, RF-13, RF-14
-- [ ] 6.1 Crear servicio cliente `frontend/src/services/analyticsService.js` con métodos Axios para interactuar con los endpoints de analítica y recomendación.
-- [ ] 6.2 Crear módulo utilitario `frontend/src/utils/reportUtils.js` para compilar y generar el documento PDF estructurado (portada/cabecera oficial, resumen ejecutivo de KPIs y tabla de incidencias filtradas).
-- [ ] 6.3 Crear componente `ExportPdfButton.jsx` con botón de descarga interactivo, feedback visual durante la generación y bloqueo reactivo (`disabled`) si no hay datos.
-- [ ] 6.4 Crear pruebas unitarias con Vitest en `analyticsService.test.js` y `reportUtils.test.js`.
+## [x] Tarea 6: Servicios API y Módulo de Exportación a PDF en Frontend - Depende de Tarea 5 - RF: RF-12, RF-13, RF-14
+- [x] 6.1 Crear servicio cliente `frontend/src/services/analyticsService.js` con métodos Axios para interactuar con los endpoints de analítica y recomendación.
+- [x] 6.2 Crear módulo utilitario `frontend/src/utils/reportUtils.js` para compilar y generar el documento PDF estructurado (portada/cabecera oficial, resumen ejecutivo de KPIs y tabla de incidencias filtradas).
+- [x] 6.3 Crear componente `ExportPdfButton.jsx` con botón de descarga interactivo, feedback visual durante la generación y bloqueo reactivo (`disabled`) si no hay datos.
+- [x] 6.4 Crear pruebas unitarias con Vitest en `analyticsService.test.js` y `reportUtils.test.js`.
 
 ## [ ] Tarea 7: Componentes del Panel de Analítica y Gráficos Visuales en Frontend - Depende de Tarea 6 - RF: RF-1 al RF-11, RF-18
 - [ ] 7.1 Crear componente `AnalyticsKpiCards.jsx` y su hoja de estilos con tarjetas visuales para Total de incidencias, MTTT, MTTR y % Cumplimiento de SLA.
