@@ -116,6 +116,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/h2-console/**", "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/incidents/*/history").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/incidents/*/assets/*/confirm").hasAnyRole("OPERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/incidents/*/assets/*").hasAnyRole("OPERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/incidents/my-incidents").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/incidents/geocode/reverse").authenticated()
                         .requestMatchers("/api/analytics/**").hasAnyRole("ANALYST", "ADMIN", "OPERATOR")

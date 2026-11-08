@@ -42,10 +42,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 6: Endpoints REST y Seguridad RBAC para Gestión de Activos — depende de Tarea 3, Tarea 5 — RF: RF-3, RF-4, RF-7
-- [ ] Exponer endpoint `POST /api/incidents/{incidentId}/assets/{assetId}/confirm` restringido a roles `OPERATOR` y `ADMIN`.
-- [ ] Exponer endpoint `DELETE /api/incidents/{incidentId}/assets/{assetId}` restringido a roles `OPERATOR` y `ADMIN`.
-- [ ] Añadir manejo de excepciones específicas en `GlobalExceptionHandler`.
-- [ ] Tests de integración de controladores con `MockMvc` validando códigos HTTP 200, 403 (para rol `CITIZEN`) y 404.
+- [x] Exponer endpoint `POST /api/incidents/{incidentId}/assets/{assetId}/confirm` restringido a roles `OPERATOR` y `ADMIN`. (Cubre RF-3, RF-7)
+- [x] Exponer endpoint `DELETE /api/incidents/{incidentId}/assets/{assetId}` restringido a roles `OPERATOR` y `ADMIN`. (Cubre RF-4)
+- [x] Añadir manejo de excepciones específicas en `GlobalExceptionHandler`. (Cubre RF-7)
+- [x] Tests de integración de controladores con `MockMvc` validando códigos HTTP 200, 403 (para rol `CITIZEN`) y 404. (Cubre RF-3, RF-4, RF-7)
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 7: Componentes Frontend para Activos Urbanos y Contexto Externo — depende de Tarea 2, Tarea 6 — RF: RF-3, RF-4, RF-5, RF-10

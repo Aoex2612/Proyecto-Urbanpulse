@@ -3,6 +3,7 @@ package org.bulbaseros.controller;
 import jakarta.validation.Valid;
 import org.bulbaseros.dto.AttachmentResponse;
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
@@ -12,6 +13,7 @@ import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.service.AttachmentService;
 import org.bulbaseros.service.IncidentService;
+import org.bulbaseros.service.UrbanAssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +21,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,16 +38,18 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 /**
- * Controlador REST que gestiona las operaciones del ciclo de vida, auditoria y adjuntos multimedia de incidencias en UrbanPulse.
+ * Controlador REST que gestiona las operaciones del ciclo de vida, auditoria, adjuntos multimedia
+ * y gestión de activos urbanos asociados a incidencias en UrbanPulse.
  * <p>
  * Expone endpoints protegidos mediante RBAC (Role-Based Access Control) para la consulta cartografica
  * de incidencias activas, obtencion del detalle individual, alta de reportes ciudadanos, triaje operativo
- * de estados con auditoria inmutable, inspeccion cronologica de transiciones para administradores
- * y subida/consulta de archivos multimedia adjuntos (imágenes JPEG y PNG).
+ * de estados con auditoria inmutable, inspeccion cronologica de transiciones para administradores,
+ * subida/consulta de archivos multimedia adjuntos (imágenes JPEG y PNG) y confirmación/desvinculación
+ * de elementos de equipamiento urbano (semáforos, fuentes, contenedores).
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.2
+ * @version 1.3
  */
 @RestController
 @RequestMapping("/api/incidents")
@@ -60,24 +66,46 @@ public class IncidentController {
     private final AttachmentService attachmentService;
 
     /**
-     * Constructor para compatibilidad con pruebas unitarias que no requieran servicio de adjuntos.
+     * Servicio de logica de negocio espacial y gestion de activos urbanos.
+     */
+    private final UrbanAssetService urbanAssetService;
+
+    /**
+     * Constructor para compatibilidad con pruebas unitarias que no requieran servicio de adjuntos ni de activos.
      *
      * @param incidentService Servicio de logica de negocio transaccional de incidencias.
      */
     public IncidentController(IncidentService incidentService) {
-        this(incidentService, null);
+        this(incidentService, null, null);
     }
 
     /**
-     * Constructor principal con inyeccion de dependencias para el controlador de incidencias.
+     * Constructor con inyección de dependencias para el controlador de incidencias y servicio de adjuntos.
      *
      * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
      * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
      */
+    public IncidentController(IncidentService incidentService, AttachmentService attachmentService) {
+        this(incidentService, attachmentService, null);
+    }
+
+    /**
+     * Constructor principal con inyeccion de dependencias para el controlador de incidencias,
+     * almacenamiento de adjuntos y gestión espacial de activos urbanos.
+     *
+     * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
+     * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
+     * @param urbanAssetService Servicio de gestion espacial y vinculación de activos urbanos.
+     */
     @Autowired
-    public IncidentController(IncidentService incidentService, @Autowired(required = false) AttachmentService attachmentService) {
+    public IncidentController(
+            IncidentService incidentService,
+            @Autowired(required = false) AttachmentService attachmentService,
+            @Autowired(required = false) UrbanAssetService urbanAssetService
+    ) {
         this.incidentService = incidentService;
         this.attachmentService = attachmentService;
+        this.urbanAssetService = urbanAssetService;
     }
 
     /**
@@ -274,5 +302,53 @@ public class IncidentController {
     public ResponseEntity<List<AttachmentResponse>> getAttachments(@PathVariable Long id) {
         List<AttachmentResponse> attachments = attachmentService.getAttachmentsByIncidentId(id);
         return ResponseEntity.ok(attachments);
+    }
+
+    /**
+     * Confirma formalmente la vinculación de un activo urbano a una incidencia.
+     * <p>
+     * Endpoint protegido con control de acceso perimetral restringido a usuarios con rol {@code OPERATOR} o {@code ADMIN}.
+     * Actualiza el indicador {@code isConfirmed} a {@code true} para el activo especificado.
+     * </p>
+     *
+     * @param incidentId Identificador único de la incidencia.
+     * @param assetId    Identificador único del activo urbano asociado.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y el DTO {@link IncidentAssetResponse} actualizado.
+     */
+    @PostMapping("/{incidentId}/assets/{assetId}/confirm")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<IncidentAssetResponse> confirmAssetAssociation(
+            @PathVariable("incidentId") Long incidentId,
+            @PathVariable("assetId") Long assetId
+    ) {
+        if (urbanAssetService == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Servicio de activos urbanos no disponible");
+        }
+        IncidentAssetResponse response = urbanAssetService.confirmAssetAssociation(incidentId, assetId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Elimina o desvincula la asociación entre un activo urbano y una incidencia de servicio.
+     * <p>
+     * Endpoint protegido con control de acceso perimetral restringido a usuarios con rol {@code OPERATOR} o {@code ADMIN}.
+     * Retorna HTTP 200 OK (o 204 No Content) tras completar la desvinculación.
+     * </p>
+     *
+     * @param incidentId Identificador único de la incidencia.
+     * @param assetId    Identificador único del activo urbano a desvincular.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y confirmación de la supresión.
+     */
+    @DeleteMapping("/{incidentId}/assets/{assetId}")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<Void> removeAssetAssociation(
+            @PathVariable("incidentId") Long incidentId,
+            @PathVariable("assetId") Long assetId
+    ) {
+        if (urbanAssetService == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Servicio de activos urbanos no disponible");
+        }
+        urbanAssetService.removeAssetAssociation(incidentId, assetId);
+        return ResponseEntity.ok().build();
     }
 }
