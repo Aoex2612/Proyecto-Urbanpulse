@@ -57,9 +57,9 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 8: Verificación Global, Documentación y Cobertura — depende de Tarea 5, Tarea 6, Tarea 7 — RF: Todos
-- [ ] Ejecutar suite completa de tests backend (`mvn clean test`) comprobando tasa de éxito al 100% y cobertura JaCoCo.
-- [ ] Ejecutar linter y tests de frontend (`npm run lint`, `npm test`).
-- [ ] Actualizar documentación técnica y diagramas en `docs/architecture.md` y `docs/api.md` con los nuevos endpoints y modelos.
+- [x] Ejecutar suite completa de tests backend (`mvn clean test`) comprobando tasa de éxito al 100% y cobertura JaCoCo.
+- [x] Ejecutar linter y tests de frontend (`npm run lint`, `npm test`).
+- [x] Actualizar documentación técnica y diagramas en `docs/architecture.md` y `docs/api.md` con los nuevos endpoints y modelos.
 - [ ] Validar contra todos los criterios de aceptación de `spec.md`.
 
 ---

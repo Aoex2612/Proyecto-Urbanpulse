@@ -305,3 +305,79 @@ flowchart TD
 | **`CambiosEstadoRepository`** | `org.bulbaseros.repository` | Repositorio JPA para la consulta ordenada de la trazabilidad inmutable de estados de cada incidencia. |
 | **`UserRepository`** | `org.bulbaseros.repository` | Consulta de cuentas de usuario por email y verificación de existencia. |
 | **`ArchivoAdjuntoRepository`** | `org.bulbaseros.repository` | Acceso JPA a la persistencia de metadatos de archivos multimedia vinculados a incidencias. |
+| **`UrbanAssetService`** | `org.bulbaseros.service` | Cálculo de proximidad geodésica (Haversine en radio <= 50m), cálculo de confianza probabilística, asociación y gestión operativa de confirmación/desvinculación de activos urbanos. |
+| **`ExternalContextService`** | `org.bulbaseros.service` | Orquestación resiliente de llamadas a Open-Meteo y conector de tráfico municipal, protegido con Circuit Breaker y fallback seguro. |
+| **`CircuitBreaker`** | `org.bulbaseros.service.resilience` | Componente de resiliencia con estados CLOSED, OPEN y HALF-OPEN, ventana móvil y cooldown de 30 segundos para evitar saturación ante fallos externos. |
+| **`ActivoUrbanoRepository`** | `org.bulbaseros.repository` | Consultas espaciales con prefiltrado por ventana de latitud y longitud sobre el catálogo de activos urbanos. |
+| **`AsociacionIncidenciaActivoRepository`** | `org.bulbaseros.repository` | Persistencia y gestión del ciclo de vida de los vínculos incidencia-activo (`incident_assets`). |
+| **`ObservacionesExternasRepository`** / **`ContextoIncidenciaRepository`** | `org.bulbaseros.repository` | Almacenamiento y consulta de observaciones contextuales externas (ambientales y de tráfico). |
+| **`UrbanAssetMapper`** / **`UrbanContextMapper`** | `org.bulbaseros.mappers` | Transformación de entidades de activos y observaciones a DTOs de salida (`IncidentAssetResponse`, `ExternalObservationResponse`). |
+
+---
+
+## 4. Arquitectura de Enriquecimiento Espacial y Resiliencia (Feature 007)
+
+UrbanPulse incorpora un subsistema de contextualización automática al registrar cada incidencia que enriquece el reporte ciudadano con información espacial del mobiliario urbano y condiciones ambientales en tiempo real, garantizando alta resiliencia y desacoplamiento de dependencias externas.
+
+### 4.1. Detección y Asociación Geodésica de Activos Urbanos
+
+Para evitar consultas espaciales costosas sobre toda la base de datos, el cálculo de proximidad implementa una estrategia en dos etapas:
+
+1. **Prefiltrado Bounding Box (JPA):**
+   - Se delimita una ventana de latitud y longitud equivalente a un radio de tolerancia inicial:
+     $$\Delta \text{lat} \approx \frac{50}{111.320} \approx 0.00045^\circ$$
+     $$\Delta \text{lon} \approx \frac{50}{111.320 \cdot \cos(\text{lat})} \approx 0.00056^\circ$$
+   - Se ejecuta `ActivoUrbanoRepository.findByLatitudeBetweenAndLongitudeBetween` aprovechando los índices en BD.
+
+2. **Cálculo Geodésico Exacto (Fórmula de Haversine):**
+   - Sobre el subconjunto prefiltrado se calcula la distancia exacta sobre la esfera terrestre ($R = 6.371.000\text{ m}$):
+     $$a = \sin^2\left(\frac{\Delta \phi}{2}\right) + \cos(\phi_1)\cos(\phi_2)\sin^2\left(\frac{\Delta \lambda}{2}\right)$$
+     $$d = 2 R \cdot \text{atan2}\left(\sqrt{a}, \sqrt{1 - a}\right)$$
+   - Se descartan aquellos activos con distancia $d > 50\text{ m}$.
+
+3. **Scoring de Confianza Probabilística y Ordenación:**
+   - A cada activo dentro del radio se le asigna una confianza decreciente linealmente con la distancia:
+     $$\text{confidenceScore} = \max\left(0.0, \, 1.0 - \frac{d}{50.0}\right)$$
+   - Los activos se ordenan de menor a mayor distancia antes de asociarse como sugeridos (`isConfirmed = false`). Los operadores municipales pueden posteriormente confirmar (`isConfirmed = true`) o desvincular activos mediante endpoints asegurados con RBAC.
+
+```mermaid
+flowchart TD
+    Report[Ciudadano reporta incidencia] --> Coords[Coordenadas Lat/Lon WGS84]
+    Coords --> BBox[1. Prefiltrado Bounding Box JPA +-0.0005 deg]
+    BBox --> CandidateAssets[(urban_assets en caja)]
+    CandidateAssets --> Haversine[2. Calculo Haversine d en metros]
+    Haversine --> Filter{d <= 50m?}
+    Filter -- No --> Discard[Descartar candidato]
+    Filter -- Si --> Score[3. Calcular confianza: 1.0 - d/50]
+    Score --> Sort[Ordenar por proximidad ascendente]
+    Sort --> Persist[Asociar como sugerido: isConfirmed = false]
+```
+
+---
+
+### 4.2. Ingesta Resiliente de Contexto Externo y Circuit Breaker
+
+La integración con APIs externas (como el servicio meteorológico Open-Meteo y los conectores de tráfico municipal) está aislada del ciclo principal de guardado de incidencias para asegurar que **la creación de una incidencia nunca falle (201 Created) si un proveedor externo sufre cortes, latencias elevadas o indisponibilidad**.
+
+#### Máquina de Estados del Circuit Breaker
+
+El patrón Circuit Breaker opera con una ventana deslizante de fallos y un periodo de enfriamiento (cooldown):
+
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN : Tasa de fallos >= umbral (5 fallos en ventana) / Timeout > 3s
+    OPEN --> HALF_OPEN : Transcurrido cooldown (30 segundos)
+    HALF_OPEN --> CLOSED : Peticion de prueba exitosa
+    HALF_OPEN --> OPEN : Peticion de prueba fallida
+```
+
+1. **Estado `CLOSED` (Normal):** Las llamadas a las APIs externas se ejecutan a través de un `RestTemplate` configurado con un timeout estricto de conexión y lectura de **3.000 ms**.
+2. **Estado `OPEN` (Circuito Abierto):** Ante 5 fallos consecutivos (timeouts, errores HTTP 5xx o excepciones de red), el circuito se abre inmediatamente. Todas las peticiones posteriores se desvían de forma instantánea al método de **fallback** sin ejecutar llamadas HTTP, evitando el agotamiento de hilos del servidor.
+3. **Estado `HALF_OPEN` (Prueba):** Tras **30 segundos** de periodo de cooldown, se permite una llamada de sondeo. Si tiene éxito, el circuito vuelve a `CLOSED`; si falla, regresa a `OPEN` reseteando el temporizador.
+
+#### Estrategia de Fallback y Degradación Controlada
+
+- Si el circuito está abierto, o si se produce un timeout o error HTTP durante la llamada, el conector captura la excepción, registra una traza descriptiva (`WARN / ERROR`) y retorna una colección vacía de observaciones externas sin interrumpir la transacción de la incidencia.
+- En la interfaz de usuario (modal de detalle de incidencia), el componente `IncidentContextCard` detecta la ausencia de métricas y muestra un estado degradado informativo, garantizando que el ciudadano y el operador puedan visualizar y gestionar la incidencia con normalidad.
+
