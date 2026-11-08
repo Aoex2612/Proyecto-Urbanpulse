@@ -534,4 +534,41 @@ class IncidentControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(mockAssetService).removeAssetAssociation(1L, 5L);
     }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/incidents/search con OPERATOR permite incluir filtro de estado")
+    void shouldSearchIncidentsWithStatusForOperator() throws Exception {
+        IncidentResponse item = createSampleIncidentResponse(201L, "Farola rota", EstadoIncidencia.VALIDATED);
+        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), eq(true)))
+                .thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/incidents/search")
+                        .param("text", "farola")
+                        .param("category", "Alumbrado")
+                        .param("status", "VALIDATED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(201L))
+                .andExpect(jsonPath("$[0].title").value("Farola rota"));
+
+        verify(incidentService).searchIncidents(eq("farola"), eq("Alumbrado"), isNull(), isNull(), eq(EstadoIncidencia.VALIDATED), eq(true));
+    }
+
+    @Test
+    @WithMockUser(username = "ciudadano@urbanpulse.es", roles = "CITIZEN")
+    @DisplayName("GET /api/incidents/search con CITIZEN ignora el filtro de estado")
+    void shouldSearchIncidentsIgnoringStatusForCitizen() throws Exception {
+        IncidentResponse item = createSampleIncidentResponse(202L, "Bache calzada", EstadoIncidencia.REPORTED);
+        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), eq(false)))
+                .thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/incidents/search")
+                        .param("text", "bache")
+                        .param("status", "VALIDATED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(202L));
+
+        verify(incidentService).searchIncidents(eq("bache"), isNull(), isNull(), isNull(), eq(EstadoIncidencia.VALIDATED), eq(false));
+    }
+    }
 }

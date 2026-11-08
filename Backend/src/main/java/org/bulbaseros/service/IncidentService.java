@@ -22,6 +22,8 @@ import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
+import org.bulbaseros.specification.IncidentSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 import org.bulbaseros.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +96,8 @@ public class IncidentService {
      * Repositorio de datos JPA para la gestion de tareas y asignaciones operativas ({@link Tareas}).
      */
     private final TareasRepository tareasRepository;
+    private final NotificationService notificationService;
+    private final DuplicateDetectionService duplicateDetectionService;
 
     /**
      * Servicio de cálculo de proximidad y gestión de activos urbanos vinculados (RF-1, RF-5).
@@ -132,15 +136,17 @@ public class IncidentService {
     /**
      * Constructor con inyeccion de dependencias para el servicio de incidencias.
      *
-     * @param incidenciaRepository    Repositorio JPA de incidencias urbanas.
-     * @param cambiosEstadoRepository Repositorio JPA de transiciones de estado de auditoria.
-     * @param userRepository          Repositorio JPA de usuarios del sistema.
-     * @param incidentMapper          Mapeador de incidencias a DTOs.
-     * @param statusChangeMapper      Mapeador de cambios de estado a DTOs.
-     * @param malagaOpenDataService   Servicio de integracion territorial con datos abiertos de Malaga.
-     * @param tareasRepository        Repositorio opcional de tareas operativas y asignaciones.
-     * @param urbanAssetService       Servicio opcional de activos urbanos y cálculo de proximidad.
-     * @param externalContextService  Servicio opcional de ingesta y consulta de contexto externo.
+     * @param incidenciaRepository       Repositorio JPA de incidencias urbanas.
+     * @param cambiosEstadoRepository    Repositorio JPA de transiciones de estado de auditoria.
+     * @param userRepository             Repositorio JPA de usuarios del sistema.
+     * @param incidentMapper             Mapeador de incidencias a DTOs.
+     * @param statusChangeMapper         Mapeador de cambios de estado a DTOs.
+     * @param malagaOpenDataService      Servicio de integracion territorial con datos abiertos de Malaga.
+     * @param tareasRepository           Repositorio opcional de tareas operativas y asignaciones.
+     * @param urbanAssetService          Servicio opcional de activos urbanos y cálculo de proximidad.
+     * @param externalContextService     Servicio opcional de ingesta y consulta de contexto externo.
+     * @param notificationService        Servicio opcional de notificaciones in-app.
+     * @param duplicateDetectionService  Servicio opcional de detección y notificación de duplicados.
      */
     @Autowired
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -151,7 +157,9 @@ public class IncidentService {
                            MalagaOpenDataService malagaOpenDataService,
                            @Autowired(required = false) TareasRepository tareasRepository,
                            @Autowired(required = false) UrbanAssetService urbanAssetService,
-                           @Autowired(required = false) ExternalContextService externalContextService) {
+                           @Autowired(required = false) ExternalContextService externalContextService,
+                           @Autowired(required = false) NotificationService notificationService,
+                           @Autowired(required = false) DuplicateDetectionService duplicateDetectionService) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
@@ -161,6 +169,8 @@ public class IncidentService {
         this.tareasRepository = tareasRepository;
         this.urbanAssetService = urbanAssetService;
         this.externalContextService = externalContextService;
+        this.notificationService = notificationService;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -169,7 +179,7 @@ public class IncidentService {
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService) {
-        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null);
+        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null, null, null);
     }
 
     /**
@@ -357,6 +367,16 @@ public class IncidentService {
         incidencia.setUpdatedAt(OffsetDateTime.now());
 
         Incidencia savedIncident = incidenciaRepository.save(incidencia);
+
+        if (duplicateDetectionService != null) {
+            List<Incidencia> potentialDuplicates = duplicateDetectionService.findPotentialDuplicates(
+                    savedIncident.getLatitude(), savedIncident.getLongitude(),
+                    savedIncident.getCategory(), savedIncident.getTitle(),
+                    savedIncident.getDescription(), savedIncident.getId()
+            );
+            duplicateDetectionService.notifyPotentialDuplicates(savedIncident, potentialDuplicates);
+        }
+
         IncidentResponse response = incidentMapper.toDto(savedIncident);
 
         // Asociación defensiva de activos urbanos próximos (RF-1, RF-5, RF-15)
@@ -457,6 +477,8 @@ public class IncidentService {
         cambio.setCreatedAt(OffsetDateTime.now());
         cambiosEstadoRepository.save(cambio);
 
+        sendStatusNotificationsFromService(updatedIncident, fromStatus, toStatus.name());
+
         return new IncidentStatusResponse(
                 id,
                 toStatus,
@@ -555,5 +577,53 @@ public class IncidentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Las coordenadas están fuera de Málaga");
         }
         return malagaOpenDataService.resolveLocation(latitude, longitude);
+    }
+
+    /**
+     * Envía notificaciones de cambio de estado al ciudadano propietario y técnicos asignados activos.
+     *
+     * @param incident   Incidencia actualizada.
+     * @param fromStatus Nombre del estado anterior.
+     * @param toStatus   Nombre del estado nuevo.
+     */
+    private void sendStatusNotificationsFromService(Incidencia incident, String fromStatus, String toStatus) {
+        if (notificationService == null) {
+            return;
+        }
+        String title = "Incidencia #" + incident.getId() + " actualizada a " + toStatus;
+        String message = "La incidencia '" + incident.getTitle() + "' ha cambiado de estado de " + fromStatus + " a " + toStatus + ".";
+
+        if (incident.getCitizen() != null) {
+            notificationService.createNotification(incident.getCitizen(), incident, "STATUS_CHANGE", title, message);
+        }
+
+        if (tareasRepository != null) {
+            List<Tareas> activeTasks = tareasRepository.findByIncidentIdAndIsActiveTrue(incident.getId());
+            for (Tareas task : activeTasks) {
+                if (task.getTechnician() != null) {
+                    notificationService.createNotification(task.getTechnician(), incident, "STATUS_CHANGE", title, message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Busca incidencias aplicando filtros multicriterio mediante JPA Specifications.
+     *
+     * @param text          Texto libre para buscar en título y descripción.
+     * @param category      Categoría de la incidencia.
+     * @param start         Fecha de inicio del rango.
+     * @param end           Fecha de fin del rango.
+     * @param status        Estado del ciclo de vida (ignorado si includeStatus es false).
+     * @param includeStatus Si true aplica el filtro de estado; si false lo omite (para CITIZEN).
+     * @return Lista de DTOs {@link IncidentResponse} que cumplen los criterios de búsqueda.
+     */
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> searchIncidents(String text, String category,
+                                                   OffsetDateTime start, OffsetDateTime end,
+                                                   EstadoIncidencia status, boolean includeStatus) {
+        Specification<Incidencia> spec = IncidentSpecifications.build(text, category, start, end, status, includeStatus);
+        List<Incidencia> results = incidenciaRepository.findAll(spec);
+        return incidentMapper.toDtoList(results);
     }
 }

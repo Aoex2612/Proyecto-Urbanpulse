@@ -19,7 +19,10 @@ import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.IncidentMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
+import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
 import org.bulbaseros.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -51,6 +54,7 @@ public class IncidentTriageService {
     private final AssignmentService assignmentService;
     private final PriorityService priorityService;
     private final IncidentMapper incidentMapper;
+    private final NotificationService notificationService;
 
     /**
      * Construye una nueva instancia de {@link IncidentTriageService} inyectando las dependencias requeridas.
@@ -62,14 +66,17 @@ public class IncidentTriageService {
      * @param assignmentService       Servicio de negocio para la gestión de asignaciones.
      * @param priorityService         Servicio del motor determinista de cálculo de prioridades asistidas.
      * @param incidentMapper          Mapeador de conversión entre {@link Incidencia} e {@link IncidentResponse}.
+     * @param notificationService     Servicio para el envío de notificaciones in-app.
      */
+    @Autowired
     public IncidentTriageService(IncidenciaRepository incidenciaRepository,
                                  UserRepository userRepository,
                                  CambiosEstadoRepository cambiosEstadoRepository,
                                  TareasRepository tareasRepository,
                                  AssignmentService assignmentService,
                                  PriorityService priorityService,
-                                 IncidentMapper incidentMapper) {
+                                 IncidentMapper incidentMapper,
+                                 @Autowired(required = false) NotificationService notificationService) {
         this.incidenciaRepository = incidenciaRepository;
         this.userRepository = userRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
@@ -77,6 +84,17 @@ public class IncidentTriageService {
         this.assignmentService = assignmentService;
         this.priorityService = priorityService;
         this.incidentMapper = incidentMapper;
+        this.notificationService = notificationService;
+    }
+
+    public IncidentTriageService(IncidenciaRepository incidenciaRepository,
+                                 UserRepository userRepository,
+                                 CambiosEstadoRepository cambiosEstadoRepository,
+                                 TareasRepository tareasRepository,
+                                 AssignmentService assignmentService,
+                                 PriorityService priorityService,
+                                 IncidentMapper incidentMapper) {
+        this(incidenciaRepository, userRepository, cambiosEstadoRepository, tareasRepository, assignmentService, priorityService, incidentMapper, null);
     }
 
     /**
@@ -173,6 +191,7 @@ public class IncidentTriageService {
                 : null;
 
         recordStatusChange(savedIncident, fromStatus, EstadoIncidencia.VALIDATED.name(), user, reason);
+        sendStatusNotifications(savedIncident, fromStatus, EstadoIncidencia.VALIDATED.name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -217,6 +236,7 @@ public class IncidentTriageService {
         Incidencia savedIncident = incidenciaRepository.save(incident);
 
         recordStatusChange(savedIncident, fromStatus, EstadoIncidencia.REJECTED.name(), user, request.getReason().trim());
+        sendStatusNotifications(savedIncident, fromStatus, EstadoIncidencia.REJECTED.name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -263,6 +283,7 @@ public class IncidentTriageService {
         Incidencia savedIncident = incidenciaRepository.save(incident);
 
         recordStatusChange(savedIncident, fromStatus, request.getTargetStatus().name(), user, request.getReason().trim());
+        sendStatusNotifications(savedIncident, fromStatus, request.getTargetStatus().name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -301,6 +322,7 @@ public class IncidentTriageService {
         Incidencia savedIncident = incidenciaRepository.save(incident);
 
         recordStatusChange(savedIncident, fromStatus, EstadoIncidencia.IN_PROGRESS.name(), user, "Inicio de intervención operativa técnica");
+        sendStatusNotifications(savedIncident, fromStatus, EstadoIncidencia.IN_PROGRESS.name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -350,6 +372,7 @@ public class IncidentTriageService {
 
         String reason = notes.isEmpty() ? null : notes;
         recordStatusChange(savedIncident, fromStatus, EstadoIncidencia.RESOLVED.name(), user, reason);
+        sendStatusNotifications(savedIncident, fromStatus, EstadoIncidencia.RESOLVED.name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -388,6 +411,7 @@ public class IncidentTriageService {
         Incidencia savedIncident = incidenciaRepository.save(incident);
 
         recordStatusChange(savedIncident, fromStatus, EstadoIncidencia.CLOSED.name(), user, "Cierre definitivo del expediente tras verificar resolución");
+        sendStatusNotifications(savedIncident, fromStatus, EstadoIncidencia.CLOSED.name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -430,6 +454,7 @@ public class IncidentTriageService {
         Incidencia savedIncident = incidenciaRepository.save(incident);
 
         recordStatusChange(savedIncident, fromStatus, EstadoIncidencia.REOPENED.name(), user, request.getReason().trim());
+        sendStatusNotifications(savedIncident, fromStatus, EstadoIncidencia.REOPENED.name());
 
         return incidentMapper.toDto(savedIncident);
     }
@@ -501,6 +526,34 @@ public class IncidentTriageService {
             boolean isAssigned = tareasRepository.existsByIncidentIdAndTechnicianIdAndIsActiveTrue(incidentId, user.getId());
             if (!isAssigned) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No es un técnico asignado a esta incidencia");
+            }
+        }
+    }
+
+    /**
+     * Envía notificaciones de cambio de estado al ciudadano propietario y a los técnicos asignados activos.
+     *
+     * @param incident   Incidencia urbana que ha experimentado la transición de estado.
+     * @param fromStatus Nombre del estado anterior.
+     * @param toStatus   Nombre del estado nuevo.
+     */
+    private void sendStatusNotifications(Incidencia incident, String fromStatus, String toStatus) {
+        if (notificationService == null) {
+            return;
+        }
+        String title = "Incidencia #" + incident.getId() + " actualizada a " + toStatus;
+        String message = "La incidencia '" + incident.getTitle() + "' ha cambiado de estado de " + fromStatus + " a " + toStatus + ".";
+
+        if (incident.getCitizen() != null) {
+            notificationService.createNotification(incident.getCitizen(), incident, "STATUS_CHANGE", title, message);
+        }
+
+        if (tareasRepository != null) {
+            List<Tareas> activeTasks = tareasRepository.findByIncidentIdAndIsActiveTrue(incident.getId());
+            for (Tareas task : activeTasks) {
+                if (task.getTechnician() != null) {
+                    notificationService.createNotification(task.getTechnician(), incident, "STATUS_CHANGE", title, message);
+                }
             }
         }
     }

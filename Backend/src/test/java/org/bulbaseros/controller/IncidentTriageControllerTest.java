@@ -38,6 +38,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -735,5 +736,24 @@ class IncidentTriageControllerTest {
                 .andExpect(jsonPath("$.id").value(51))
                 .andExpect(jsonPath("$.comment").value("Texto rectificado"))
                 .andExpect(jsonPath("$.updatedAt").exists());
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("POST /api/incidents/{id}/mark-duplicate como OPERATOR debe retornar 200 OK y estado REJECTED")
+    void shouldReturn200WhenMarkAsDuplicateByOperator() throws Exception {
+        IncidentResponse response = new IncidentResponse();
+        response.setId(10L);
+        response.setStatus(EstadoIncidencia.REJECTED);
+
+        when(incidentTriageService.rejectIncident(eq(10L), any(), eq("operador@urbanpulse.es")))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/api/incidents/10/mark-duplicate"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        verify(incidentTriageService).rejectIncident(eq(10L), any(), eq("operador@urbanpulse.es"));
     }
 }

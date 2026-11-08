@@ -49,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -96,6 +97,12 @@ class IncidentServiceTest {
 
     @Mock
     private ExternalContextService externalContextService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private DuplicateDetectionService duplicateDetectionService;
 
     /**
      * Mock del servicio de integracion con datos abiertos de Malaga.
@@ -1080,5 +1087,25 @@ class IncidentServiceTest {
         assertTrue(response.getUrbanAssets().isEmpty());
         assertNotNull(response.getUrbanContext());
         assertTrue(response.getUrbanContext().isEmpty());
+    }
+
+    @Test
+    @DisplayName("updateIncidentStatus: envia notificacion al ciudadano al actualizar estado")
+    void shouldSendNotificationOnUpdateIncidentStatus() {
+        Incidencia inc = new Incidencia();
+        inc.setId(10L);
+        inc.setTitle("Farola rota");
+        inc.setStatus(EstadoIncidencia.REPORTED);
+        inc.setCitizen(testCitizen);
+
+        when(incidenciaRepository.findById(10L)).thenReturn(Optional.of(inc));
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenReturn(inc);
+
+        UpdateIncidentStatusRequest request = new UpdateIncidentStatusRequest(EstadoIncidencia.VALIDATED, "Validacion correcta");
+        incidentService.updateIncidentStatus(10L, request, "operador@urbanpulse.es");
+
+        verify(notificationService).createNotification(eq(testCitizen), eq(inc), eq("STATUS_CHANGE"), anyString(), anyString());
+    }
     }
 }

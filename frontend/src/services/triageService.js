@@ -268,7 +268,20 @@ export const getTechniciansByDepartment = async (departmentId) => {
   return response.data;
 };
 
+/**
+ * Confirma y marca una incidencia como duplicada de otra rechazándola automáticamente (HU20).
+ *
+ * @param {number|string} incidentId - Identificador único de la incidencia duplicada.
+ * @returns {Promise<Object>} Incidencia con estado actualizado a REJECTED.
+ * @throws {import('axios').AxiosError} Si la petición falla o el usuario carece de permisos de operador/admin.
+ */
+export const markAsDuplicate = async (incidentId) => {
+  const response = await api.post(`/api/incidents/${incidentId}/mark-duplicate`);
+  return response.data;
+};
+
 const triageService = {
+  markAsDuplicate,
   calculatePriority,
   updatePriority,
   validateIncident,
