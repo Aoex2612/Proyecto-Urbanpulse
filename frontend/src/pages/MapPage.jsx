@@ -17,6 +17,7 @@ import {
   MapDateFilter,
 } from '../components/Map';
 import { filterIncidentsByDate, DATE_FILTER_PRESETS } from '../utils/dateUtils';
+import IncidentFilterBar from '../components/Filters/IncidentFilterBar';
 import './MapPage.css';
 
 /**
@@ -36,6 +37,9 @@ export default function MapPage() {
     startDate: '',
     endDate: '',
   });
+
+  // Criterios de filtrado multicriterio (HU19)
+  const [multiFilterCriteria, setMultiFilterCriteria] = useState({ text: '', category: '', startDate: '', endDate: '', status: '' });
 
   // Estados de flujo de creacion asistida
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
@@ -188,10 +192,36 @@ export default function MapPage() {
     setSelectedIncident(null);
   };
 
-  // Filtrado temporal memoizado de incidencias segun el preset o rango configurado
+  // Filtrado temporal y multicriterio memoizado (HU19)
   const filteredIncidents = useMemo(() => {
-    return filterIncidentsByDate(incidents, dateFilter);
-  }, [incidents, dateFilter]);
+    const dateFiltered = filterIncidentsByDate(incidents, dateFilter);
+    return dateFiltered.filter((incident) => {
+      if (multiFilterCriteria.text) {
+        const q = multiFilterCriteria.text.toLowerCase();
+        const matchTitle = (incident.title || '').toLowerCase().includes(q);
+        const matchDesc = (incident.description || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc) return false;
+      }
+      if (multiFilterCriteria.category && incident.category !== multiFilterCriteria.category) {
+        return false;
+      }
+      if (multiFilterCriteria.status && incident.status !== multiFilterCriteria.status) {
+        return false;
+      }
+      if (multiFilterCriteria.startDate) {
+        const created = new Date(incident.createdAt);
+        const start = new Date(multiFilterCriteria.startDate);
+        if (created < start) return false;
+      }
+      if (multiFilterCriteria.endDate) {
+        const created = new Date(incident.createdAt);
+        const end = new Date(multiFilterCriteria.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (created > end) return false;
+      }
+      return true;
+    });
+  }, [incidents, dateFilter, multiFilterCriteria]);
 
   // Recuento de incidencias activas globales en la plataforma
   const totalActiveCount = useMemo(() => {
@@ -303,6 +333,14 @@ export default function MapPage() {
           </button>
         </div>
       </header>
+
+      {!loading && !error && (
+        <IncidentFilterBar
+          onFilterChange={setMultiFilterCriteria}
+          userRole={currentUser?.role}
+          hasResults={filteredIncidents.length > 0}
+        />
+      )}
 
       {/* Barra interactiva de filtrado temporal de incidencias */}
       {!loading && !error && (

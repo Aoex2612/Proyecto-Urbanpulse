@@ -5,7 +5,7 @@
  * rechazo y colaboración mediante notas internas y avisos públicos conectados en tiempo real a PostgreSQL.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import incidentService from '../services/incidentService';
@@ -19,6 +19,8 @@ import {
   ReasonModal,
 } from '../components/Triage';
 import IncidentCommentsSection from '../components/Comments/IncidentCommentsSection';
+import IncidentFilterBar from '../components/Filters/IncidentFilterBar';
+import notificationService from '../services/notificationService';
 import './OperatorPanelPage.css';
 
 /**
@@ -45,6 +47,8 @@ export default function OperatorPanelPage() {
   const [resolveModalIncident, setResolveModalIncident] = useState(null);
   const [reasonModalState, setReasonModalState] = useState(null); // { isOpen, incident, actionType }
   const [commentsModalIncident, setCommentsModalIncident] = useState(null);
+  const [duplicateIncidentIds, setDuplicateIncidentIds] = useState(new Set());
+  const [filterCriteria, setFilterCriteria] = useState({ text: '', category: '', startDate: '', endDate: '', status: '' });
 
   /**
    * Carga el listado de incidencias activas desde la API backend.
@@ -73,10 +77,26 @@ export default function OperatorPanelPage() {
       }
     });
 
+    if (canOperateTriage && notificationService?.getNotifications) {
+      notificationService
+        .getNotifications()
+        .then((notifs) => {
+          if (isMounted && Array.isArray(notifs)) {
+            const dupIds = new Set(
+              notifs
+                .filter((n) => n.type === 'DUPLICATE_SUGGESTION' && n.incidentId)
+                .map((n) => n.incidentId)
+            );
+            setDuplicateIncidentIds(dupIds);
+          }
+        })
+        .catch(() => {});
+    }
+
     return () => {
       isMounted = false;
     };
-  }, [fetchIncidents]);
+  }, [fetchIncidents, canOperateTriage]);
 
   /**
    * Manejador para el cierre de sesión seguro del operador.
@@ -95,6 +115,31 @@ export default function OperatorPanelPage() {
    * @param {number|string} id - Identificador de la incidencia.
    * @returns {Promise<void>}
    */
+  /**
+   * Confirma una incidencia como duplicada y la transiciona automáticamente a REJECTED.
+   *
+   * @param {number|string} id - Identificador de la incidencia.
+   */
+  const handleMarkDuplicate = async (id) => {
+    const confirmed = window.confirm(
+      `¿Deseas confirmar la incidencia #${id} como duplicada? Se rechazará automáticamente en el circuito de triaje.`
+    );
+    if (!confirmed) return;
+
+    setUpdatingId(id);
+    try {
+      const updated = await triageService.markAsDuplicate(id);
+      setIncidents((prev) =>
+        prev.map((inc) => (inc.id === id ? { ...inc, ...updated, status: 'REJECTED' } : inc))
+      );
+      setFeedbackMessage(`Incidencia #${id} confirmada como duplicada y rechazada.`);
+    } catch (err) {
+      setFeedbackMessage(`Error al marcar duplicada la incidencia #${id}: ${err?.response?.data?.message || 'Error de servidor'}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleValidate = async (id) => {
     setUpdatingId(id);
     try {
@@ -288,6 +333,36 @@ export default function OperatorPanelPage() {
     return incident.assignments.filter((a) => a.isActive !== false);
   };
 
+  // Incidencias filtradas según los criterios de IncidentFilterBar (HU19)
+  const displayedIncidents = useMemo(() => {
+    return incidents.filter((incident) => {
+      if (filterCriteria.text) {
+        const q = filterCriteria.text.toLowerCase();
+        const matchTitle = (incident.title || '').toLowerCase().includes(q);
+        const matchDesc = (incident.description || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc) return false;
+      }
+      if (filterCriteria.category && incident.category !== filterCriteria.category) {
+        return false;
+      }
+      if (filterCriteria.status && incident.status !== filterCriteria.status) {
+        return false;
+      }
+      if (filterCriteria.startDate) {
+        const created = new Date(incident.createdAt);
+        const start = new Date(filterCriteria.startDate);
+        if (created < start) return false;
+      }
+      if (filterCriteria.endDate) {
+        const created = new Date(incident.createdAt);
+        const end = new Date(filterCriteria.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (created > end) return false;
+      }
+      return true;
+    });
+  }, [incidents, filterCriteria]);
+
   return (
     <div className="operator-container">
       <header className="operator-header">
@@ -422,6 +497,12 @@ export default function OperatorPanelPage() {
             </div>
           )}
 
+          <IncidentFilterBar
+            onFilterChange={setFilterCriteria}
+            userRole={user?.role}
+            hasResults={displayedIncidents.length > 0}
+          />
+
           {loading ? (
             <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
               <p>Cargando incidencias desde PostgreSQL...</p>
@@ -470,7 +551,7 @@ export default function OperatorPanelPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {incidents.map((incident) => {
+                  {displayedIncidents.map((incident) => {
                     const activeAssignments = getActiveAssignments(incident);
                     const isProcessing = updatingId === incident.id;
 
@@ -478,7 +559,14 @@ export default function OperatorPanelPage() {
                       <tr key={incident.id} className={`incident-row incident-status-${incident.status?.toLowerCase()}`}>
                         <td className="incident-id">#{incident.id}</td>
                         <td className="incident-title-cell">
-                          <div className="incident-title">{incident.title}</div>
+                          <div className="incident-title">
+                            {incident.title}
+                            {duplicateIncidentIds.has(incident.id) && (
+                              <span className="badge-duplicate-suggestion" title="Posible incidencia duplicada">
+                                ⚠ Posible Duplicado
+                              </span>
+                            )}
+                          </div>
                           <p className="incident-desc">{incident.description}</p>
                         </td>
                         <td>{incident.category}</td>
@@ -527,6 +615,18 @@ export default function OperatorPanelPage() {
                         <td className="triage-actions-cell">
                           <div className="action-buttons-group">
                             {/* Botones contextuales según estado */}
+                            {canOperateTriage && incident.status !== 'REJECTED' && incident.status !== 'CLOSED' && (
+                              <button
+                                type="button"
+                                className="btn-action-triage btn-triage-duplicate"
+                                onClick={() => handleMarkDuplicate(incident.id)}
+                                disabled={isProcessing}
+                                title="Confirmar como duplicada y rechazar"
+                                aria-label={`Confirmar duplicado para #${incident.id}`}
+                              >
+                                Confirmar Duplicado
+                              </button>
+                            )}
                             {incident.status === 'REPORTED' && canOperateTriage && (
                               <>
                                 <button

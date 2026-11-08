@@ -13,6 +13,13 @@ import incidentService from '../services/incidentService';
 import triageService from '../services/triageService';
 import authService from '../services/authService';
 
+vi.mock('../services/notificationService', () => ({
+  default: {
+    getNotifications: vi.fn(() => Promise.resolve([])),
+    markAsRead: vi.fn(() => Promise.resolve()),
+  },
+}));
+
 // Mock de servicios
 vi.mock('../services/incidentService', () => ({
   default: {

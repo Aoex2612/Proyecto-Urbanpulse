@@ -327,4 +327,28 @@ class SecurityConfigTest {
                 .andExpect(status().is(not(401)))
                 .andExpect(status().is(not(403)));
     }
+
+    /**
+     * Verifica que peticiones no autenticadas a /api/notifications respondan 401 Unauthorized.
+     */
+    @Test
+    @DisplayName("Petición sin autenticación a GET /api/notifications debe responder 401 Unauthorized")
+    void shouldRejectUnauthenticatedAccessToNotifications() throws Exception {
+        mockMvc.perform(get("/api/notifications"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    /**
+     * Verifica que usuarios autenticados puedan acceder a /api/notifications superando el filtro perimetral.
+     */
+    @Test
+    @WithMockUser(roles = "CITIZEN")
+    @DisplayName("Usuario autenticado con rol CITIZEN debe ser autorizado en GET /api/notifications")
+    void shouldAuthorizeCitizenRoleOnNotifications() throws Exception {
+        mockMvc.perform(get("/api/notifications"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
 }

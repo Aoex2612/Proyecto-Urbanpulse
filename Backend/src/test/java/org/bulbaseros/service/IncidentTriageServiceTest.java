@@ -20,7 +20,10 @@ import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.IncidentMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
+import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
+import java.util.List;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.bulbaseros.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -84,6 +87,9 @@ class IncidentTriageServiceTest {
 
     @Mock
     private IncidentMapper incidentMapper;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private IncidentTriageService triageService;
@@ -853,5 +859,23 @@ class IncidentTriageServiceTest {
 
         assertThrows(IllegalStateException.class,
                 () -> triageService.reopenIncident(100L, request, "operador@urbanpulse.es"));
+    }
+    @Test
+    @DisplayName("validateIncident: envia notificacion al ciudadano y tecnicos activos")
+    void shouldSendNotificationOnValidateIncident() {
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(operator));
+        when(incidenciaRepository.findById(100L)).thenReturn(Optional.of(incident));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenReturn(incident);
+        when(incidentMapper.toDto(any(Incidencia.class))).thenReturn(new IncidentResponse());
+
+        Tareas activeTask = new Tareas();
+        activeTask.setTechnician(technician);
+        activeTask.setIsActive(true);
+        when(tareasRepository.findByIncidentIdAndIsActiveTrue(100L)).thenReturn(List.of(activeTask));
+
+        triageService.validateIncident(100L, new ValidateIncidentRequest("OK"), "operador@urbanpulse.es");
+
+        verify(notificationService).createNotification(eq(citizen), eq(incident), eq("STATUS_CHANGE"), anyString(), anyString());
+        verify(notificationService).createNotification(eq(technician), eq(incident), eq("STATUS_CHANGE"), anyString(), anyString());
     }
 }

@@ -53,4 +53,12 @@ public interface UserRepository extends JpaRepository<Usuario, Long> {
      */
     @Query("SELECT u FROM Usuario u WHERE u.role = :role AND u.department.id = :departmentId")
     List<Usuario> findByRoleAndDepartmentId(@Param("role") RolUsuario role, @Param("departmentId") Long departmentId);
+
+    /**
+     * Recupera la lista de usuarios que poseen un rol funcional determinado.
+     *
+     * @param role Rol funcional del usuario.
+     * @return Lista de usuarios con dicho rol.
+     */
+    List<Usuario> findByRole(RolUsuario role);
 }
