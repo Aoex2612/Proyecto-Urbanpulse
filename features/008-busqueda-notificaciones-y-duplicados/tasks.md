@@ -63,7 +63,7 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 9.1 Ejecutar suite completa de pruebas unitarias y de integración de Backend con Maven (`mvn clean test`) verificando 100% de tests exitosos y cobertura de código JaCoCo $\ge 80\%$.
 - [x] 9.2 Ejecutar suite completa de pruebas de Frontend con Vitest (`npm run test:coverage`) verificando 100% de tests en verde y cobertura $\ge 80\%$.
 - [x] 9.3 Ejecutar análisis estático de código en Frontend con ESLint (`npm run lint`) garantizando 0 errores y 0 advertencias.
-- [ ] 9.4 Realizar comprobación cruzada de todos los criterios de aceptación de `spec.md` y preparar la ejecución de la validación formal con la skill `sdd-validate`.
+- [x] 9.4 Realizar comprobación cruzada de todos los criterios de aceptación de `spec.md` y preparar la ejecución de la validación formal con la skill `sdd-validate`.
 
 ---
 

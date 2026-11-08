@@ -1,5 +1,5 @@
 # Spec 008 — Búsqueda, Notificaciones y Duplicados
-**Estado:** propuesta 📝
+**Estado:** validada ✅
 
 ## Contexto y objetivo
 Aportar capacidades avanzadas de localización de incidencias mediante búsqueda y filtrado multicriterio adaptado por roles, optimizar la carga de trabajo municipal mediante la detección automática y sugerencia de reportes duplicados, y mantener informados en tiempo real tanto a la ciudadanía como al personal operativo sobre la evolución del ciclo de vida de los avisos mediante un centro de notificaciones integrado.
@@ -59,17 +59,17 @@ Aportar capacidades avanzadas de localización de incidencias mediante búsqueda
 - Algoritmos de inteligencia artificial con redes neuronales o embeddings vectoriales para la similitud semántica (se implementará concordancia léxica y normalización de texto).
 
 ## Criterios de aceptación
-- [ ] La barra de filtros permite buscar por texto libre, categoría y fechas tanto en el mapa como en el panel de operador.
-- [ ] El filtro por estado de incidencia está accesible para roles de gestión interna y completamente oculto para ciudadanos.
-- [ ] Ante búsquedas sin coincidencias se muestra una vista vacía con botón para limpiar filtros.
-- [ ] El sistema detecta y notifica sugerencias de duplicados exclusivamente a operadores y técnicos ante avisos a $\le 60\text{ m}$, $\le 48\text{ h}$, misma categoría y texto afín.
-- [ ] El operador o técnico puede confirmar el duplicado marcando la incidencia como `REJECTED` con su motivo.
-- [ ] La creación de reportes por parte del ciudadano no se bloquea tras un rechazo por duplicidad.
-- [ ] Los cambios de estado de una incidencia generan notificaciones persistentes para el creador y el personal asignado.
-- [ ] La campana de la barra de navegación muestra el badge de no leídas y despliega el listado cronológico.
-- [ ] Pulsar en una notificación abre el modal de detalle de la incidencia.
-- [ ] Cada notificación puede marcarse individualmente como leída actualizando el badge en tiempo real.
-- [ ] Ausencia de notificaciones muestra el estado vacío informativo.
+- [x] La barra de filtros permite buscar por texto libre, categoría y fechas tanto en el mapa como en el panel de operador.
+- [x] El filtro por estado de incidencia está accesible para roles de gestión interna y completamente oculto para ciudadanos.
+- [x] Ante búsquedas sin coincidencias se muestra una vista vacía con botón para limpiar filtros.
+- [x] El sistema detecta y notifica sugerencias de duplicados exclusivamente a operadores y técnicos ante avisos a $\le 60\text{ m}$, $\le 48\text{ h}$, misma categoría y texto afín.
+- [x] El operador o técnico puede confirmar el duplicado marcando la incidencia como `REJECTED` con su motivo.
+- [x] La creación de reportes por parte del ciudadano no se bloquea tras un rechazo por duplicidad.
+- [x] Los cambios de estado de una incidencia generan notificaciones persistentes para el creador y el personal asignado.
+- [x] La campana de la barra de navegación muestra el badge de no leídas y despliega el listado cronológico.
+- [x] Pulsar en una notificación abre el modal de detalle de la incidencia.
+- [x] Cada notificación puede marcarse individualmente como leída actualizando el badge en tiempo real.
+- [x] Ausencia de notificaciones muestra el estado vacío informativo.
 
 ## Dudas abiertas
-- Ninguna duda abierta tras la entrevista de requisitos. La especificación está lista para aprobación.
+- Ninguna duda abierta. Especificación validada y aprobada con éxito.
