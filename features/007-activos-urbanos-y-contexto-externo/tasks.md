@@ -25,14 +25,14 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Pruebas unitarias de `UrbanAssetServiceTest` (cálculo de distancias, ordenación por proximidad y fórmulas de confianza).
 - [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 4: Patrón Circuit Breaker y Servicio de Ingesta de Contexto Externo con Fallback (HU17, HU18) — depende de Tarea 1, Tarea 2 — RF: RF-8, RF-9, RF-11, RF-12, RF-13, RF-14, RF-15
-- [ ] Implementar componente de resiliencia `CircuitBreaker` (estados CLOSED, OPEN, HALF_OPEN, ventana móvil y cooldown de 30s).
-- [ ] Implementar `ExternalContextService` con cliente `RestTemplate` configurado a 3.000 ms de timeout.
-- [ ] Implementar conector HTTP con Open-Meteo para temperatura, lluvia y viento.
-- [ ] Implementar conector/adaptador para tráfico municipal en el tramo de la incidencia.
-- [ ] Implementar método de fallback transparente ante fallos de conexión, timeout o circuito abierto (devolviendo lista vacía y registrando log).
-- [ ] Pruebas unitarias de `CircuitBreakerTest` y `ExternalContextServiceTest` (verificación de fallback y tolerancia a fallos).
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+## [x] Tarea 4: Patrón Circuit Breaker y Servicio de Ingesta de Contexto Externo con Fallback (HU17, HU18) — depende de Tarea 1, Tarea 2 — RF: RF-8, RF-9, RF-11, RF-12, RF-13, RF-14, RF-15
+- [x] Implementar componente de resiliencia `CircuitBreaker` (estados CLOSED, OPEN, HALF_OPEN, ventana móvil y cooldown de 30s).
+- [x] Implementar `ExternalContextService` con cliente `RestTemplate` configurado a 3.000 ms de timeout.
+- [x] Implementar conector HTTP con Open-Meteo para temperatura, lluvia y viento.
+- [x] Implementar conector/adaptador para tráfico municipal en el tramo de la incidencia.
+- [x] Implementar método de fallback transparente ante fallos de conexión, timeout o circuito abierto (devolviendo lista vacía y registrando log).
+- [x] Pruebas unitarias de `CircuitBreakerTest` y `ExternalContextServiceTest` (verificación de fallback y tolerancia a fallos).
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 5: Integración en Creación y Consulta de Incidencias — depende de Tarea 3, Tarea 4 — RF: RF-1, RF-5, RF-8, RF-10, RF-15
 - [ ] Modificar `IncidentService.createIncident` para orquestar la llamada a `UrbanAssetService` y `ExternalContextService`.
