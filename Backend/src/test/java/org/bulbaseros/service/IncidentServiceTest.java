@@ -1107,5 +1107,4 @@ class IncidentServiceTest {
 
         verify(notificationService).createNotification(eq(testCitizen), eq(inc), eq("STATUS_CHANGE"), anyString(), anyString());
     }
-    }
 }

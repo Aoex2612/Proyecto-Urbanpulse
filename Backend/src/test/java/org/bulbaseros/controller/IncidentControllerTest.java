@@ -570,5 +570,4 @@ class IncidentControllerTest {
 
         verify(incidentService).searchIncidents(eq("bache"), isNull(), isNull(), isNull(), eq(EstadoIncidencia.VALIDATED), eq(false));
     }
-    }
 }
