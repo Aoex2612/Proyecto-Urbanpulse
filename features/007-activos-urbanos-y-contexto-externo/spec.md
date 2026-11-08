@@ -58,15 +58,15 @@ Transformar los avisos reportados de incidentes aislados en unidades de trabajo 
 - Predicción climatológica futura (solo se capturan las observaciones vigentes al momento del reporte).
 
 ## Criterios de aceptación
-- [ ] Cálculo de proximidad geográfica ejecutado al reportar una incidencia, detectando activos urbanos a menos de 50 metros.
-- [ ] Generación de registro en `incident_asset_associations` con `distance_meters`, `confidence_score` y `is_confirmed = false`.
-- [ ] Endpoint `POST /api/incidents/{incidentId}/assets/{assetId}/confirm` operativo para roles `OPERATOR`/`ADMIN`.
-- [ ] Endpoint `DELETE /api/incidents/{incidentId}/assets/{assetId}` operativo para desvincular un activo.
-- [ ] Ingesta automática de observaciones meteorológicas (temperatura, precipitación, viento) en `external_observations` y asociadas a la incidencia.
-- [ ] Inclusión de `urbanAssets` y `urbanContext` en la respuesta JSON de `GET /api/incidents/{id}`.
-- [ ] Patrón Circuit Breaker / Fallback implementado con timeout estricto de 3 segundos ante caídas o lentitud de APIs externas.
-- [ ] Alta de incidencias exitosa (HTTP 201 Created) incluso ante la desconexión total o simulación de error 500/timeout de las APIs externas.
-- [ ] Batería de pruebas unitarias y de integración que validen el cálculo de proximidad, fallback ante fallo externo y endpoints REST.
+- [x] Cálculo de proximidad geográfica ejecutado al reportar una incidencia, detectando activos urbanos a menos de 50 metros.
+- [x] Generación de registro en `incident_asset_associations` con `distance_meters`, `confidence_score` y `is_confirmed = false`.
+- [x] Endpoint `POST /api/incidents/{incidentId}/assets/{assetId}/confirm` operativo para roles `OPERATOR`/`ADMIN`.
+- [x] Endpoint `DELETE /api/incidents/{incidentId}/assets/{assetId}` operativo para desvincular un activo.
+- [x] Ingesta automática de observaciones meteorológicas (temperatura, precipitación, viento) en `external_observations` y asociadas a la incidencia.
+- [x] Inclusión de `urbanAssets` y `urbanContext` en la respuesta JSON de `GET /api/incidents/{id}`.
+- [x] Patrón Circuit Breaker / Fallback implementado con timeout estricto de 3 segundos ante caídas o lentitud de APIs externas.
+- [x] Alta de incidencias exitosa (HTTP 201 Created) incluso ante la desconexión total o simulación de error 500/timeout de las APIs externas.
+- [x] Batería de pruebas unitarias y de integración que validen el cálculo de proximidad, fallback ante fallo externo y endpoints REST.
 
 ## Dudas abiertas
 - Ninguna. Los requisitos funcionales y contratos se alinean con las directrices de `docs/DESCRIPCION.md`, la arquitectura C4 y el esquema relacional existente en PostgreSQL.

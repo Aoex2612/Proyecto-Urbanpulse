@@ -946,10 +946,15 @@ class IncidentServiceTest {
             return inc;
         });
 
-        IncidentAssetResponse assetDto = new IncidentAssetResponse(
-                55L, 101L, "Farola Larios 1", "FAROLA", "CALLE_LARIOS_01",
-                12.5, 0.85, false, OffsetDateTime.now()
-        );
+        IncidentAssetResponse assetDto = IncidentAssetResponse.builder()
+                .assetId(101L)
+                .name("Farola Larios 1")
+                .type("FAROLA")
+                .assetCode("CALLE_LARIOS_01")
+                .distanceMeters(12.5)
+                .confidenceScore(0.85)
+                .isConfirmed(false)
+                .build();
         when(urbanAssetService.associateNearbyAssets(any(Incidencia.class))).thenReturn(List.of(assetDto));
 
         ExternalObservationResponse weatherDto = new ExternalObservationResponse(
@@ -1024,10 +1029,15 @@ class IncidentServiceTest {
 
         when(incidenciaRepository.findById(incidentId)).thenReturn(Optional.of(testIncident));
 
-        IncidentAssetResponse assetDto = new IncidentAssetResponse(
-                incidentId, 202L, "Contenedor Vidrio", "CONTENEDOR", "CONT-VIDRIO-01",
-                18.0, 0.76, true, OffsetDateTime.now()
-        );
+        IncidentAssetResponse assetDto = IncidentAssetResponse.builder()
+                .assetId(202L)
+                .name("Contenedor Vidrio")
+                .type("CONTENEDOR")
+                .assetCode("CONT-VIDRIO-01")
+                .distanceMeters(18.0)
+                .confidenceScore(0.76)
+                .isConfirmed(true)
+                .build();
         when(urbanAssetService.getAssetsByIncidentId(incidentId)).thenReturn(List.of(assetDto));
 
         ExternalObservationResponse contextDto = new ExternalObservationResponse(
