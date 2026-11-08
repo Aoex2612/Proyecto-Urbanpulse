@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
           </Link>
 
           <Link
-            to="/operator"
+            to="/operator-panel"
             className="analytics-nav-link"
             title="Ir al Centro de Triaje y Operaciones"
           >

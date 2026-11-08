@@ -48,13 +48,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] 7.5 Crear página principal `AnalyticsPage.jsx` y estilos asociados en `AnalyticsPage.css` integrando los componentes anteriores y la tabla de datos.
 - [x] 7.6 Crear pruebas unitarias con Vitest en `AnalyticsPage.test.jsx`, `AnalyticsKpiCards.test.jsx` y `EmptyAnalyticsState.test.jsx`.
 
-## [ ] Tarea 8: Integración de Asistencia Inteligente en Triaje, Navegación y Verificación Global - Depende de Tareas 5, 6 y 7 - RF: Todos (RF-1 al RF-21)
-- [ ] 8.1 Actualizar `AssignmentModal.jsx` para invocar el servicio de recomendación, preseleccionar automáticamente el departamento sugerido, mostrar badge persistente de opción recomendada y advertencia para confianza < 50%.
-- [ ] 8.2 Actualizar `Navbar.jsx` con el enlace visible "Analítica" hacia `/analytics` únicamente para usuarios con rol `ANALYST`, `ADMIN` u `OPERATOR`.
-- [ ] 8.3 Registrar la ruta protegida `/analytics` en `App.jsx` protegida por `ProtectedRoute` y `RoleGuard`.
-- [ ] 8.4 Ejecutar suite de pruebas de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y reporte JaCoCo.
-- [ ] 8.5 Ejecutar suite de pruebas y linter de Frontend (`cd frontend && npm test` y `npm run lint`) garantizando 0 errores y advertencias.
-- [ ] 8.6 Redactar documento técnico y guía de pruebas de la feature en `docs/009-analitica-urbana-y-reportes/qa-note.md` para la posterior fase de validación (`sdd-validate`).
+## [x] Tarea 8: Integración de Asistencia Inteligente en Triaje, Navegación y Verificación Global - Depende de Tareas 5, 6 y 7 - RF: Todos (RF-1 al RF-21)
+- [x] 8.1 Actualizar `AssignmentModal.jsx` para invocar el servicio de recomendación, preseleccionar automáticamente el departamento sugerido, mostrar badge persistente de opción recomendada y advertencia para confianza < 50%.
+- [x] 8.2 Actualizar `Navbar.jsx` con el enlace visible "Analítica" hacia `/analytics` únicamente para usuarios con rol `ANALYST`, `ADMIN` u `OPERATOR`.
+- [x] 8.3 Registrar la ruta protegida `/analytics` en `App.jsx` protegida por `ProtectedRoute` y `RoleGuard`.
+- [x] 8.4 Ejecutar suite de pruebas de Backend (`cd Backend && mvn clean test`) verificando 100% de tests en verde y reporte JaCoCo.
+- [x] 8.5 Ejecutar suite de pruebas y linter de Frontend (`cd frontend && npm test` y `npm run lint`) garantizando 0 errores y advertencias.
+- [x] 8.6 Redactar documento técnico y guía de pruebas de la feature en `docs/009-analitica-urbana-y-reportes/qa-note.md` para la posterior fase de validación (`sdd-validate`).
 
 ---
 ## Mantenimiento (checklist recurrente)

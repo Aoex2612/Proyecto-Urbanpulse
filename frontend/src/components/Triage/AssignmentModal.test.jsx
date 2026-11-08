@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AssignmentModal from './AssignmentModal';
 import triageService from '../../services/triageService';
+import analyticsService from '../../services/analyticsService';
 
 vi.mock('../../services/triageService', () => ({
   default: {
@@ -11,6 +12,13 @@ vi.mock('../../services/triageService', () => ({
     assignDepartmentsAndTechnicians: vi.fn(),
     deactivateAssignments: vi.fn(),
   },
+}));
+
+vi.mock('../../services/analyticsService', () => ({
+  default: {
+    getDepartmentRecommendation: vi.fn(),
+  },
+  getDepartmentRecommendation: vi.fn(),
 }));
 
 describe('AssignmentModal', () => {
@@ -45,6 +53,7 @@ describe('AssignmentModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    analyticsService.getDepartmentRecommendation.mockResolvedValue(null);
     triageService.getDepartments.mockResolvedValue(mockDepartments);
     triageService.getIncidentAssignments.mockResolvedValue(mockIncident.assignments);
     triageService.getTechniciansByDepartment.mockImplementation((deptId) => {
@@ -200,5 +209,119 @@ describe('AssignmentModal', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('preselecciona automáticamente el departamento sugerido con su insignia y técnicos (RF-15)', async () => {
+    analyticsService.getDepartmentRecommendation.mockResolvedValueOnce({
+      suggestedDepartmentId: 2,
+      suggestedDepartmentName: 'Vías Públicas',
+      confidencePercentage: 86,
+      isLowConfidenceWarning: false,
+      reasoning: 'Coincidencia léxica con bache y calzada.',
+    });
+
+    render(
+      <AssignmentModal isOpen={true} incident={mockIncident} onClose={vi.fn()} />
+    );
+
+    await waitFor(() => {
+      expect(analyticsService.getDepartmentRecommendation).toHaveBeenCalledWith({
+        incidentId: 42,
+        title: 'Hoyo profundo en calzada',
+        description: undefined,
+        category: undefined,
+      });
+      expect(
+        screen.getByText(/Sugerencia Inteligente:/i)
+      ).toBeInTheDocument();
+      expect(screen.getAllByText('Vías Públicas').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/Recomendado \(86%\)/i)).toBeInTheDocument();
+    });
+
+    // Debe estar preseleccionado el checkbox de Vías Públicas
+    const viasCheckbox = screen.getByLabelText(/Seleccionar departamento Vías Públicas/i);
+    expect(viasCheckbox).toBeChecked();
+
+    // Debe cargar técnicos de Vías Públicas automáticamente
+    await waitFor(() => {
+      expect(triageService.getTechniciansByDepartment).toHaveBeenCalledWith(2);
+      expect(screen.getByText('María Asfalto')).toBeInTheDocument();
+    });
+  });
+
+  it('mantiene visible la insignia de sugerencia de manera persistente tras deseleccionar el departamento (RF-16)', async () => {
+    analyticsService.getDepartmentRecommendation.mockResolvedValueOnce({
+      suggestedDepartmentId: 2,
+      suggestedDepartmentName: 'Vías Públicas',
+      confidencePercentage: 90,
+      isLowConfidenceWarning: false,
+      reasoning: 'Calzada dañada',
+    });
+
+    render(
+      <AssignmentModal isOpen={true} incident={mockIncident} onClose={vi.fn()} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Sugerencia Inteligente:/i)).toBeInTheDocument();
+    });
+
+    const viasCheckbox = screen.getByLabelText(/Seleccionar departamento Vías Públicas/i);
+    expect(viasCheckbox).toBeChecked();
+
+    // El operador desmarca el departamento sugerido
+    fireEvent.click(viasCheckbox);
+    expect(viasCheckbox).not.toBeChecked();
+
+    // La insignia de sugerencia sigue visible en pantalla (RF-16)
+    expect(screen.getByText(/Sugerencia Inteligente:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recomendado \(90%\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Calzada dañada/i)).toBeInTheDocument();
+  });
+
+  it('muestra distintivo de advertencia explícita ante grado de confianza inferior al 50% (RF-17)', async () => {
+    analyticsService.getDepartmentRecommendation.mockResolvedValueOnce({
+      suggestedDepartmentId: 2,
+      suggestedDepartmentName: 'Vías Públicas',
+      confidencePercentage: 42,
+      isLowConfidenceWarning: true,
+      reasoning: 'Texto ambiguo en la descripción.',
+    });
+
+    render(
+      <AssignmentModal isOpen={true} incident={mockIncident} onClose={vi.fn()} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Sugerencia Inteligente:/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Atención: Nivel de confianza bajo \(< 50%\)\. Requiere confirmación rigurosa del operador\./i
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('no preselecciona el departamento sugerido si ya está asignado activamente a la incidencia', async () => {
+    // Alumbrado Público (id 1) ya está asignado activamente en mockIncident
+    analyticsService.getDepartmentRecommendation.mockResolvedValueOnce({
+      suggestedDepartmentId: 1,
+      suggestedDepartmentName: 'Alumbrado Público',
+      confidencePercentage: 95,
+      isLowConfidenceWarning: false,
+      reasoning: 'Farolas apagadas.',
+    });
+
+    render(
+      <AssignmentModal isOpen={true} incident={mockIncident} onClose={vi.fn()} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Sugerencia Inteligente:/i)).toBeInTheDocument();
+    });
+
+    const alumbradoCheckbox = screen.getByLabelText(/Seleccionar departamento Alumbrado Público/i);
+    // Como ya está en asignaciones activas actuales, no debe preseleccionarse en las nuevas
+    expect(alumbradoCheckbox).not.toBeChecked();
   });
 });
