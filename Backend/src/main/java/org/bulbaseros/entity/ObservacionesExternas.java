@@ -5,10 +5,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad JPA que representa una observación contextual externa en la plataforma UrbanPulse.
@@ -26,6 +28,9 @@ public class ObservacionesExternas {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
+
     @Column(nullable = false, length = 50)
     private String source;
 
@@ -40,4 +45,14 @@ public class ObservacionesExternas {
 
     @Column(name = "observed_at", nullable = false)
     private OffsetDateTime observedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
+        if (this.observedAt == null) {
+            this.observedAt = OffsetDateTime.now();
+        }
+    }
 }

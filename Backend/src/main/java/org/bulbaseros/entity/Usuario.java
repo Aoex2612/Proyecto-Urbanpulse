@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -19,6 +20,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa a un usuario en la plataforma UrbanPulse.
@@ -57,6 +59,12 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
+
+    /**
+     * Identificador público universal (UUID v4) del usuario para exposición externa y API v2.
+     */
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Correo electrónico único del usuario, utilizado como identificador de inicio de sesión.
@@ -155,6 +163,34 @@ public class Usuario {
         setFullName(fullName);
         setRole(role);
         this.department = department;
+    }
+
+    /**
+     * Obtiene el identificador público universal del usuario.
+     *
+     * @return Identificador público UUID.
+     */
+    public UUID getPublicId() {
+        return publicId;
+    }
+
+    /**
+     * Establece el identificador público universal del usuario.
+     *
+     * @param publicId Identificador público UUID a asignar.
+     */
+    public void setPublicId(UUID publicId) {
+        this.publicId = publicId;
+    }
+
+    /**
+     * Callback JPA previo a la persistencia para inicializar el identificador público si no existe.
+     */
+    @PrePersist
+    protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
     }
 
     /**

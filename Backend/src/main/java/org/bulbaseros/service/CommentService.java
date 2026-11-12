@@ -3,6 +3,7 @@ package org.bulbaseros.service;
 import org.bulbaseros.dto.CommentResponse;
 import org.bulbaseros.dto.CreateCommentRequest;
 import org.bulbaseros.dto.UpdateCommentRequest;
+import org.bulbaseros.dto.v2.CommentResponseV2;
 import org.bulbaseros.entity.ComentariosIncidencias;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.entity.Incidencia;
@@ -10,16 +11,20 @@ import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.CommentMapper;
+import org.bulbaseros.mappers.CommentMapperV2;
 import org.bulbaseros.repository.ComentariosIncidenciasRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Servicio de negocio para la gestión del muro de comentarios y notas técnicas de incidencias.
@@ -39,23 +44,26 @@ public class CommentService {
     private final IncidenciaRepository incidenciaRepository;
     private final UserRepository userRepository;
     private final CommentMapper commentMapper;
+    private final CommentMapperV2 commentMapperV2;
 
-    /**
-     * Construye una nueva instancia de {@link CommentService} inyectando las dependencias necesarias.
-     *
-     * @param comentariosRepository Repositorio de persistencia de comentarios.
-     * @param incidenciaRepository   Repositorio de consulta y actualización de incidencias.
-     * @param userRepository         Repositorio de usuarios del sistema.
-     * @param commentMapper          Mapeador entre entidades {@link ComentariosIncidencias} y DTOs {@link CommentResponse}.
-     */
     public CommentService(ComentariosIncidenciasRepository comentariosRepository,
                           IncidenciaRepository incidenciaRepository,
                           UserRepository userRepository,
                           CommentMapper commentMapper) {
+        this(comentariosRepository, incidenciaRepository, userRepository, commentMapper, new CommentMapperV2());
+    }
+
+    @Autowired
+    public CommentService(ComentariosIncidenciasRepository comentariosRepository,
+                          IncidenciaRepository incidenciaRepository,
+                          UserRepository userRepository,
+                          CommentMapper commentMapper,
+                          @Autowired(required = false) CommentMapperV2 commentMapperV2) {
         this.comentariosRepository = comentariosRepository;
         this.incidenciaRepository = incidenciaRepository;
         this.userRepository = userRepository;
         this.commentMapper = commentMapper;
+        this.commentMapperV2 = commentMapperV2 != null ? commentMapperV2 : new CommentMapperV2();
     }
 
     /**
@@ -214,5 +222,65 @@ public class CommentService {
 
         ComentariosIncidencias updatedComment = comentariosRepository.save(comment);
         return commentMapper.toDto(updatedComment);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentResponseV2> getCommentsByIncidentPublicId(UUID incidentPublicId, Authentication auth) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Se requiere autenticación previa");
+        }
+
+        String email = auth.getName();
+        Usuario user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario autenticado no encontrado"));
+
+        if (user.getRole() == RolUsuario.CITIZEN) {
+            if (incident.getCitizen() == null || !incident.getCitizen().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Un ciudadano solo puede visualizar comentarios de sus propias incidencias");
+            }
+            List<ComentariosIncidencias> publicComments =
+                    comentariosRepository.findByIncidentPublicIdAndIsInternalFalseOrderByCreatedAtAsc(incidentPublicId);
+            return commentMapperV2.toDtoList(publicComments);
+        }
+
+        if (user.getRole() == RolUsuario.OPERATOR
+                || user.getRole() == RolUsuario.TECHNICIAN
+                || user.getRole() == RolUsuario.ADMIN) {
+            List<ComentariosIncidencias> allComments =
+                    comentariosRepository.findByIncidentPublicIdOrderByCreatedAtAsc(incidentPublicId);
+            return commentMapperV2.toDtoList(allComments);
+        }
+
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Rol no autorizado para visualizar comentarios");
+    }
+
+    @Transactional
+    public CommentResponseV2 addCommentV2(UUID incidentPublicId, CreateCommentRequest request, String userEmail) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        addComment(incident.getId(), request, userEmail);
+
+        List<ComentariosIncidencias> all = comentariosRepository.findByIncidentPublicIdOrderByCreatedAtAsc(incidentPublicId);
+        ComentariosIncidencias last = all.get(all.size() - 1);
+        return commentMapperV2.toDto(last);
+    }
+
+    @Transactional
+    public CommentResponseV2 updateCommentV2(UUID incidentPublicId, UUID commentPublicId, UpdateCommentRequest request, String userEmail) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        ComentariosIncidencias comment = comentariosRepository.findByPublicId(commentPublicId)
+                .orElseThrow(() -> new IllegalArgumentException("Comentario no encontrado con publicId: " + commentPublicId));
+
+        updateComment(incident.getId(), comment.getId(), request, userEmail);
+
+        ComentariosIncidencias updated = comentariosRepository.findByPublicId(commentPublicId)
+                .orElseThrow(() -> new IllegalArgumentException("Comentario no encontrado"));
+        return commentMapperV2.toDto(updated);
     }
 }

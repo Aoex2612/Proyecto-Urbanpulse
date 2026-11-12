@@ -13,6 +13,8 @@ import org.springframework.stereotype.Repository;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestion de persistencia y consultas de la entidad {@link Incidencia}.
@@ -104,4 +106,20 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long>, J
      * @return Lista de incidencias creadas entre ambas fechas.
      */
     List<Incidencia> findByCreatedAtBetweenOrderByCreatedAtDesc(OffsetDateTime startDate, OffsetDateTime endDate);
+
+    /**
+     * Recupera una incidencia urbana a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico de la incidencia.
+     * @return Contenedor {@link Optional} con la incidencia hallada o vacio si no existe.
+     */
+    Optional<Incidencia> findByPublicId(UUID publicId);
+
+    /**
+     * Comprueba la existencia de una incidencia urbana a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico de la incidencia.
+     * @return {@code true} si existe una incidencia con dicho UUID publico, {@code false} en caso contrario.
+     */
+    boolean existsByPublicId(UUID publicId);
 }

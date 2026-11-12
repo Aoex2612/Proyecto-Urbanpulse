@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestión y persistencia de entidades {@link Usuario}.
@@ -61,4 +62,12 @@ public interface UserRepository extends JpaRepository<Usuario, Long> {
      * @return Lista de usuarios con dicho rol.
      */
     List<Usuario> findByRole(RolUsuario role);
+
+    /**
+     * Busca un usuario en el sistema a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico del usuario.
+     * @return {@link Optional} con el usuario hallado o vacio.
+     */
+    Optional<Usuario> findByPublicId(UUID publicId);
 }

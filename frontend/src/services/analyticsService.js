@@ -29,7 +29,7 @@ import api from './api';
  * @throws {import('axios').AxiosError} Si la petición falla o el usuario carece de permisos autorizados (403).
  */
 export const getAnalyticsSummary = async (params = {}) => {
-  const response = await api.get('/api/analytics/summary', { params });
+  const response = await api.get('/api/v2/analytics/summary', { params });
   return response.data;
 };
 
@@ -48,11 +48,11 @@ export const getAnalyticsSummary = async (params = {}) => {
  * Admite consulta por identificador de incidencia (`incidentId`) o por los atributos textuales (`title`, `description`, `category`).
  *
  * @param {DepartmentRecommendationParams} [params={}] - Parámetros de la incidencia a evaluar.
- * @returns {Promise<{suggestedDepartmentId: number|null, suggestedDepartmentName: string, confidencePercentage: number, isLowConfidenceWarning: boolean, reasoning: string}>} Objeto con la sugerencia y grado de confianza.
+ * @returns {Promise<{suggestedDepartmentId: number|string|null, suggestedDepartmentName: string, confidencePercentage: number, isLowConfidenceWarning: boolean, reasoning: string}>} Objeto con la sugerencia y grado de confianza.
  * @throws {import('axios').AxiosError} Si la petición falla o el usuario no cuenta con rol autorizado.
  */
 export const getDepartmentRecommendation = async (params = {}) => {
-  const response = await api.get('/api/analytics/recommend-department', { params });
+  const response = await api.get('/api/v2/analytics/recommend-department', { params });
   return response.data;
 };
 

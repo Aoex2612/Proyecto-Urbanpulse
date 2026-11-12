@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestión de persistencia y consultas de la entidad {@link ActivoUrbano}.
@@ -39,4 +40,12 @@ public interface ActivoUrbanoRepository extends JpaRepository<ActivoUrbano, Long
      * @return {@link Optional} que contiene el activo urbano si existe, o vacío en caso contrario.
      */
     Optional<ActivoUrbano> findByAssetCode(String assetCode);
+
+    /**
+     * Busca un activo urbano a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico del activo.
+     * @return {@link Optional} con el activo urbano o vacio.
+     */
+    Optional<ActivoUrbano> findByPublicId(UUID publicId);
 }

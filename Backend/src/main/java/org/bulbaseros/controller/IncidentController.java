@@ -57,7 +57,7 @@ import java.util.List;
  * @version 1.3
  */
 @RestController
-@RequestMapping("/api/incidents")
+@RequestMapping({"/api/v1/incidents", "/api/incidents"})
 public class IncidentController {
 
     /**

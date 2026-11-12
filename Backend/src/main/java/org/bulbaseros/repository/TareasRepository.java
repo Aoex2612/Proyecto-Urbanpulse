@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestión de persistencia de asignaciones departamentales y técnicas ({@link Tareas}).
@@ -93,4 +95,28 @@ public interface TareasRepository extends JpaRepository<Tareas, Long> {
      * @return Lista de asignaciones activas del departamento.
      */
     List<Tareas> findByDepartmentIdAndIsActiveTrue(Long departmentId);
+
+    /**
+     * Recupera una asignacion a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico de la asignacion.
+     * @return {@link Optional} con la asignacion o vacio.
+     */
+    Optional<Tareas> findByPublicId(UUID publicId);
+
+    /**
+     * Recupera todas las asignaciones activas de una incidencia a partir de su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista de asignaciones activas.
+     */
+    List<Tareas> findByIncidentPublicIdAndIsActiveTrue(UUID incidentPublicId);
+
+    /**
+     * Recupera todas las asignaciones de una incidencia a partir de su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista de asignaciones.
+     */
+    List<Tareas> findByIncidentPublicId(UUID incidentPublicId);
 }

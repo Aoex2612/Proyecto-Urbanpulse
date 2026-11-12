@@ -15,19 +15,19 @@ import api from './api';
  * @throws {import('axios').AxiosError} Si ocurre un error durante la petición HTTP.
  */
 export const getAllIncidents = async () => {
-  const response = await api.get('/api/incidents');
+  const response = await api.get('/api/v2/incidents');
   return response.data;
 };
 
 /**
  * Obtiene los detalles de una incidencia específica a partir de su identificador único.
  *
- * @param {number|string} id - Identificador numérico de la incidencia a consultar.
- * @returns {Promise<{id: number, title: string, description: string, category: string, status: string, priority: string, latitude: number, longitude: number, citizenId: number, citizenName: string, citizenEmail: string, createdAt: string, updatedAt: string}>} Datos detallados de la incidencia.
+ * @param {number|string} id - Identificador numérico o UUID público de la incidencia a consultar.
+ * @returns {Promise<{id: string, title: string, description: string, category: string, status: string, priority: string, latitude: number, longitude: number, citizenId: string, citizenName: string, citizenEmail: string, createdAt: string, updatedAt: string}>} Datos detallados de la incidencia.
  * @throws {import('axios').AxiosError} Si la incidencia no existe (HTTP 404) o falla la conexión.
  */
 export const getIncidentById = async (id) => {
-  const response = await api.get(`/api/incidents/${id}`);
+  const response = await api.get(`/api/v2/incidents/${id}`);
   return response.data;
 };
 
@@ -43,7 +43,7 @@ export const getIncidentById = async (id) => {
  * @throws {import('axios').AxiosError} Si ocurre un error durante la petición HTTP o falta autenticación.
  */
 export const getMyIncidents = async (params = {}) => {
-  const response = await api.get('/api/incidents/my-incidents', { params });
+  const response = await api.get('/api/v2/incidents/my-incidents', { params });
   return response.data;
 };
 
@@ -58,7 +58,7 @@ export const getMyIncidents = async (params = {}) => {
  */
 export const reverseGeocode = async (latitude, longitude) => {
   try {
-    const response = await api.get('/api/incidents/geocode/reverse', {
+    const response = await api.get('/api/v2/incidents/geocode/reverse', {
       params: { latitude, longitude },
     });
     return {
@@ -80,11 +80,11 @@ export const reverseGeocode = async (latitude, longitude) => {
  * Registra una nueva incidencia urbana en la plataforma asociada al ciudadano autenticado.
  *
  * @param {{title: string, description: string, category: string, latitude: number, longitude: number}} incidentData - Datos del formulario de creación de incidencia.
- * @returns {Promise<{id: number, title: string, description: string, category: string, status: string, priority: string, latitude: number, longitude: number, citizenId: number, citizenName: string, citizenEmail: string, createdAt: string, updatedAt: string}>} Incidencia creada devuelta por el servidor con estado REPORTED y prioridad MEDIUM (HTTP 201).
+ * @returns {Promise<{id: string, title: string, description: string, category: string, status: string, priority: string, latitude: number, longitude: number, citizenId: string, citizenName: string, citizenEmail: string, createdAt: string, updatedAt: string}>} Incidencia creada devuelta por el servidor con estado REPORTED y prioridad MEDIUM (HTTP 201).
  * @throws {import('axios').AxiosError} Si la validación falla (HTTP 400) o el usuario no está autenticado (HTTP 401).
  */
 export const createIncident = async (incidentData) => {
-  const response = await api.post('/api/incidents', incidentData);
+  const response = await api.post('/api/v2/incidents', incidentData);
   return response.data;
 };
 
@@ -92,13 +92,13 @@ export const createIncident = async (incidentData) => {
  * Actualiza el estado operativo de una incidencia y registra la transición atómica en la tabla de auditoría.
  * Operación restringida a usuarios con roles operativos (OPERATOR o ADMIN).
  *
- * @param {number|string} id - Identificador numérico de la incidencia cuyo estado se modificará.
+ * @param {number|string} id - Identificador numérico o UUID público de la incidencia cuyo estado se modificará.
  * @param {{status: string, reason?: string}} statusData - Objeto con el nuevo estado y el motivo justificado de la transición.
- * @returns {Promise<{id: number, title: string, description: string, category: string, status: string, priority: string, latitude: number, longitude: number, citizenId: number, citizenName: string, citizenEmail: string, createdAt: string, updatedAt: string}>} Incidencia actualizada con el nuevo estado (HTTP 200).
+ * @returns {Promise<Object>} Incidencia actualizada con el nuevo estado (HTTP 200).
  * @throws {import('axios').AxiosError} Si el usuario no tiene permisos (HTTP 403), la incidencia no existe (HTTP 404) o los datos son inválidos (HTTP 400).
  */
 export const updateIncidentStatus = async (id, statusData) => {
-  const response = await api.patch(`/api/incidents/${id}/status`, statusData);
+  const response = await api.patch(`/api/v2/incidents/${id}/status`, statusData);
   return response.data;
 };
 
@@ -115,12 +115,12 @@ export const updateStatus = updateIncidentStatus;
  * Recupera el registro cronológico inmutable de cambios de estado de una incidencia para el timeline de auditoría.
  * Operación restringida a usuarios con rol administrativo (ADMIN).
  *
- * @param {number|string} id - Identificador numérico de la incidencia a auditar.
- * @returns {Promise<Array<{id: number, incidentId: number, previousStatus: string, newStatus: string, changeReason: string, changedByUserId: number, changedByUserName: string, changedByUserEmail: string, createdAt: string}>>} Historial de cambios de estado ordenado cronológicamente (HTTP 200).
+ * @param {number|string} id - Identificador numérico o UUID público de la incidencia a auditar.
+ * @returns {Promise<Array<Object>>} Historial de cambios de estado ordenado cronológicamente (HTTP 200).
  * @throws {import('axios').AxiosError} Si el usuario carece de rol ADMIN (HTTP 403) o la incidencia no existe (HTTP 404).
  */
 export const getIncidentHistory = async (id) => {
-  const response = await api.get(`/api/incidents/${id}/history`);
+  const response = await api.get(`/api/v2/incidents/${id}/history`);
   return response.data;
 };
 
@@ -129,13 +129,13 @@ export const getIncidentHistory = async (id) => {
  *
  * @param {number|string} incidentId - Identificador único de la incidencia.
  * @param {File} file - Archivo de imagen seleccionado para adjuntar.
- * @returns {Promise<{id: number, incidentId: number, fileName: string, fileUrl: string, mimeType: string, fileSizeBytes: number, uploadedAt: string}>} Datos del adjunto creado.
+ * @returns {Promise<Object>} Datos del adjunto creado.
  * @throws {import('axios').AxiosError} Si ocurre un error de validación o red.
  */
 export const uploadIncidentAttachment = async (incidentId, file) => {
   const formData = new FormData();
   formData.append('file', file);
-  const response = await api.post(`/api/incidents/${incidentId}/attachments`, formData, {
+  const response = await api.post(`/api/v2/incidents/${incidentId}/attachments`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -147,11 +147,11 @@ export const uploadIncidentAttachment = async (incidentId, file) => {
  * Recupera la lista de archivos multimedia adjuntos a una incidencia.
  *
  * @param {number|string} incidentId - Identificador único de la incidencia.
- * @returns {Promise<Array<{id: number, incidentId: number, fileName: string, fileUrl: string, mimeType: string, fileSizeBytes: number, uploadedAt: string}>>} Lista de archivos adjuntos.
+ * @returns {Promise<Array<Object>>} Lista de archivos adjuntos.
  * @throws {import('axios').AxiosError} Si falla la consulta o la incidencia no existe.
  */
 export const getIncidentAttachments = async (incidentId) => {
-  const response = await api.get(`/api/incidents/${incidentId}/attachments`);
+  const response = await api.get(`/api/v2/incidents/${incidentId}/attachments`);
   return response.data;
 };
 
@@ -160,11 +160,11 @@ export const getIncidentAttachments = async (incidentId) => {
  * En el backend, si el usuario autenticado es ciudadano, la API filtra automáticamente solo los comentarios no internos.
  *
  * @param {number|string} incidentId - Identificador único de la incidencia.
- * @returns {Promise<Array<{id: number, incidentId: number, authorId: number, authorName: string, authorRole: string, comment: string, isInternal: boolean, createdAt: string, updatedAt: string|null}>>} Lista de comentarios públicos de la incidencia.
+ * @returns {Promise<Array<Object>>} Lista de comentarios públicos de la incidencia.
  * @throws {import('axios').AxiosError} Si ocurre un error durante la petición o falta autorización.
  */
 export const getIncidentPublicComments = async (incidentId) => {
-  const response = await api.get(`/api/incidents/${incidentId}/comments`);
+  const response = await api.get(`/api/v2/incidents/${incidentId}/comments`);
   return response.data;
 };
 
@@ -178,7 +178,7 @@ export const getIncidentPublicComments = async (incidentId) => {
  * @throws {import('axios').AxiosError} Si el usuario carece de permisos (HTTP 403), no existe la incidencia o el activo (HTTP 404).
  */
 export const confirmIncidentAsset = async (incidentId, assetId) => {
-  const response = await api.post(`/api/incidents/${incidentId}/assets/${assetId}/confirm`);
+  const response = await api.post(`/api/v2/incidents/${incidentId}/assets/${assetId}/confirm`);
   return response.data;
 };
 
@@ -192,7 +192,7 @@ export const confirmIncidentAsset = async (incidentId, assetId) => {
  * @throws {import('axios').AxiosError} Si el usuario carece de permisos (HTTP 403), no existe la asociación (HTTP 404).
  */
 export const removeIncidentAsset = async (incidentId, assetId) => {
-  const response = await api.delete(`/api/incidents/${incidentId}/assets/${assetId}`);
+  const response = await api.delete(`/api/v2/incidents/${incidentId}/assets/${assetId}`);
   return response.data;
 };
 

@@ -12,11 +12,18 @@ import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.CambiosEstado;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.entity.Incidencia;
+import org.bulbaseros.dto.v2.IncidentResponseV2;
+import org.bulbaseros.dto.v2.IncidentStatusResponseV2;
+import org.bulbaseros.dto.v2.StatusChangeResponseV2;
 import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.IncidentMapper;
+import org.bulbaseros.mappers.IncidentMapperV2;
 import org.bulbaseros.mappers.StatusChangeMapper;
+import org.bulbaseros.mappers.StatusChangeMapperV2;
+
+import java.util.UUID;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.RolUsuario;
@@ -98,30 +105,11 @@ public class IncidentService {
     private final TareasRepository tareasRepository;
     private final NotificationService notificationService;
     private final DuplicateDetectionService duplicateDetectionService;
-
-    /**
-     * Servicio de cálculo de proximidad y gestión de activos urbanos vinculados (RF-1, RF-5).
-     */
     private final UrbanAssetService urbanAssetService;
-
-    /**
-     * Servicio de captura y consulta de observaciones de contexto externo meteorológico y vial (RF-8, RF-10, RF-15).
-     */
     private final ExternalContextService externalContextService;
+    private final IncidentMapperV2 incidentMapperV2;
+    private final StatusChangeMapperV2 statusChangeMapperV2;
 
-    /**
-     * Mapa inmutable que define las transiciones permitidas según el ciclo de vida oficial
-     * de incidencias en UrbanPulse:
-     * <ul>
-     *   <li>REPORTED -> VALIDATED, REJECTED</li>
-     *   <li>VALIDATED -> ASSIGNED</li>
-     *   <li>ASSIGNED -> IN_PROGRESS</li>
-     *   <li>IN_PROGRESS -> RESOLVED</li>
-     *   <li>RESOLVED -> CLOSED, REOPENED</li>
-     *   <li>REOPENED -> ASSIGNED</li>
-     *   <li>REJECTED, CLOSED -> terminales (sin transiciones posteriores)</li>
-     * </ul>
-     */
     public static final Map<EstadoIncidencia, Set<EstadoIncidencia>> ALLOWED_TRANSITIONS = Map.of(
             EstadoIncidencia.REPORTED, Set.of(EstadoIncidencia.VALIDATED, EstadoIncidencia.REJECTED),
             EstadoIncidencia.VALIDATED, Set.of(EstadoIncidencia.ASSIGNED),
@@ -159,7 +147,9 @@ public class IncidentService {
                            @Autowired(required = false) UrbanAssetService urbanAssetService,
                            @Autowired(required = false) ExternalContextService externalContextService,
                            @Autowired(required = false) NotificationService notificationService,
-                           @Autowired(required = false) DuplicateDetectionService duplicateDetectionService) {
+                           @Autowired(required = false) DuplicateDetectionService duplicateDetectionService,
+                           @Autowired(required = false) IncidentMapperV2 incidentMapperV2,
+                           @Autowired(required = false) StatusChangeMapperV2 statusChangeMapperV2) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
@@ -171,6 +161,8 @@ public class IncidentService {
         this.externalContextService = externalContextService;
         this.notificationService = notificationService;
         this.duplicateDetectionService = duplicateDetectionService;
+        this.incidentMapperV2 = incidentMapperV2 != null ? incidentMapperV2 : new IncidentMapperV2();
+        this.statusChangeMapperV2 = statusChangeMapperV2 != null ? statusChangeMapperV2 : new StatusChangeMapperV2();
     }
 
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -179,7 +171,7 @@ public class IncidentService {
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService) {
-        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null, null, null);
+        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null, null, null, null, null);
     }
 
     /**
@@ -625,5 +617,125 @@ public class IncidentService {
         Specification<Incidencia> spec = IncidentSpecifications.build(text, category, start, end, status, includeStatus);
         List<Incidencia> results = incidenciaRepository.findAll(spec);
         return incidentMapper.toDtoList(results);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncidentResponseV2> getActiveIncidentsV2() {
+        List<Incidencia> activeIncidents = incidenciaRepository.findByStatusNotIn(
+                List.of(EstadoIncidencia.CLOSED, EstadoIncidencia.REJECTED)
+        );
+        return incidentMapperV2.toDtoList(activeIncidents);
+    }
+
+    @Transactional(readOnly = true)
+    public IncidentResponseV2 getIncidentByPublicId(UUID publicId) {
+        if (publicId == null) {
+            throw new IllegalArgumentException("El identificador público de la incidencia no puede ser nulo");
+        }
+        Incidencia incidencia = incidenciaRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + publicId));
+
+        IncidentResponseV2 response = incidentMapperV2.toDto(incidencia);
+
+        if (urbanAssetService != null) {
+            try {
+                response.setUrbanAssets(urbanAssetService.getAssetsByIncidentPublicId(publicId));
+            } catch (Exception ex) {
+                log.warn("IncidentService: Error al recuperar activos urbanos para incidencia {}: {}", publicId, ex.getMessage());
+                response.setUrbanAssets(Collections.emptyList());
+            }
+        }
+
+        if (externalContextService != null) {
+            try {
+                response.setUrbanContext(externalContextService.getContextByIncidentPublicId(publicId));
+            } catch (Exception ex) {
+                log.warn("IncidentService: Error al recuperar contexto externo para incidencia {}: {}", publicId, ex.getMessage());
+                response.setUrbanContext(Collections.emptyList());
+            }
+        }
+
+        return response;
+    }
+
+    @Transactional
+    public IncidentResponseV2 createIncidentV2(CreateIncidentRequest request, String userEmail) {
+        IncidentResponse v1Response = createIncident(request, userEmail);
+        return getIncidentByPublicId(incidenciaRepository.findById(v1Response.getId())
+                .orElseThrow(() -> new IllegalStateException("Incidencia recién creada no encontrada"))
+                .getPublicId());
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<IncidentResponseV2> getMyIncidentsV2(int page, int size, String statusFilter, String userEmail) {
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            throw new IllegalArgumentException("El correo electrónico del usuario no puede estar vacío");
+        }
+
+        Usuario citizen = userRepository.findByEmail(userEmail.trim().toLowerCase())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario ciudadano no encontrado"));
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<Incidencia> pageResult;
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"TODOS".equalsIgnoreCase(statusFilter.trim())) {
+            try {
+                EstadoIncidencia status = EstadoIncidencia.valueOf(statusFilter.trim().toUpperCase());
+                Specification<Incidencia> spec = (root, query, cb) -> cb.and(
+                        cb.equal(root.get("citizen").get("id"), citizen.getId()),
+                        cb.equal(root.get("status"), status)
+                );
+                pageResult = incidenciaRepository.findAll(spec, pageable);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de incidencia no válido: " + statusFilter);
+            }
+        } else {
+            Specification<Incidencia> spec = (root, query, cb) -> cb.equal(root.get("citizen").get("id"), citizen.getId());
+            pageResult = incidenciaRepository.findAll(spec, pageable);
+        }
+
+        return incidentMapperV2.toPageResponse(pageResult);
+    }
+
+    @Transactional
+    public IncidentStatusResponseV2 updateIncidentStatusV2(UUID publicId, UpdateIncidentStatusRequest request, String userEmail) {
+        Incidencia incident = incidenciaRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + publicId));
+
+        updateIncidentStatus(incident.getId(), request, userEmail);
+
+        Incidencia updated = incidenciaRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + publicId));
+
+        return IncidentStatusResponseV2.builder()
+                .id(updated.getPublicId().toString())
+                .status(updated.getStatus())
+                .updatedAt(updated.getUpdatedAt())
+                .reason(request.getComment())
+                .updatedBy(userEmail)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatusChangeResponseV2> getIncidentStatusHistoryV2(UUID publicId) {
+        if (publicId == null) {
+            throw new IllegalArgumentException("El identificador público no puede ser nulo");
+        }
+
+        if (!incidenciaRepository.existsByPublicId(publicId)) {
+            throw new IncidentNotFoundException("Incidencia no encontrada con publicId: " + publicId);
+        }
+
+        List<CambiosEstado> statusChanges = cambiosEstadoRepository.findByIncidentPublicIdOrderByCreatedAtAsc(publicId);
+        return statusChangeMapperV2.toDtoList(statusChanges);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncidentResponseV2> searchIncidentsV2(String text, String category,
+                                                     OffsetDateTime start, OffsetDateTime end,
+                                                     EstadoIncidencia status, boolean includeStatus) {
+        Specification<Incidencia> spec = IncidentSpecifications.build(text, category, start, end, status, includeStatus);
+        List<Incidencia> results = incidenciaRepository.findAll(spec);
+        return incidentMapperV2.toDtoList(results);
     }
 }

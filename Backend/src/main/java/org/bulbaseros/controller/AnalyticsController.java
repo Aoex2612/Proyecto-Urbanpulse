@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @version 1.0
  */
 @RestController
-@RequestMapping("/api/analytics")
+@RequestMapping({"/api/v1/analytics", "/api/analytics"})
 @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN', 'OPERATOR')")
 @Slf4j
 public class AnalyticsController {

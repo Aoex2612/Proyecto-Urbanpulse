@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa una asignación operativa (tarea) de una incidencia urbana.
@@ -40,6 +41,9 @@ public class Tareas {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Incidencia urbana asignada.
@@ -104,6 +108,9 @@ public class Tareas {
      */
     @PrePersist
     protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
         if (this.assignedAt == null) {
             this.assignedAt = OffsetDateTime.now();
         }

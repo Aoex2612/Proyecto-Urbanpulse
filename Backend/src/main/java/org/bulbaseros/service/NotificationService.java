@@ -1,18 +1,22 @@
 package org.bulbaseros.service;
 
 import org.bulbaseros.dto.NotificationResponse;
+import org.bulbaseros.dto.v2.NotificationResponseV2;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.Notification;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.mappers.NotificationMapper;
+import org.bulbaseros.mappers.NotificationMapperV2;
 import org.bulbaseros.repository.NotificationRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Servicio de lógica de negocio transaccional para la gestión integral de notificaciones in-app.
@@ -33,20 +37,23 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
+    private final NotificationMapperV2 notificationMapperV2;
 
-    /**
-     * Construye una nueva instancia de {@link NotificationService} con sus dependencias inyectadas por constructor.
-     *
-     * @param notificationRepository Repositorio Spring Data JPA para la persistencia de notificaciones.
-     * @param userRepository         Repositorio Spring Data JPA para la consulta de usuarios.
-     * @param notificationMapper     Mapeador de conversión entre entidades {@link Notification} y DTOs {@link NotificationResponse}.
-     */
     public NotificationService(NotificationRepository notificationRepository,
                                UserRepository userRepository,
                                NotificationMapper notificationMapper) {
+        this(notificationRepository, userRepository, notificationMapper, new NotificationMapperV2());
+    }
+
+    @Autowired
+    public NotificationService(NotificationRepository notificationRepository,
+                               UserRepository userRepository,
+                               NotificationMapper notificationMapper,
+                               @Autowired(required = false) NotificationMapperV2 notificationMapperV2) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.notificationMapper = notificationMapper;
+        this.notificationMapperV2 = notificationMapperV2 != null ? notificationMapperV2 : new NotificationMapperV2();
     }
 
     /**
@@ -118,6 +125,24 @@ public class NotificationService {
         notification.setIsRead(true);
         Notification savedNotification = notificationRepository.save(notification);
         return notificationMapper.toDto(savedNotification);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationResponseV2> getUserNotificationsV2(String userEmail) {
+        Usuario user = findUserByEmailOrThrow(userEmail);
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        return notificationMapperV2.toDtoList(notifications);
+    }
+
+    @Transactional
+    public NotificationResponseV2 markAsReadV2(UUID notificationPublicId, String userEmail) {
+        Usuario user = findUserByEmailOrThrow(userEmail);
+        Notification notification = notificationRepository.findByPublicIdAndUserId(notificationPublicId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notificación no encontrada o no pertenece al usuario"));
+
+        notification.setIsRead(true);
+        Notification savedNotification = notificationRepository.save(notification);
+        return notificationMapperV2.toDto(savedNotification);
     }
 
     /**

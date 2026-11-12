@@ -17,7 +17,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
  */
 async function getNotifications() {
   const token = localStorage.getItem('token');
-  const response = await axios.get(`${API_BASE}/api/notifications`, {
+  const response = await axios.get(`${API_BASE}/api/v2/notifications`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
@@ -31,7 +31,7 @@ async function getNotifications() {
  */
 async function getUnreadCount() {
   const token = localStorage.getItem('token');
-  const response = await axios.get(`${API_BASE}/api/notifications/unread-count`, {
+  const response = await axios.get(`${API_BASE}/api/v2/notifications/unread-count`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return typeof response.data === 'number' ? response.data : response.data?.count ?? 0;
@@ -40,14 +40,14 @@ async function getUnreadCount() {
 /**
  * Marca una notificación individual como leída.
  *
- * @param {number} id Identificador único de la notificación a marcar como leída.
+ * @param {number|string} id Identificador único de la notificación a marcar como leída.
  * @returns {Promise<Object>} DTO actualizado de la notificación con isRead en true.
  * @throws {Error} Si la petición falla, el usuario no está autenticado o la notificación no le pertenece.
  */
 async function markAsRead(id) {
   const token = localStorage.getItem('token');
   const response = await axios.patch(
-    `${API_BASE}/api/notifications/${id}/read`,
+    `${API_BASE}/api/v2/notifications/${id}/read`,
     {},
     { headers: { Authorization: `Bearer ${token}` } }
   );

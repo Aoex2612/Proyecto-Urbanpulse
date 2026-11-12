@@ -1,6 +1,7 @@
 package org.bulbaseros.service;
 
 import org.bulbaseros.dto.IncidentResponse;
+import org.bulbaseros.dto.v2.IncidentResponseV2;
 import org.bulbaseros.dto.PriorityCalculationRequest;
 import org.bulbaseros.dto.PriorityCalculationResponse;
 import org.bulbaseros.dto.ReevaluateIncidentRequest;
@@ -17,12 +18,14 @@ import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.IncidentMapper;
+import org.bulbaseros.mappers.IncidentMapperV2;
 import org.bulbaseros.repository.CambiosEstadoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
+import java.util.UUID;
 import org.bulbaseros.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -54,20 +57,9 @@ public class IncidentTriageService {
     private final AssignmentService assignmentService;
     private final PriorityService priorityService;
     private final IncidentMapper incidentMapper;
+    private final IncidentMapperV2 incidentMapperV2;
     private final NotificationService notificationService;
 
-    /**
-     * Construye una nueva instancia de {@link IncidentTriageService} inyectando las dependencias requeridas.
-     *
-     * @param incidenciaRepository    Repositorio de persistencia y consulta de incidencias.
-     * @param userRepository          Repositorio de usuarios del sistema.
-     * @param cambiosEstadoRepository Repositorio de auditoría de transiciones de estado.
-     * @param tareasRepository        Repositorio de asignaciones departamentales y técnicas.
-     * @param assignmentService       Servicio de negocio para la gestión de asignaciones.
-     * @param priorityService         Servicio del motor determinista de cálculo de prioridades asistidas.
-     * @param incidentMapper          Mapeador de conversión entre {@link Incidencia} e {@link IncidentResponse}.
-     * @param notificationService     Servicio para el envío de notificaciones in-app.
-     */
     @Autowired
     public IncidentTriageService(IncidenciaRepository incidenciaRepository,
                                  UserRepository userRepository,
@@ -76,7 +68,8 @@ public class IncidentTriageService {
                                  AssignmentService assignmentService,
                                  PriorityService priorityService,
                                  IncidentMapper incidentMapper,
-                                 @Autowired(required = false) NotificationService notificationService) {
+                                 @Autowired(required = false) NotificationService notificationService,
+                                 @Autowired(required = false) IncidentMapperV2 incidentMapperV2) {
         this.incidenciaRepository = incidenciaRepository;
         this.userRepository = userRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
@@ -85,6 +78,7 @@ public class IncidentTriageService {
         this.priorityService = priorityService;
         this.incidentMapper = incidentMapper;
         this.notificationService = notificationService;
+        this.incidentMapperV2 = incidentMapperV2 != null ? incidentMapperV2 : new IncidentMapperV2();
     }
 
     public IncidentTriageService(IncidenciaRepository incidenciaRepository,
@@ -94,7 +88,7 @@ public class IncidentTriageService {
                                  AssignmentService assignmentService,
                                  PriorityService priorityService,
                                  IncidentMapper incidentMapper) {
-        this(incidenciaRepository, userRepository, cambiosEstadoRepository, tareasRepository, assignmentService, priorityService, incidentMapper, null);
+        this(incidenciaRepository, userRepository, cambiosEstadoRepository, tareasRepository, assignmentService, priorityService, incidentMapper, null, null);
     }
 
     /**
@@ -556,5 +550,88 @@ public class IncidentTriageService {
                 }
             }
         }
+    }
+
+    private Incidencia getIncidentByPublicIdOrThrow(UUID publicId) {
+        return incidenciaRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + publicId));
+    }
+
+    @Transactional(readOnly = true)
+    public PriorityCalculationResponse calculatePriorityV2(UUID incidentPublicId, PriorityCalculationRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return calculateAssistedPriority(incident.getId(), request, userEmail);
+    }
+
+    @Transactional
+    public IncidentResponseV2 updatePriorityV2(UUID incidentPublicId, UpdatePriorityRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        updatePriority(incident.getId(), request, userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 validateIncidentV2(UUID incidentPublicId, ValidateIncidentRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        validateIncident(incident.getId(), request, userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 rejectIncidentV2(UUID incidentPublicId, RejectIncidentRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        rejectIncident(incident.getId(), request, userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 reevaluateIncidentV2(UUID incidentPublicId, ReevaluateIncidentRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        reevaluateIncident(incident.getId(), request, userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 startWorkV2(UUID incidentPublicId, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        startIntervention(incident.getId(), userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 resolveIncidentV2(UUID incidentPublicId, ResolveIncidentRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        resolveIncident(incident.getId(), request, userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 closeIncidentV2(UUID incidentPublicId, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        closeIncident(incident.getId(), userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 reopenIncidentV2(UUID incidentPublicId, ReopenIncidentRequest request, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        reopenIncident(incident.getId(), request, userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public IncidentResponseV2 markIncidentAsDuplicateV2(UUID incidentPublicId, String userEmail) {
+        Incidencia incident = getIncidentByPublicIdOrThrow(incidentPublicId);
+        rejectIncident(incident.getId(), new RejectIncidentRequest("Incidencia confirmada como duplicada de otra existente en el sistema"), userEmail);
+        Incidencia updated = getIncidentByPublicIdOrThrow(incidentPublicId);
+        return incidentMapperV2.toDto(updated);
     }
 }

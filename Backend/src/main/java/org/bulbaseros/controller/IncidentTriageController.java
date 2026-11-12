@@ -47,7 +47,7 @@ import java.util.List;
  * @version 1.0
  */
 @RestController
-@RequestMapping("/api/incidents")
+@RequestMapping({"/api/v1/incidents", "/api/incidents"})
 public class IncidentTriageController {
 
     private final IncidentTriageService incidentTriageService;

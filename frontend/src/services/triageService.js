@@ -17,7 +17,7 @@ import api from './api';
  * @throws {import('axios').AxiosError} Si ocurre un error en la petición o el usuario carece de permisos.
  */
 export const calculatePriority = async (incidentId, { streetCut, safetyRisk }) => {
-  const response = await api.post(`/api/incidents/${incidentId}/priority/calculate`, {
+  const response = await api.post(`/api/v2/incidents/${incidentId}/priority/calculate`, {
     streetCut,
     safetyRisk,
   });
@@ -35,7 +35,7 @@ export const calculatePriority = async (incidentId, { streetCut, safetyRisk }) =
  * @throws {import('axios').AxiosError} Si los datos son inválidos o falta autorización.
  */
 export const updatePriority = async (incidentId, { priority, priorityReason }) => {
-  const response = await api.put(`/api/incidents/${incidentId}/priority`, {
+  const response = await api.put(`/api/v2/incidents/${incidentId}/priority`, {
     priority,
     priorityReason,
   });
@@ -52,7 +52,7 @@ export const updatePriority = async (incidentId, { priority, priorityReason }) =
  * @throws {import('axios').AxiosError} Si la transición es ilegal o carece de permisos de operador/admin.
  */
 export const validateIncident = async (incidentId, data = {}) => {
-  const response = await api.post(`/api/incidents/${incidentId}/validate`, data);
+  const response = await api.post(`/api/v2/incidents/${incidentId}/validate`, data);
   return response.data;
 };
 
@@ -66,7 +66,7 @@ export const validateIncident = async (incidentId, data = {}) => {
  * @throws {import('axios').AxiosError} Si el motivo no cumple la longitud mínima o la transición no es válida.
  */
 export const rejectIncident = async (incidentId, { reason }) => {
-  const response = await api.post(`/api/incidents/${incidentId}/reject`, { reason });
+  const response = await api.post(`/api/v2/incidents/${incidentId}/reject`, { reason });
   return response.data;
 };
 
@@ -81,7 +81,7 @@ export const rejectIncident = async (incidentId, { reason }) => {
  * @throws {import('axios').AxiosError} Si el estado destino no está permitido o el motivo es insuficiente.
  */
 export const reevaluateIncident = async (incidentId, { targetStatus, reason }) => {
-  const response = await api.post(`/api/incidents/${incidentId}/reevaluate`, {
+  const response = await api.post(`/api/v2/incidents/${incidentId}/reevaluate`, {
     targetStatus,
     reason,
   });
@@ -97,7 +97,7 @@ export const reevaluateIncident = async (incidentId, { targetStatus, reason }) =
  * @throws {import('axios').AxiosError} Si el técnico no está asignado o el estado previo no es ASSIGNED o REOPENED.
  */
 export const startWork = async (incidentId) => {
-  const response = await api.post(`/api/incidents/${incidentId}/start-work`);
+  const response = await api.post(`/api/v2/incidents/${incidentId}/start-work`);
   return response.data;
 };
 
@@ -111,7 +111,7 @@ export const startWork = async (incidentId) => {
  * @throws {import('axios').AxiosError} Si la incidencia requiere justificación y no se aporta.
  */
 export const resolveIncident = async (incidentId, data = {}) => {
-  const response = await api.post(`/api/incidents/${incidentId}/resolve`, data);
+  const response = await api.post(`/api/v2/incidents/${incidentId}/resolve`, data);
   return response.data;
 };
 
@@ -124,7 +124,7 @@ export const resolveIncident = async (incidentId, data = {}) => {
  * @throws {import('axios').AxiosError} Si la incidencia no se encuentra en estado RESOLVED o falta autorización.
  */
 export const closeIncident = async (incidentId) => {
-  const response = await api.post(`/api/incidents/${incidentId}/close`);
+  const response = await api.post(`/api/v2/incidents/${incidentId}/close`);
   return response.data;
 };
 
@@ -138,7 +138,7 @@ export const closeIncident = async (incidentId) => {
  * @throws {import('axios').AxiosError} Si la incidencia no está en RESOLVED o el motivo es inválido.
  */
 export const reopenIncident = async (incidentId, { reason }) => {
-  const response = await api.post(`/api/incidents/${incidentId}/reopen`, { reason });
+  const response = await api.post(`/api/v2/incidents/${incidentId}/reopen`, { reason });
   return response.data;
 };
 
@@ -157,7 +157,7 @@ export const assignDepartmentsAndTechnicians = async (
   incidentId,
   { departmentIds, technicianIds = [] }
 ) => {
-  const response = await api.post(`/api/incidents/${incidentId}/assignments`, {
+  const response = await api.post(`/api/v2/incidents/${incidentId}/assignments`, {
     departmentIds,
     technicianIds,
   });
@@ -172,7 +172,7 @@ export const assignDepartmentsAndTechnicians = async (
  * @throws {import('axios').AxiosError} Si la incidencia no existe o falla la consulta.
  */
 export const getIncidentAssignments = async (incidentId) => {
-  const response = await api.get(`/api/incidents/${incidentId}/assignments`);
+  const response = await api.get(`/api/v2/incidents/${incidentId}/assignments`);
   return response.data;
 };
 
@@ -191,7 +191,7 @@ export const deactivateAssignments = async (
   incidentId,
   { departmentIds = [], technicianIds = [] }
 ) => {
-  const response = await api.post(`/api/incidents/${incidentId}/assignments/deactivate`, {
+  const response = await api.post(`/api/v2/incidents/${incidentId}/assignments/deactivate`, {
     departmentIds,
     technicianIds,
   });
@@ -206,7 +206,7 @@ export const deactivateAssignments = async (
  * @throws {import('axios').AxiosError} Si el usuario no tiene permisos para consultar la incidencia.
  */
 export const getIncidentComments = async (incidentId) => {
-  const response = await api.get(`/api/incidents/${incidentId}/comments`);
+  const response = await api.get(`/api/v2/incidents/${incidentId}/comments`);
   return response.data;
 };
 
@@ -221,7 +221,7 @@ export const getIncidentComments = async (incidentId) => {
  * @throws {import('axios').AxiosError} Si la incidencia está en estado terminal o los datos son inválidos.
  */
 export const addIncidentComment = async (incidentId, { comment, isInternal = false }) => {
-  const response = await api.post(`/api/incidents/${incidentId}/comments`, {
+  const response = await api.post(`/api/v2/incidents/${incidentId}/comments`, {
     comment,
     isInternal,
   });
@@ -239,7 +239,7 @@ export const addIncidentComment = async (incidentId, { comment, isInternal = fal
  * @throws {import('axios').AxiosError} Si el usuario no es el autor ni administrador o el comentario no existe.
  */
 export const updateIncidentComment = async (incidentId, commentId, { comment }) => {
-  const response = await api.put(`/api/incidents/${incidentId}/comments/${commentId}`, {
+  const response = await api.put(`/api/v2/incidents/${incidentId}/comments/${commentId}`, {
     comment,
   });
   return response.data;
@@ -252,7 +252,7 @@ export const updateIncidentComment = async (incidentId, commentId, { comment }) 
  * @throws {import('axios').AxiosError} Si ocurre un error de red o falta autenticación.
  */
 export const getDepartments = async () => {
-  const response = await api.get('/api/departments');
+  const response = await api.get('/api/v2/departments');
   return response.data;
 };
 
@@ -264,7 +264,7 @@ export const getDepartments = async () => {
  * @throws {import('axios').AxiosError} Si el departamento no existe (404) o el usuario no tiene rol OPERATOR/ADMIN.
  */
 export const getTechniciansByDepartment = async (departmentId) => {
-  const response = await api.get(`/api/departments/${departmentId}/technicians`);
+  const response = await api.get(`/api/v2/departments/${departmentId}/technicians`);
   return response.data;
 };
 
@@ -276,7 +276,7 @@ export const getTechniciansByDepartment = async (departmentId) => {
  * @throws {import('axios').AxiosError} Si la petición falla o el usuario carece de permisos de operador/admin.
  */
 export const markAsDuplicate = async (incidentId) => {
-  const response = await api.post(`/api/incidents/${incidentId}/mark-duplicate`);
+  const response = await api.post(`/api/v2/incidents/${incidentId}/mark-duplicate`);
   return response.data;
 };
 

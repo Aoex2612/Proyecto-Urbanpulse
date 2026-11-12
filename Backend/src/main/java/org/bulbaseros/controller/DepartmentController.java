@@ -31,7 +31,7 @@ import java.util.List;
  * @version 1.0
  */
 @RestController
-@RequestMapping("/api/departments")
+@RequestMapping({"/api/v1/departments", "/api/departments"})
 public class DepartmentController {
 
     private final DepartamentoRepository departamentoRepository;

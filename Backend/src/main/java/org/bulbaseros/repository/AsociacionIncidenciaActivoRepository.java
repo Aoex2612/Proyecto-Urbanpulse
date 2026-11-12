@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestión de persistencia de las asociaciones entre incidencias y activos urbanos.
@@ -44,4 +45,29 @@ public interface AsociacionIncidenciaActivoRepository extends JpaRepository<Asoc
      * @param assetId Identificador único del activo urbano.
      */
     void deleteByIncidentIdAndAssetId(Long incidentId, Long assetId);
+
+    /**
+     * Recupera todas las asociaciones de activos vinculadas a una incidencia mediante su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista de asociaciones de activos.
+     */
+    List<AsociacionIncidenciaActivo> findByIncidentPublicId(UUID incidentPublicId);
+
+    /**
+     * Busca una asociacion concreta utilizando los identificadores publicos (UUID v4) de incidencia y activo.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @param assetPublicId Identificador publico del activo.
+     * @return {@link Optional} con la asociacion o vacio.
+     */
+    Optional<AsociacionIncidenciaActivo> findByIncidentPublicIdAndAssetPublicId(UUID incidentPublicId, UUID assetPublicId);
+
+    /**
+     * Elimina la asociacion entre una incidencia y un activo urbano mediante sus identificadores publicos.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @param assetPublicId Identificador publico del activo.
+     */
+    void deleteByIncidentPublicIdAndAssetPublicId(UUID incidentPublicId, UUID assetPublicId);
 }

@@ -99,13 +99,14 @@ export default function AssignmentModal({
         if (!isMounted || !data) return;
         setRecommendation(data);
         if (data.suggestedDepartmentId != null) {
-          const suggestedId = Number(data.suggestedDepartmentId);
+          const suggestedId = data.suggestedDepartmentId;
+          const suggestedIdStr = String(suggestedId);
           const alreadyAssigned = (incident.assignments || []).some(
-            (a) => a.isActive !== false && Number(a.departmentId) === suggestedId
+            (a) => a.isActive !== false && String(a.departmentId) === suggestedIdStr
           );
           if (!alreadyAssigned) {
             setSelectedDeptIds((prev) =>
-              prev.includes(suggestedId) ? prev : [...prev, suggestedId]
+              prev.some((id) => String(id) === suggestedIdStr) ? prev : [...prev, suggestedId]
             );
             // Pre-cargar técnicos para el departamento sugerido
             triageService
@@ -115,6 +116,7 @@ export default function AssignmentModal({
                   setTechniciansByDept((prev) => ({
                     ...prev,
                     [suggestedId]: techs || [],
+                    [suggestedIdStr]: techs || [],
                   }));
                 }
               })
@@ -226,12 +228,15 @@ export default function AssignmentModal({
    */
   const toggleDepartment = async (deptId) => {
     setError(null);
-    if (selectedDeptIds.includes(deptId)) {
+    const isCurrentlySelected = selectedDeptIds.some((id) => String(id) === String(deptId));
+    if (isCurrentlySelected) {
       // Deseleccionar departamento
-      setSelectedDeptIds((prev) => prev.filter((id) => id !== deptId));
+      setSelectedDeptIds((prev) => prev.filter((id) => String(id) !== String(deptId)));
       // Deseleccionar técnicos de este departamento
       const deptTechIds = (techniciansByDept[deptId] || []).map((t) => t.id);
-      setSelectedTechIds((prev) => prev.filter((id) => !deptTechIds.includes(id)));
+      setSelectedTechIds((prev) =>
+        prev.filter((id) => !deptTechIds.some((tId) => String(tId) === String(id)))
+      );
     } else {
       // Seleccionar departamento
       setSelectedDeptIds((prev) => [...prev, deptId]);
@@ -257,11 +262,13 @@ export default function AssignmentModal({
   /**
    * Conmuta la selección de un técnico para asignación.
    *
-   * @param {number} techId - Identificador del técnico.
+   * @param {number|string} techId - Identificador del técnico.
    */
   const toggleTechnician = (techId) => {
     setSelectedTechIds((prev) =>
-      prev.includes(techId) ? prev.filter((id) => id !== techId) : [...prev, techId]
+      prev.some((id) => String(id) === String(techId))
+        ? prev.filter((id) => String(id) !== String(techId))
+        : [...prev, techId]
     );
   };
 
@@ -453,10 +460,12 @@ export default function AssignmentModal({
               ) : (
                 <div className="departments-grid">
                   {departments.map((dept) => {
-                    const isSelected = selectedDeptIds.includes(dept.id);
+                    const isSelected = selectedDeptIds.some(
+                      (id) => String(id) === String(dept.id)
+                    );
                     const isRecommended =
                       recommendation?.suggestedDepartmentId != null &&
-                      Number(recommendation.suggestedDepartmentId) === dept.id;
+                      String(recommendation.suggestedDepartmentId) === String(dept.id);
                     return (
                       <label
                         key={dept.id}
@@ -503,10 +512,16 @@ export default function AssignmentModal({
 
                 <div className="technicians-container">
                   {selectedDeptIds.map((deptId) => {
-                    const dept = departments.find((d) => d.id === deptId);
+                    const dept = departments.find(
+                      (d) => String(d.id) === String(deptId)
+                    );
                     const deptName = dept ? dept.name : `Departamento #${deptId}`;
-                    const techs = techniciansByDept[deptId] || [];
-                    const isLoadingTechs = loadingTechsByDept[deptId];
+                    const techs =
+                      techniciansByDept[deptId] ||
+                      techniciansByDept[String(deptId)] ||
+                      [];
+                    const isLoadingTechs =
+                      loadingTechsByDept[deptId] || loadingTechsByDept[String(deptId)];
 
                     return (
                       <div key={deptId} className="department-tech-group">
@@ -520,7 +535,9 @@ export default function AssignmentModal({
                         ) : (
                           <div className="technicians-list">
                             {techs.map((tech) => {
-                              const isTechSelected = selectedTechIds.includes(tech.id);
+                              const isTechSelected = selectedTechIds.some(
+                                (id) => String(id) === String(tech.id)
+                              );
                               return (
                                 <label
                                   key={tech.id}

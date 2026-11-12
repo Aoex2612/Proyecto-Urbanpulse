@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa un comentario o nota de seguimiento asociada a una incidencia urbana.
@@ -40,6 +41,9 @@ public class ComentariosIncidencias {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Incidencia urbana a la que se asocia el comentario.
@@ -102,6 +106,9 @@ public class ComentariosIncidencias {
      */
     @PrePersist
     protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
         }

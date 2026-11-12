@@ -34,7 +34,7 @@ describe('triageService', () => {
   });
 
   describe('calculatePriority', () => {
-    it('llama a POST /api/incidents/:id/priority/calculate con los factores', async () => {
+    it('llama a POST /api/v2/incidents/:id/priority/calculate con los factores', async () => {
       const mockResponse = {
         suggestedPriority: 'CRITICAL',
         priorityReason: 'Prioridad CRITICAL: corte de vía pública con riesgo alto de seguridad.',
@@ -45,7 +45,7 @@ describe('triageService', () => {
 
       const result = await calculatePriority(10, { streetCut: true, safetyRisk: 'HIGH' });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/priority/calculate', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/priority/calculate', {
         streetCut: true,
         safetyRisk: 'HIGH',
       });
@@ -54,7 +54,7 @@ describe('triageService', () => {
   });
 
   describe('updatePriority', () => {
-    it('llama a PUT /api/incidents/:id/priority con la prioridad y justificación', async () => {
+    it('llama a PUT /api/v2/incidents/:id/priority con la prioridad y justificación', async () => {
       const mockUpdated = { id: 10, priority: 'HIGH', priorityReason: 'Tráfico denso' };
       api.put.mockResolvedValueOnce({ data: mockUpdated });
 
@@ -63,7 +63,7 @@ describe('triageService', () => {
         priorityReason: 'Tráfico denso',
       });
 
-      expect(api.put).toHaveBeenCalledWith('/api/incidents/10/priority', {
+      expect(api.put).toHaveBeenCalledWith('/api/v2/incidents/10/priority', {
         priority: 'HIGH',
         priorityReason: 'Tráfico denso',
       });
@@ -72,13 +72,13 @@ describe('triageService', () => {
   });
 
   describe('validateIncident', () => {
-    it('llama a POST /api/incidents/:id/validate con motivo opcional', async () => {
+    it('llama a POST /api/v2/incidents/:id/validate con motivo opcional', async () => {
       const mockResult = { id: 10, status: 'VALIDATED' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
       const result = await validateIncident(10, { reason: 'Datos contrastados' });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/validate', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/validate', {
         reason: 'Datos contrastados',
       });
       expect(result).toEqual(mockResult);
@@ -86,13 +86,13 @@ describe('triageService', () => {
   });
 
   describe('rejectIncident', () => {
-    it('llama a POST /api/incidents/:id/reject con motivo justificado', async () => {
+    it('llama a POST /api/v2/incidents/:id/reject con motivo justificado', async () => {
       const mockResult = { id: 10, status: 'REJECTED' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
       const result = await rejectIncident(10, { reason: 'Incidencia duplicada' });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/reject', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/reject', {
         reason: 'Incidencia duplicada',
       });
       expect(result).toEqual(mockResult);
@@ -100,7 +100,7 @@ describe('triageService', () => {
   });
 
   describe('reevaluateIncident', () => {
-    it('llama a POST /api/incidents/:id/reevaluate con targetStatus y motivo', async () => {
+    it('llama a POST /api/v2/incidents/:id/reevaluate con targetStatus y motivo', async () => {
       const mockResult = { id: 10, status: 'VALIDATED' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
@@ -109,7 +109,7 @@ describe('triageService', () => {
         reason: 'Se aportan nuevas pruebas fotográficas',
       });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/reevaluate', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/reevaluate', {
         targetStatus: 'VALIDATED',
         reason: 'Se aportan nuevas pruebas fotográficas',
       });
@@ -118,19 +118,19 @@ describe('triageService', () => {
   });
 
   describe('startWork', () => {
-    it('llama a POST /api/incidents/:id/start-work', async () => {
+    it('llama a POST /api/v2/incidents/:id/start-work', async () => {
       const mockResult = { id: 10, status: 'IN_PROGRESS' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
       const result = await startWork(10);
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/start-work');
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/start-work');
       expect(result).toEqual(mockResult);
     });
   });
 
   describe('resolveIncident', () => {
-    it('llama a POST /api/incidents/:id/resolve con notas de resolución', async () => {
+    it('llama a POST /api/v2/incidents/:id/resolve con notas de resolución', async () => {
       const mockResult = { id: 10, status: 'RESOLVED' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
@@ -138,7 +138,7 @@ describe('triageService', () => {
         resolutionNotes: 'Sustitución de luminaria completada',
       });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/resolve', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/resolve', {
         resolutionNotes: 'Sustitución de luminaria completada',
       });
       expect(result).toEqual(mockResult);
@@ -146,25 +146,25 @@ describe('triageService', () => {
   });
 
   describe('closeIncident', () => {
-    it('llama a POST /api/incidents/:id/close', async () => {
+    it('llama a POST /api/v2/incidents/:id/close', async () => {
       const mockResult = { id: 10, status: 'CLOSED' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
       const result = await closeIncident(10);
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/close');
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/close');
       expect(result).toEqual(mockResult);
     });
   });
 
   describe('reopenIncident', () => {
-    it('llama a POST /api/incidents/:id/reopen con motivo de reapertura', async () => {
+    it('llama a POST /api/v2/incidents/:id/reopen con motivo de reapertura', async () => {
       const mockResult = { id: 10, status: 'REOPENED' };
       api.post.mockResolvedValueOnce({ data: mockResult });
 
       const result = await reopenIncident(10, { reason: 'La luminaria vuelve a fallar' });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/reopen', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/reopen', {
         reason: 'La luminaria vuelve a fallar',
       });
       expect(result).toEqual(mockResult);
@@ -172,19 +172,19 @@ describe('triageService', () => {
   });
 
   describe('getIncidentAssignments', () => {
-    it('llama a GET /api/incidents/:id/assignments', async () => {
+    it('llama a GET /api/v2/incidents/:id/assignments', async () => {
       const mockAssignments = [{ id: 1, departmentId: 2, departmentName: 'Obras', isActive: true }];
       api.get.mockResolvedValueOnce({ data: mockAssignments });
 
       const result = await getIncidentAssignments(10);
 
-      expect(api.get).toHaveBeenCalledWith('/api/incidents/10/assignments');
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/10/assignments');
       expect(result).toEqual(mockAssignments);
     });
   });
 
   describe('assignDepartmentsAndTechnicians', () => {
-    it('llama a POST /api/incidents/:id/assignments con IDs de departamentos y técnicos', async () => {
+    it('llama a POST /api/v2/incidents/:id/assignments con IDs de departamentos y técnicos', async () => {
       const mockAssignments = [{ id: 1, departmentId: 2, technicianId: 5, isActive: true }];
       api.post.mockResolvedValueOnce({ data: mockAssignments });
 
@@ -193,7 +193,7 @@ describe('triageService', () => {
         technicianIds: [5],
       });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/assignments', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/assignments', {
         departmentIds: [2],
         technicianIds: [5],
       });
@@ -202,7 +202,7 @@ describe('triageService', () => {
   });
 
   describe('deactivateAssignments', () => {
-    it('llama a POST /api/incidents/:id/assignments/deactivate con los IDs a desactivar', async () => {
+    it('llama a POST /api/v2/incidents/:id/assignments/deactivate con los IDs a desactivar', async () => {
       const mockResult = [];
       api.post.mockResolvedValueOnce({ data: mockResult });
 
@@ -211,7 +211,7 @@ describe('triageService', () => {
         technicianIds: [5],
       });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/assignments/deactivate', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/assignments/deactivate', {
         departmentIds: [2],
         technicianIds: [5],
       });
@@ -220,19 +220,19 @@ describe('triageService', () => {
   });
 
   describe('getIncidentComments', () => {
-    it('llama a GET /api/incidents/:id/comments', async () => {
+    it('llama a GET /api/v2/incidents/:id/comments', async () => {
       const mockComments = [{ id: 1, comment: 'Nota de seguimiento', isInternal: true }];
       api.get.mockResolvedValueOnce({ data: mockComments });
 
       const result = await getIncidentComments(10);
 
-      expect(api.get).toHaveBeenCalledWith('/api/incidents/10/comments');
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/10/comments');
       expect(result).toEqual(mockComments);
     });
   });
 
   describe('addIncidentComment', () => {
-    it('llama a POST /api/incidents/:id/comments con comment e isInternal', async () => {
+    it('llama a POST /api/v2/incidents/:id/comments con comment e isInternal', async () => {
       const mockComment = { id: 1, comment: 'Requiere grúa', isInternal: true };
       api.post.mockResolvedValueOnce({ data: mockComment });
 
@@ -241,7 +241,7 @@ describe('triageService', () => {
         isInternal: true,
       });
 
-      expect(api.post).toHaveBeenCalledWith('/api/incidents/10/comments', {
+      expect(api.post).toHaveBeenCalledWith('/api/v2/incidents/10/comments', {
         comment: 'Requiere grúa',
         isInternal: true,
       });
@@ -250,13 +250,13 @@ describe('triageService', () => {
   });
 
   describe('updateIncidentComment', () => {
-    it('llama a PUT /api/incidents/:id/comments/:commentId con el texto actualizado', async () => {
+    it('llama a PUT /api/v2/incidents/:id/comments/:commentId con el texto actualizado', async () => {
       const mockUpdated = { id: 1, comment: 'Requiere grúa pluma' };
       api.put.mockResolvedValueOnce({ data: mockUpdated });
 
       const result = await updateIncidentComment(10, 1, { comment: 'Requiere grúa pluma' });
 
-      expect(api.put).toHaveBeenCalledWith('/api/incidents/10/comments/1', {
+      expect(api.put).toHaveBeenCalledWith('/api/v2/incidents/10/comments/1', {
         comment: 'Requiere grúa pluma',
       });
       expect(result).toEqual(mockUpdated);
@@ -264,7 +264,7 @@ describe('triageService', () => {
   });
 
   describe('getDepartments', () => {
-    it('llama a GET /api/departments', async () => {
+    it('llama a GET /api/v2/departments', async () => {
       const mockDepartments = [
         { id: 1, name: 'Alumbrado Público' },
         { id: 2, name: 'Parques y Jardines' },
@@ -273,19 +273,19 @@ describe('triageService', () => {
 
       const result = await getDepartments();
 
-      expect(api.get).toHaveBeenCalledWith('/api/departments');
+      expect(api.get).toHaveBeenCalledWith('/api/v2/departments');
       expect(result).toEqual(mockDepartments);
     });
   });
 
   describe('getTechniciansByDepartment', () => {
-    it('llama a GET /api/departments/:id/technicians', async () => {
+    it('llama a GET /api/v2/departments/:id/technicians', async () => {
       const mockTechnicians = [{ id: 3, fullName: 'Técnico Pérez', email: 'perez@malaga.es' }];
       api.get.mockResolvedValueOnce({ data: mockTechnicians });
 
       const result = await getTechniciansByDepartment(2);
 
-      expect(api.get).toHaveBeenCalledWith('/api/departments/2/technicians');
+      expect(api.get).toHaveBeenCalledWith('/api/v2/departments/2/technicians');
       expect(result).toEqual(mockTechnicians);
     });
   });

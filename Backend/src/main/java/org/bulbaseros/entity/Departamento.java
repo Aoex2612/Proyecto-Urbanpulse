@@ -5,10 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa un departamento o área técnica municipal.
@@ -35,6 +38,12 @@ public class Departamento {
     private Long id;
 
     /**
+     * Identificador publico universal (UUID v4) del departamento para exposicion externa y API v2.
+     */
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
+
+    /**
      * Denominación oficial del departamento municipal (único, máximo 100 caracteres).
      */
     @Column(nullable = false, unique = true, length = 100)
@@ -55,5 +64,26 @@ public class Departamento {
     public Departamento(String name, String description) {
         this.name = name;
         this.description = description;
+    }
+
+    /**
+     * Constructor para compatibilidad con identificador numerico legacy y tests.
+     *
+     * @param id          Identificador numerico interno.
+     * @param name        Nombre o denominacion del departamento.
+     * @param description Descripcion de funciones o alcance.
+     */
+    public Departamento(Long id, String name, String description) {
+        this.id = id;
+        this.publicId = UUID.randomUUID();
+        this.name = name;
+        this.description = description;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
     }
 }
