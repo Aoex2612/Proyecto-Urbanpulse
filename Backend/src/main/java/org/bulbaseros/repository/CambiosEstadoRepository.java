@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestion de persistencia y auditoria de la entidad {@link CambiosEstado}.
@@ -63,4 +65,21 @@ public interface CambiosEstadoRepository extends JpaRepository<CambiosEstado, Lo
     default List<CambiosEstado> findByIncidentIdAndToStatus(Long incidentId, EstadoIncidencia toStatus) {
         return findByIncidentIdAndToStatus(incidentId, toStatus != null ? toStatus.name() : null);
     }
+
+    /**
+     * Recupera un cambio de estado a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico del registro de auditoria.
+     * @return {@link Optional} con el cambio de estado o vacio.
+     */
+    Optional<CambiosEstado> findByPublicId(UUID publicId);
+
+    /**
+     * Recupera la secuencia cronologica completa de cambios de estado para una incidencia identificada por su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista cronologica ascendente de transiciones auditadas.
+     */
+    @Query("SELECT c FROM CambiosEstado c WHERE c.incident.publicId = :incidentPublicId ORDER BY c.createdAt ASC")
+    List<CambiosEstado> findByIncidentPublicIdOrderByCreatedAtAsc(@Param("incidentPublicId") UUID incidentPublicId);
 }

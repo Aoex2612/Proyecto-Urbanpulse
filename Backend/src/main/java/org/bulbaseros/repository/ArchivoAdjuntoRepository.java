@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestión de persistencia de la entidad {@link ArchivoAdjunto}.
@@ -38,4 +40,21 @@ public interface ArchivoAdjuntoRepository extends JpaRepository<ArchivoAdjunto, 
      * @return Lista de {@link ArchivoAdjunto} asociados.
      */
     List<ArchivoAdjunto> findByIncidentId(Long incidentId);
+
+    /**
+     * Recupera un archivo adjunto a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico del archivo.
+     * @return {@link Optional} con el archivo adjunto o vacio.
+     */
+    Optional<ArchivoAdjunto> findByPublicId(UUID publicId);
+
+    /**
+     * Recupera todos los archivos adjuntos vinculados a una incidencia mediante su identificador publico universal.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista cronologica ascendente de archivos adjuntos.
+     */
+    @Query("SELECT a FROM ArchivoAdjunto a WHERE a.incident.publicId = :incidentPublicId ORDER BY a.uploadedAt ASC")
+    List<ArchivoAdjunto> findByIncidentPublicIdOrderByUploadedAtAsc(@Param("incidentPublicId") UUID incidentPublicId);
 }

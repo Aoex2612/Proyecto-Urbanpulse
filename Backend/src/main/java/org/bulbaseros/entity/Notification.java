@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa una notificación in-app dirigida a un usuario de UrbanPulse.
@@ -42,6 +43,9 @@ public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Usuario destinatario de la notificación (ciudadano, operador, técnico o administrador).
@@ -114,6 +118,9 @@ public class Notification {
      */
     @PrePersist
     protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
         }

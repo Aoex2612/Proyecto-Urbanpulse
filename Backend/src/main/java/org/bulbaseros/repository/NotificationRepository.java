@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la persistencia, consulta y gestión de notificaciones ({@link Notification}).
@@ -55,4 +56,21 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * @return {@link Optional} conteniendo la notificación si existe y pertenece al usuario, o vacío en caso contrario.
      */
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
+
+    /**
+     * Busca una notificacion a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico de la notificacion.
+     * @return {@link Optional} con la notificacion o vacio.
+     */
+    Optional<Notification> findByPublicId(UUID publicId);
+
+    /**
+     * Busca una notificacion por su identificador publico asegurando que pertenezca al usuario especificado.
+     *
+     * @param publicId Identificador publico de la notificacion.
+     * @param userId   Identificador interno del usuario.
+     * @return {@link Optional} con la notificacion si coincide o vacio.
+     */
+    Optional<Notification> findByPublicIdAndUserId(UUID publicId, Long userId);
 }

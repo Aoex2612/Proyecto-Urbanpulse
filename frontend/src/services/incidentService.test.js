@@ -20,7 +20,7 @@ describe('incidentService', () => {
   });
 
   describe('getMyIncidents', () => {
-    it('realiza una petición GET a /api/incidents/my-incidents con los parámetros adecuados', async () => {
+    it('realiza una petición GET a /api/v2/incidents/my-incidents con los parámetros adecuados', async () => {
       const mockPageResponse = {
         content: [
           { id: 1, title: 'Farola rota', status: 'REPORTED' },
@@ -38,7 +38,7 @@ describe('incidentService', () => {
       const result = await getMyIncidents(params);
 
       expect(api.get).toHaveBeenCalledTimes(1);
-      expect(api.get).toHaveBeenCalledWith('/api/incidents/my-incidents', { params });
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/my-incidents', { params });
       expect(result).toEqual(mockPageResponse);
     });
 
@@ -64,7 +64,7 @@ describe('incidentService', () => {
       const result = await reverseGeocode(36.7213, -4.4214);
 
       expect(api.get).toHaveBeenCalledTimes(1);
-      expect(api.get).toHaveBeenCalledWith('/api/incidents/geocode/reverse', {
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/geocode/reverse', {
         params: { latitude: 36.7213, longitude: -4.4214 },
       });
       expect(result).toEqual({
@@ -104,7 +104,7 @@ describe('incidentService', () => {
   });
 
   describe('getIncidentPublicComments', () => {
-    it('consulta los comentarios de una incidencia mediante GET /api/incidents/{id}/comments', async () => {
+    it('consulta los comentarios de una incidencia mediante GET /api/v2/incidents/{id}/comments', async () => {
       const mockComments = [
         {
           id: 101,
@@ -121,7 +121,7 @@ describe('incidentService', () => {
       const result = await getIncidentPublicComments(42);
 
       expect(api.get).toHaveBeenCalledTimes(1);
-      expect(api.get).toHaveBeenCalledWith('/api/incidents/42/comments');
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/42/comments');
       expect(result).toEqual(mockComments);
     });
 
@@ -129,7 +129,7 @@ describe('incidentService', () => {
       api.get.mockResolvedValueOnce({ data: [] });
 
       const result = await incidentService.getIncidentPublicComments(7);
-      expect(api.get).toHaveBeenCalledWith('/api/incidents/7/comments');
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/7/comments');
       expect(result).toEqual([]);
     });
   });

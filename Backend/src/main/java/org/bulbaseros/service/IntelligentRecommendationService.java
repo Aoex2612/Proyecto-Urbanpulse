@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AssistantPerformanceResponse;
 import org.bulbaseros.dto.DepartmentRecommendationResponse;
+import org.bulbaseros.dto.v2.DepartmentRecommendationResponseV2;
 import org.bulbaseros.entity.Departamento;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.Tareas;
@@ -356,6 +357,42 @@ public class IntelligentRecommendationService {
     @Transactional(readOnly = true)
     public DepartmentRecommendationResponse recommendDepartment(Long incidentId) {
         return recommendDepartment(incidentId, this.incidenciaRepository);
+    }
+
+    /**
+     * Genera la sugerencia asistida de departamento para la API v2 con identificador publico UUID.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia (opcional).
+     * @param title Titulo para inferencia ad-hoc si no hay id.
+     * @param description Descripcion para inferencia ad-hoc si no hay id.
+     * @param category Categoria para inferencia ad-hoc si no hay id.
+     * @return DTO {@link DepartmentRecommendationResponseV2} con el UUID del departamento sugerido.
+     */
+    @Transactional(readOnly = true)
+    public DepartmentRecommendationResponseV2 recommendDepartmentV2(java.util.UUID incidentPublicId, String title, String description, String category) {
+        DepartmentRecommendationResponse v1Res;
+        if (incidentPublicId != null) {
+            Incidencia inc = incidenciaRepository.findByPublicId(incidentPublicId)
+                    .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+            v1Res = recommendDepartment(inc);
+        } else {
+            v1Res = recommendDepartment(title, description, category);
+        }
+
+        String deptPublicId = null;
+        if (v1Res.getSuggestedDepartmentId() != null) {
+            deptPublicId = departamentoRepository.findById(v1Res.getSuggestedDepartmentId())
+                    .map(d -> d.getPublicId() != null ? d.getPublicId().toString() : null)
+                    .orElse(null);
+        }
+
+        return DepartmentRecommendationResponseV2.builder()
+                .suggestedDepartmentId(deptPublicId)
+                .suggestedDepartmentName(v1Res.getSuggestedDepartmentName())
+                .confidencePercentage(v1Res.getConfidencePercentage())
+                .isLowConfidenceWarning(v1Res.getIsLowConfidenceWarning())
+                .rationale(v1Res.getReasoning())
+                .build();
     }
 
     /**

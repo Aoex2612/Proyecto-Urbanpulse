@@ -14,6 +14,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa un registro inmutable de auditoria sobre la transicion de estado de una incidencia.
@@ -37,6 +38,9 @@ public class CambiosEstado {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Incidencia urbana asociada a la transicion de estado auditada.
@@ -106,6 +110,9 @@ public class CambiosEstado {
      */
     @PrePersist
     protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
         }

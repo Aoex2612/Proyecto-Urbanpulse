@@ -21,7 +21,7 @@ describe('notificationService', () => {
 
     expect(result).toEqual(mockNotifications);
     expect(axios.get).toHaveBeenCalledWith(
-      expect.stringContaining('/api/notifications'),
+      expect.stringContaining('/api/v2/notifications'),
       expect.objectContaining({
         headers: { Authorization: 'Bearer fake-jwt-token' },
       })
@@ -35,7 +35,7 @@ describe('notificationService', () => {
 
     expect(count).toBe(4);
     expect(axios.get).toHaveBeenCalledWith(
-      expect.stringContaining('/api/notifications/unread-count'),
+      expect.stringContaining('/api/v2/notifications/unread-count'),
       expect.objectContaining({
         headers: { Authorization: 'Bearer fake-jwt-token' },
       })
@@ -50,7 +50,7 @@ describe('notificationService', () => {
 
     expect(result).toEqual(updated);
     expect(axios.patch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/notifications/10/read'),
+      expect.stringContaining('/api/v2/notifications/10/read'),
       {},
       expect.objectContaining({
         headers: { Authorization: 'Bearer fake-jwt-token' },

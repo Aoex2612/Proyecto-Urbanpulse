@@ -242,6 +242,29 @@ public class ExternalContextService {
     }
 
     /**
+     * Recupera las observaciones de contexto exterior vinculadas a una incidencia a partir de su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista de DTOs {@link ExternalObservationResponse} asociados.
+     */
+    @Transactional(readOnly = true)
+    public List<ExternalObservationResponse> getContextByIncidentPublicId(java.util.UUID incidentPublicId) {
+        if (incidentPublicId == null) {
+            return Collections.emptyList();
+        }
+
+        List<ContextoIncidencia> contexts = contextoIncidenciaRepository.findByIncidentPublicId(incidentPublicId);
+        if (contexts == null || contexts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return contexts.stream()
+                .filter(c -> c.getObservation() != null)
+                .map(c -> urbanContextMapper.toDto(c.getObservation()))
+                .toList();
+    }
+
+    /**
      * Consulta la API meteorológica externa (Open-Meteo) y extrae temperatura, precipitación y velocidad del viento.
      *
      * @param latitude Coordenada de latitud.

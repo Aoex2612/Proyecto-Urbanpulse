@@ -232,6 +232,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return false;
         }
         return path.startsWith("/api/auth/") || path.equals("/api/auth")
+                || path.startsWith("/api/v1/auth/") || path.equals("/api/v1/auth")
+                || path.startsWith("/api/v2/auth/") || path.equals("/api/v2/auth")
                 || path.startsWith("/h2-console/") || path.equals("/h2-console");
     }
 

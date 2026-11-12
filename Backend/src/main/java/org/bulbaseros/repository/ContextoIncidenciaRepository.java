@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la gestión de relaciones entre incidencias y observaciones externas.
@@ -26,4 +27,12 @@ public interface ContextoIncidenciaRepository extends JpaRepository<ContextoInci
      * @return Lista de relaciones de contexto para la incidencia indicada.
      */
     List<ContextoIncidencia> findByIncidentId(Long incidentId);
+
+    /**
+     * Recupera todas las relaciones de contexto asociadas a una incidencia mediante su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista de relaciones de contexto.
+     */
+    List<ContextoIncidencia> findByIncidentPublicId(UUID incidentPublicId);
 }

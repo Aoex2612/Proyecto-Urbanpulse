@@ -33,11 +33,11 @@ describe('analyticsService', () => {
 
       const result = await getAnalyticsSummary();
 
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/summary', { params: {} });
+      expect(api.get).toHaveBeenCalledWith('/api/v2/analytics/summary', { params: {} });
       expect(result).toEqual(mockSummary);
     });
 
-    it('llama a GET /api/analytics/summary pasando los parámetros de filtrado personalizados', async () => {
+    it('llama a GET /api/v2/analytics/summary pasando los parámetros de filtrado personalizados', async () => {
       const filters = {
         preset: 'LAST_30_DAYS',
         district: 'Centro',
@@ -51,7 +51,7 @@ describe('analyticsService', () => {
 
       const result = await getAnalyticsSummary(filters);
 
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/summary', { params: filters });
+      expect(api.get).toHaveBeenCalledWith('/api/v2/analytics/summary', { params: filters });
       expect(result).toEqual(mockSummary);
     });
 
@@ -65,7 +65,7 @@ describe('analyticsService', () => {
   });
 
   describe('getDepartmentRecommendation', () => {
-    it('llama a GET /api/analytics/recommend-department con incidentId y retorna la sugerencia', async () => {
+    it('llama a GET /api/v2/analytics/recommend-department con incidentId y retorna la sugerencia', async () => {
       const mockRecommendation = {
         suggestedDepartmentId: 3,
         suggestedDepartmentName: 'Alumbrado Público',
@@ -77,13 +77,13 @@ describe('analyticsService', () => {
 
       const result = await getDepartmentRecommendation({ incidentId: 45 });
 
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/recommend-department', {
+      expect(api.get).toHaveBeenCalledWith('/api/v2/analytics/recommend-department', {
         params: { incidentId: 45 },
       });
       expect(result).toEqual(mockRecommendation);
     });
 
-    it('llama a GET /api/analytics/recommend-department con título, descripción y categoría', async () => {
+    it('llama a GET /api/v2/analytics/recommend-department con título, descripción y categoría', async () => {
       const params = {
         title: 'Árbol caído en acera',
         description: 'Una rama de grandes dimensiones obstaculiza el paso peatonal',
@@ -100,7 +100,7 @@ describe('analyticsService', () => {
 
       const result = await getDepartmentRecommendation(params);
 
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/recommend-department', {
+      expect(api.get).toHaveBeenCalledWith('/api/v2/analytics/recommend-department', {
         params,
       });
       expect(result).toEqual(mockRecommendation);

@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repositorio Spring Data JPA para la persistencia y consulta de comentarios y notas de incidencias ({@link ComentariosIncidencias}).
@@ -40,4 +42,28 @@ public interface ComentariosIncidenciasRepository extends JpaRepository<Comentar
      * @return Lista cronológica ascendente de comentarios públicos de la incidencia.
      */
     List<ComentariosIncidencias> findByIncidentIdAndIsInternalFalseOrderByCreatedAtAsc(Long incidentId);
+
+    /**
+     * Recupera un comentario a partir de su identificador publico universal (UUID v4).
+     *
+     * @param publicId Identificador publico del comentario.
+     * @return {@link Optional} con el comentario o vacio.
+     */
+    Optional<ComentariosIncidencias> findByPublicId(UUID publicId);
+
+    /**
+     * Recupera la totalidad de comentarios asociados a una incidencia identificada por su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista cronologica ascendente de comentarios.
+     */
+    List<ComentariosIncidencias> findByIncidentPublicIdOrderByCreatedAtAsc(UUID incidentPublicId);
+
+    /**
+     * Recupera exclusivamente los comentarios publicos de una incidencia identificada por su UUID publico.
+     *
+     * @param incidentPublicId Identificador publico de la incidencia.
+     * @return Lista cronologica ascendente de comentarios publicos.
+     */
+    List<ComentariosIncidencias> findByIncidentPublicIdAndIsInternalFalseOrderByCreatedAtAsc(UUID incidentPublicId);
 }

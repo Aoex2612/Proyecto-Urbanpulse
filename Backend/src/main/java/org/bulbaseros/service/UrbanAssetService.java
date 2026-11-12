@@ -1,11 +1,13 @@
 package org.bulbaseros.service;
 
 import org.bulbaseros.dto.IncidentAssetResponse;
+import org.bulbaseros.dto.v2.IncidentAssetResponseV2;
 import org.bulbaseros.entity.ActivoUrbano;
 import org.bulbaseros.entity.AsociacionIncidenciaActivo;
 import org.bulbaseros.entity.AsociacionIncidenciaActivoId;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.mappers.UrbanAssetMapper;
+import org.bulbaseros.mappers.UrbanAssetMapperV2;
 import org.bulbaseros.repository.ActivoUrbanoRepository;
 import org.bulbaseros.repository.AsociacionIncidenciaActivoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Servicio de lógica de negocio para la gestión, cálculo espacial de proximidad
@@ -54,23 +57,27 @@ public class UrbanAssetService {
     private final ActivoUrbanoRepository activoUrbanoRepository;
     private final AsociacionIncidenciaActivoRepository asociacionRepository;
     private final UrbanAssetMapper urbanAssetMapper;
+    private final UrbanAssetMapperV2 urbanAssetMapperV2;
 
-    /**
-     * Constructor para la inyección de dependencias de Spring.
-     *
-     * @param activoUrbanoRepository Repositorio JPA de activos urbanos.
-     * @param asociacionRepository   Repositorio JPA de asociaciones entre incidencias y activos.
-     * @param urbanAssetMapper       Mapeador bidireccional entre entidades de activo y DTOs.
-     */
-    @Autowired
     public UrbanAssetService(
             ActivoUrbanoRepository activoUrbanoRepository,
             AsociacionIncidenciaActivoRepository asociacionRepository,
             UrbanAssetMapper urbanAssetMapper
     ) {
+        this(activoUrbanoRepository, asociacionRepository, urbanAssetMapper, new UrbanAssetMapperV2());
+    }
+
+    @Autowired
+    public UrbanAssetService(
+            ActivoUrbanoRepository activoUrbanoRepository,
+            AsociacionIncidenciaActivoRepository asociacionRepository,
+            UrbanAssetMapper urbanAssetMapper,
+            @Autowired(required = false) UrbanAssetMapperV2 urbanAssetMapperV2
+    ) {
         this.activoUrbanoRepository = activoUrbanoRepository;
         this.asociacionRepository = asociacionRepository;
         this.urbanAssetMapper = urbanAssetMapper;
+        this.urbanAssetMapperV2 = urbanAssetMapperV2 != null ? urbanAssetMapperV2 : new UrbanAssetMapperV2();
     }
 
     /**
@@ -274,6 +281,57 @@ public class UrbanAssetService {
         ));
 
         return urbanAssetMapper.toDtoList(associations);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncidentAssetResponseV2> getAssetsByIncidentPublicId(UUID incidentPublicId) {
+        if (incidentPublicId == null) {
+            return List.of();
+        }
+
+        List<AsociacionIncidenciaActivo> associations = asociacionRepository.findByIncidentPublicId(incidentPublicId);
+        if (associations == null || associations.isEmpty()) {
+            return List.of();
+        }
+
+        associations.sort(Comparator.comparingDouble(
+                assoc -> assoc.getDistanceMeters() != null ? assoc.getDistanceMeters() : Double.MAX_VALUE
+        ));
+
+        return urbanAssetMapperV2.toDtoList(associations);
+    }
+
+    @Transactional
+    public IncidentAssetResponseV2 confirmAssetAssociationV2(UUID incidentPublicId, UUID assetPublicId) {
+        if (incidentPublicId == null || assetPublicId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los identificadores de incidencia y activo son obligatorios");
+        }
+
+        AsociacionIncidenciaActivo association = asociacionRepository.findByIncidentPublicIdAndAssetPublicId(incidentPublicId, assetPublicId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No se encontró la asociación entre la incidencia " + incidentPublicId + " y el activo " + assetPublicId
+                ));
+
+        association.setIsConfirmed(true);
+        AsociacionIncidenciaActivo updated = asociacionRepository.save(association);
+
+        return urbanAssetMapperV2.toDto(updated);
+    }
+
+    @Transactional
+    public void removeAssetAssociationV2(UUID incidentPublicId, UUID assetPublicId) {
+        if (incidentPublicId == null || assetPublicId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los identificadores de incidencia y activo son obligatorios");
+        }
+
+        asociacionRepository.findByIncidentPublicIdAndAssetPublicId(incidentPublicId, assetPublicId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No existe asociación entre la incidencia " + incidentPublicId + " y el activo " + assetPublicId + " para eliminar"
+                ));
+
+        asociacionRepository.deleteByIncidentPublicIdAndAssetPublicId(incidentPublicId, assetPublicId);
     }
 
     /**

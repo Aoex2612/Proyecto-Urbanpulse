@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @version 1.0
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping({"/api/v2/auth", "/api/v1/auth", "/api/auth"})
 public class AuthController {
 
     private final AuthService authService;

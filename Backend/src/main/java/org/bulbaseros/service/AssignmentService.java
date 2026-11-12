@@ -3,6 +3,9 @@ package org.bulbaseros.service;
 import org.bulbaseros.dto.AssignIncidentRequest;
 import org.bulbaseros.dto.AssignmentResponse;
 import org.bulbaseros.dto.DeactivateAssignmentRequest;
+import org.bulbaseros.dto.v2.AssignIncidentRequestV2;
+import org.bulbaseros.dto.v2.AssignmentResponseV2;
+import org.bulbaseros.dto.v2.DeactivateAssignmentRequestV2;
 import org.bulbaseros.entity.Departamento;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.entity.Incidencia;
@@ -11,10 +14,12 @@ import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.AssignmentMapper;
+import org.bulbaseros.mappers.AssignmentMapperV2;
 import org.bulbaseros.repository.DepartamentoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +28,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,26 +53,29 @@ public class AssignmentService {
     private final UserRepository userRepository;
     private final IncidenciaRepository incidenciaRepository;
     private final AssignmentMapper assignmentMapper;
+    private final AssignmentMapperV2 assignmentMapperV2;
 
-    /**
-     * Construye una nueva instancia de {@link AssignmentService} con sus dependencias requeridas.
-     *
-     * @param tareasRepository       Repositorio de persistencia de tareas y asignaciones.
-     * @param departamentoRepository Repositorio de consulta de departamentos municipales.
-     * @param userRepository         Repositorio de usuarios del sistema.
-     * @param incidenciaRepository   Repositorio de gestión de incidencias urbanas.
-     * @param assignmentMapper       Mapeador de conversión entre entidades {@link Tareas} y DTOs {@link AssignmentResponse}.
-     */
     public AssignmentService(TareasRepository tareasRepository,
                              DepartamentoRepository departamentoRepository,
                              UserRepository userRepository,
                              IncidenciaRepository incidenciaRepository,
                              AssignmentMapper assignmentMapper) {
+        this(tareasRepository, departamentoRepository, userRepository, incidenciaRepository, assignmentMapper, new AssignmentMapperV2());
+    }
+
+    @Autowired
+    public AssignmentService(TareasRepository tareasRepository,
+                             DepartamentoRepository departamentoRepository,
+                             UserRepository userRepository,
+                             IncidenciaRepository incidenciaRepository,
+                             AssignmentMapper assignmentMapper,
+                             @Autowired(required = false) AssignmentMapperV2 assignmentMapperV2) {
         this.tareasRepository = tareasRepository;
         this.departamentoRepository = departamentoRepository;
         this.userRepository = userRepository;
         this.incidenciaRepository = incidenciaRepository;
         this.assignmentMapper = assignmentMapper;
+        this.assignmentMapperV2 = assignmentMapperV2 != null ? assignmentMapperV2 : new AssignmentMapperV2();
     }
 
     /**
@@ -291,5 +301,77 @@ public class AssignmentService {
 
         List<Tareas> activeTasks = tareasRepository.findByIncidentIdAndIsActiveTrue(incidentId);
         return assignmentMapper.toDtoList(activeTasks);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AssignmentResponseV2> getActiveAssignmentsV2(UUID incidentPublicId) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        List<Tareas> activeTasks = tareasRepository.findByIncidentPublicIdAndIsActiveTrue(incident.getPublicId());
+        return assignmentMapperV2.toDtoList(activeTasks);
+    }
+
+    @Transactional
+    public List<AssignmentResponseV2> assignDepartmentsAndTechniciansV2(UUID incidentPublicId, AssignIncidentRequestV2 request, String userEmail) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        List<Long> deptIds = new ArrayList<>();
+        if (request.getDepartmentIds() != null) {
+            for (String dId : request.getDepartmentIds()) {
+                if (dId != null && !dId.isBlank()) {
+                    deptIds.add(departamentoRepository.findByPublicId(UUID.fromString(dId))
+                            .map(Departamento::getId)
+                            .orElseThrow(() -> new IllegalArgumentException("Departamento no encontrado con publicId: " + dId)));
+                }
+            }
+        }
+
+        List<Long> techIds = null;
+        if (request.getTechnicianIds() != null) {
+            techIds = new ArrayList<>();
+            for (String tId : request.getTechnicianIds()) {
+                if (tId != null && !tId.isBlank()) {
+                    techIds.add(userRepository.findByPublicId(UUID.fromString(tId))
+                            .map(Usuario::getId)
+                            .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado con publicId: " + tId)));
+                }
+            }
+        }
+
+        assignDepartmentsAndTechnicians(incident.getId(), new AssignIncidentRequest(deptIds, techIds), userEmail);
+
+        List<Tareas> activeTasks = tareasRepository.findByIncidentPublicIdAndIsActiveTrue(incident.getPublicId());
+        return assignmentMapperV2.toDtoList(activeTasks);
+    }
+
+    @Transactional
+    public List<AssignmentResponseV2> deactivateAssignmentsV2(UUID incidentPublicId, DeactivateAssignmentRequestV2 request, String userEmail) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        final List<Long> deptIds = request.getDepartmentIds() != null ? new ArrayList<>() : null;
+        if (deptIds != null) {
+            for (String dId : request.getDepartmentIds()) {
+                if (dId != null && !dId.isBlank()) {
+                    departamentoRepository.findByPublicId(UUID.fromString(dId)).ifPresent(d -> deptIds.add(d.getId()));
+                }
+            }
+        }
+
+        final List<Long> techIds = request.getTechnicianIds() != null ? new ArrayList<>() : null;
+        if (techIds != null) {
+            for (String tId : request.getTechnicianIds()) {
+                if (tId != null && !tId.isBlank()) {
+                    userRepository.findByPublicId(UUID.fromString(tId)).ifPresent(u -> techIds.add(u.getId()));
+                }
+            }
+        }
+
+        deactivateAssignments(incident.getId(), new DeactivateAssignmentRequest(deptIds, techIds), userEmail);
+
+        List<Tareas> remainingActiveTasks = tareasRepository.findByIncidentPublicIdAndIsActiveTrue(incident.getPublicId());
+        return assignmentMapperV2.toDtoList(remainingActiveTasks);
     }
 }
