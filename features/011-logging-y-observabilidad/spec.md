@@ -58,4 +58,4 @@ _Cada criterio debe cumplirse con prueba o demostración para dar por terminada 
 - [ ] La NFR-1 quedará verificada en el contenido de los mensajes de log generados.
 
 ## Dudas abiertas
-- [NECESITA ACLARACIÓN: Nivel exacto (ERROR/WARN/INFO) asignado a los eventos de autenticación y autorización una resolver la política de redacción de credenciales en logs.]
+- **Resuelta (Opción A):** Se determinó que los eventos de autenticación/autorización se registran con nivel `WARN` (token inválido/expirado y acceso denegado), y que la política de redacción excluye contraseñas y tokens completos de los logs.
