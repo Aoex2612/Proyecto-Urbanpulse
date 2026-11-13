@@ -48,6 +48,7 @@ dist
 dist-ssr
 coverage
 *.local
+k6/reports/
 
 # Editor directories and files
 .vscode/*
