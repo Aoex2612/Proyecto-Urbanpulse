@@ -51,10 +51,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
   - Comprobación de que la prop `hasResults={false}` renderiza el aviso de búsqueda sin resultados conforme a RF-14.
 - [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 5: Integración en vistas consumidoras (`MapPage` y `OperatorPanelPage`) y verificación E2E — Depende de: Tarea 3, Tarea 4 — RF: RF-12, RF-13, RF-14, RF-15; RNF: RNF-2, RNF-3
-- [ ] Integrar la carga del catálogo de departamentos en `MapPage.jsx` y `OperatorPanelPage.jsx` de forma no bloqueante y pasarla a `IncidentFilterBar`.
-- [ ] Conectar la barra de filtros con el nuevo cliente `incidentService.js` para ejecutar las búsquedas multicriterio.
-- [ ] Comprobar que los filtros de fecha preexistentes conviven sin interferencias ni desincronizaciones con los nuevos filtros.
-- [ ] Asegurar que el estado de los filtros se mantenga inalterado al interactuar con modales de detalle de incidencia (RF-15).
-- [ ] Actualizar y ejecutar las suites de pruebas de `MapPage.test.jsx` y `OperatorPanelPage.test.jsx`.
+## [x] Tarea 5: Integración en vistas consumidoras (`MapPage` y `OperatorPanelPage`) y verificación E2E — Depende de: Tarea 3, Tarea 4 — RF: RF-12, RF-13, RF-14, RF-15; RNF: RNF-2, RNF-3
+- [x] Integrar la carga del catálogo de departamentos en `MapPage.jsx` y `OperatorPanelPage.jsx` de forma no bloqueante y pasarla a `IncidentFilterBar`.
+- [x] Conectar la barra de filtros con el nuevo cliente `incidentService.js` para ejecutar las búsquedas multicriterio.
+- [x] Comprobar que los filtros de fecha preexistentes conviven sin interferencias ni desincronizaciones con los nuevos filtros.
+- [x] Asegurar que el estado de los filtros se mantenga inalterado al interactuar con modales de detalle de incidencia (RF-15).
+- [x] Actualizar y ejecutar las suites de pruebas de `MapPage.test.jsx` y `OperatorPanelPage.test.jsx`.
 - [ ] Validar contra todos los criterios de aceptación de `spec.md`.
