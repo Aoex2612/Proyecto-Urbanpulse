@@ -17,6 +17,65 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - urbanpulse_network
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: urbanpulse_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    networks:
+      - urbanpulse_network
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: urbanpulse_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - node-exporter
+    networks:
+      - urbanpulse_network
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: urbanpulse_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - urbanpulse_network
 
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  urbanpulse_network:
+    driver: bridge
