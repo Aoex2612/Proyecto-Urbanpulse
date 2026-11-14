@@ -33,22 +33,22 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
   - Caso límite C-4: consulta con `departmentId` inexistente devuelve lista vacía con HTTP 200 sin lanzar excepciones no controladas.
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 4: Extensión del cliente API y componente `IncidentFilterBar` con estilos — Depende de: Ninguna — RF: RF-1, RF-2, RF-3, RF-5, RF-7, RF-10, RF-13, RF-14; RNF: RNF-3, RNF-4
-- [ ] Actualizar el cliente HTTP `incidentService.js` en frontend para propagar los nuevos parámetros de búsqueda (`district`, `priority`, `departmentId`, `unassignedDepartment`) en las llamadas a `/api/incidents`.
-- [ ] Actualizar `IncidentFilterBar.jsx` para admitir la prop `departments` (con array vacío por defecto).
-- [ ] Añadir el selector desplegable de distrito accesible para todos los roles, nutrido con `MALAGA_DISTRICTS` y la opción "Todos los distritos".
-- [ ] Añadir condicionalmente (`canFilterInternal = userRole && userRole !== 'CITIZEN'`):
+## [x] Tarea 4: Extensión del cliente API y componente `IncidentFilterBar` con estilos — Depende de: Ninguna — RF: RF-1, RF-2, RF-3, RF-5, RF-7, RF-10, RF-13, RF-14; RNF: RNF-3, RNF-4
+- [x] Actualizar el cliente HTTP `incidentService.js` en frontend para propagar los nuevos parámetros de búsqueda (`district`, `priority`, `departmentId`, `unassignedDepartment`) en las llamadas a `/api/incidents`.
+- [x] Actualizar `IncidentFilterBar.jsx` para admitir la prop `departments` (con array vacío por defecto).
+- [x] Añadir el selector desplegable de distrito accesible para todos los roles, nutrido con `MALAGA_DISTRICTS` y la opción "Todos los distritos".
+- [x] Añadir condicionalmente (`canFilterInternal = userRole && userRole !== 'CITIZEN'`):
   - Selector de prioridad (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`) con etiquetas legibles.
   - Selector de departamento con opciones: "Todos los departamentos", "Sin departamento asignado" (`unassigned`) y la lista de departamentos disponibles.
-- [ ] Actualizar la función `handleClear` para resetear `district`, `priority` y `department` simultáneamente.
-- [ ] Actualizar `IncidentFilterBar.css` para asegurar maquetación responsiva y etiquetas semánticas accesibles (`aria-label`).
-- [ ] Añadir pruebas en `IncidentFilterBar.test.jsx`:
+- [x] Actualizar la función `handleClear` para resetear `district`, `priority` y `department` simultáneamente.
+- [x] Actualizar `IncidentFilterBar.css` para asegurar maquetación responsiva y etiquetas semánticas accesibles (`aria-label`).
+- [x] Añadir pruebas en `IncidentFilterBar.test.jsx`:
   - Renderizado para `CITIZEN`: solo muestra texto, categoría, fechas y distrito; oculta estado, prioridad y departamento.
   - Renderizado para `OPERATOR`: muestra todos los selectores.
   - Comportamiento resiliente si `departments` está vacío o la petición falla.
   - Emisión correcta de eventos al seleccionar y al limpiar filtros.
   - Comprobación de que la prop `hasResults={false}` renderiza el aviso de búsqueda sin resultados conforme a RF-14.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 5: Integración en vistas consumidoras (`MapPage` y `OperatorPanelPage`) y verificación E2E — Depende de: Tarea 3, Tarea 4 — RF: RF-12, RF-13, RF-14, RF-15; RNF: RNF-2, RNF-3
 - [ ] Integrar la carga del catálogo de departamentos en `MapPage.jsx` y `OperatorPanelPage.jsx` de forma no bloqueante y pasarla a `IncidentFilterBar`.
