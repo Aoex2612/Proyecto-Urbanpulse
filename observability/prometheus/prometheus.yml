@@ -8,6 +8,14 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
+  # Métricas de hardware y sistema operativo (CPU, RAM, Disco, Red)
+  - job_name: 'node-exporter'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: 'host-system'
+
   # Métricas de la aplicación Spring Boot (UrbanPulse Backend)
   - job_name: 'urban-pulse-backend'
     metrics_path: '/actuator/prometheus'
