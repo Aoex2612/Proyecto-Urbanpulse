@@ -1,4 +1,4 @@
-# 011 — Filtros avanzados de incidencias con control de acceso RBAC — Plan
+# 010 — Filtros avanzados de incidencias con control de acceso RBAC — Plan
 
 _Cómo se implementa lo descrito en `spec.md`. Debe respetar la `constitution/`._
 

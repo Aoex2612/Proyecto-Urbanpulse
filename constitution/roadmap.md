@@ -18,6 +18,8 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 ## En curso 🔄
 
+- **010 · Filtros avanzados de incidencias con control de acceso RBAC** (`HU19` ampliación) — Filtros de distrito, prioridad y departamento con protección RBAC en UI y API, combinación multicriterio y limpieza integral (`features/010-filtros-avanzados-de-incidencias-rbac/`).
+
 ## Siguiente 🔜
 
 - **Gestión e inventario de activos urbanos** — Consulta, alta y vinculación de elementos de mobiliario e infraestructura urbana con incidencias.
