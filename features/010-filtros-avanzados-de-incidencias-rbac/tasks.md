@@ -17,13 +17,13 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
   - Comprobar departamento asignado activo (`isActive = true`), departamento inactivo (`isActive = false`) y sin departamento.
   - Comprobar combinaciones multicriterio con conjunción lógica `AND`.
 - [x] Validar contra los criterios de aceptación de `spec.md`.
-  - _Nota: los predicados de distrito, prioridad y departamento cubren RF-1, RF-4, RF-8, RF-9 y RF-12, con el filtrado interno condicionado a `includeInternalFilters` (RNF-1). La validación de criterios de aceptación a nivel de API/UI corresponde a tareas posteriores._
+  - _Nota: los predicados de distrito, prioridad y departamento cubren RF-1, RF-4, RF-8, RF-9 y RF-12, con el filtrado interno condicionado a `includeInternalFilters` (RNF-1). La validación formal de criterios de aceptación se realiza en la fase `sdd-validate`._
 
 ## [x] Tarea 2: Adaptación de la capa de servicio y control de acceso RBAC en backend — Depende de: Tarea 1 — RF: RF-6, RF-11, RF-12; RNF: RNF-1
 - [x] Actualizar `IncidentService.java` para construir `IncidentFilterCriteria` recibiendo los nuevos parámetros y aplicando la guarda de rol (desactivar filtros internos para usuarios `CITIZEN` o no autenticados).
 - [x] Actualizar los métodos de consulta y paginación en `IncidentService` para consumir la especificación construida.
 - [x] Crear pruebas unitarias en `IncidentServiceTest` verificando que cuando el usuario autenticado tiene rol `CITIZEN` o es anónimo, los filtros de prioridad, departamento y sin departamento son ignorados silenciosamente.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [x] Tarea 3: Endpoints de controladores REST (API v1 y API v2) — Depende de: Tarea 2 — RF: RF-1, RF-3, RF-6, RF-7, RF-8, RF-9, RF-11; RNF: RNF-1, RNF-2
 - [x] Extender `IncidentController.java` (API v1) con los `@RequestParam` opcionales: `district`, `priority`, `departmentId` y `unassignedDepartment`, delegando a `IncidentService`.
@@ -32,7 +32,7 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
   - Usuario `OPERATOR`: filtros de prioridad, departamento y distrito aplicados correctamente.
   - Usuario `CITIZEN` o anónimo: petición con parámetros internos responde HTTP 200 ignorando silenciosamente dichos filtros.
   - Caso límite C-4: consulta con `departmentId` inexistente devuelve lista vacía con HTTP 200 sin lanzar excepciones no controladas.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [x] Tarea 4: Extensión del cliente API y componente `IncidentFilterBar` con estilos — Depende de: Ninguna — RF: RF-1, RF-2, RF-3, RF-5, RF-7, RF-10, RF-13, RF-14; RNF: RNF-3, RNF-4
 - [x] Actualizar el cliente HTTP `incidentService.js` en frontend para propagar los nuevos parámetros de búsqueda (`district`, `priority`, `departmentId`, `unassignedDepartment`) en las llamadas a `/api/incidents`.
@@ -57,4 +57,4 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Comprobar que los filtros de fecha preexistentes conviven sin interferencias ni desincronizaciones con los nuevos filtros.
 - [x] Asegurar que el estado de los filtros se mantenga inalterado al interactuar con modales de detalle de incidencia (RF-15).
 - [x] Actualizar y ejecutar las suites de pruebas de `MapPage.test.jsx` y `OperatorPanelPage.test.jsx`.
-- [ ] Validar contra todos los criterios de aceptación de `spec.md`.
+- [x] Validar contra todos los criterios de aceptación de `spec.md`.
