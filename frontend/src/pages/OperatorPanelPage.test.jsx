@@ -24,6 +24,7 @@ vi.mock('../services/notificationService', () => ({
 vi.mock('../services/incidentService', () => ({
   default: {
     getAllIncidents: vi.fn(),
+    searchIncidents: vi.fn(),
   },
 }));
 
@@ -152,6 +153,8 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
       role: 'ADMIN',
     });
     incidentService.getAllIncidents.mockResolvedValue(mockIncidents);
+    incidentService.searchIncidents.mockResolvedValue(mockIncidents);
+    triageService.getDepartments.mockResolvedValue([]);
   });
 
   const renderPanel = () =>
@@ -160,6 +163,38 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
         <OperatorPanelPage />
       </MemoryRouter>
     );
+
+  const filterableIncidents = [
+    {
+      id: 11,
+      title: 'Bache en el Centro',
+      description: 'Hoyo en calzada del distrito Centro.',
+      category: 'Vías Públicas',
+      priority: 'HIGH',
+      status: 'REPORTED',
+      district: 'Centro',
+      createdAt: '2026-11-01T10:00:00Z',
+      assignments: [],
+    },
+    {
+      id: 12,
+      title: 'Farola fundida en el Este',
+      description: 'Luminaria apagada en el distrito Este.',
+      category: 'Alumbrado',
+      priority: 'LOW',
+      status: 'VALIDATED',
+      district: 'Este',
+      createdAt: '2026-11-01T11:00:00Z',
+      assignments: [
+        {
+          id: 601,
+          departmentId: 'uuid-limpieza',
+          departmentName: 'Limpieza Urbana',
+          isActive: true,
+        },
+      ],
+    },
+  ];
 
   it('renderiza la vista con el resumen general, estadísticas y la lista de incidencias', async () => {
     renderPanel();
@@ -438,5 +473,113 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
     // No debe mostrar Iniciar Trabajo ni Resolver a operadores
     expect(screen.queryByRole('button', { name: 'Iniciar trabajo en incidencia #3' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resolver incidencia #4' })).not.toBeInTheDocument();
+  });
+
+  it('carga el catalogo de departamentos y muestra todos los selectores para roles internos', async () => {
+    triageService.getDepartments.mockResolvedValue([
+      { id: 'uuid-limpieza', name: 'Limpieza Urbana', description: 'Limpieza viaria' },
+    ]);
+
+    renderPanel();
+
+    await screen.findByText('Centro de Triaje y Operaciones Urbanas');
+
+    expect(screen.getByLabelText(/Distrito:/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Prioridad:/i)).toBeInTheDocument();
+    const departmentSelect = screen.getByLabelText(/Departamento:/i);
+    expect(departmentSelect).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(triageService.getDepartments).toHaveBeenCalled();
+      expect(departmentSelect).toContainElement(
+        screen.getByRole('option', { name: 'Limpieza Urbana' })
+      );
+    });
+  });
+
+  it('invoca la busqueda multicriterio con departmentId y unassignedDepartment tras el debounce', async () => {
+    triageService.getDepartments.mockResolvedValue([
+      { id: 'uuid-limpieza', name: 'Limpieza Urbana' },
+    ]);
+    incidentService.getAllIncidents.mockResolvedValue(filterableIncidents);
+    incidentService.searchIncidents.mockResolvedValue(filterableIncidents);
+
+    renderPanel();
+
+    await screen.findByText('Bache en el Centro');
+
+    fireEvent.change(screen.getByLabelText(/Distrito:/i), { target: { value: 'Centro' } });
+    fireEvent.change(screen.getByLabelText(/Prioridad:/i), { target: { value: 'HIGH' } });
+    const departmentSelect = screen.getByLabelText(/Departamento:/i);
+    fireEvent.change(departmentSelect, { target: { value: 'uuid-limpieza' } });
+
+    await waitFor(
+      () => {
+        expect(incidentService.searchIncidents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            district: 'Centro',
+            priority: 'HIGH',
+            departmentId: 'uuid-limpieza',
+            unassignedDepartment: undefined,
+          })
+        );
+      },
+      { timeout: 3000 }
+    );
+
+    fireEvent.change(departmentSelect, { target: { value: 'unassigned' } });
+
+    await waitFor(
+      () => {
+        expect(incidentService.searchIncidents).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            district: 'Centro',
+            priority: 'HIGH',
+            departmentId: undefined,
+            unassignedDepartment: true,
+          })
+        );
+      },
+      { timeout: 3000 }
+    );
+  });
+
+  it('conserva los filtros activos al abrir y cerrar el modal de comentarios (RF-15)', async () => {
+    incidentService.getAllIncidents.mockResolvedValue(filterableIncidents);
+
+    renderPanel();
+
+    await screen.findByText('Bache en el Centro');
+
+    const districtSelect = screen.getByLabelText(/Distrito:/i);
+    fireEvent.change(districtSelect, { target: { value: 'Centro' } });
+    expect(districtSelect).toHaveValue('Centro');
+
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Ver y redactar comentarios de la incidencia #11',
+      })
+    );
+    expect(screen.getByText(/Muro de Comentarios — Incidencia #11/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar muro de comentarios' }));
+
+    expect(screen.queryByText(/Muro de Comentarios — Incidencia #11/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Distrito:/i)).toHaveValue('Centro');
+  });
+
+  it('muestra el aviso de RF-14 cuando la busqueda no devuelve resultados', async () => {
+    incidentService.getAllIncidents.mockResolvedValue(filterableIncidents);
+    incidentService.searchIncidents.mockResolvedValue([]);
+
+    renderPanel();
+
+    await screen.findByText('Bache en el Centro');
+
+    fireEvent.change(screen.getByLabelText(/Distrito:/i), { target: { value: 'Centro' } });
+
+    expect(
+      await screen.findByText(/No se encontraron incidencias con los filtros aplicados/i)
+    ).toBeInTheDocument();
   });
 });

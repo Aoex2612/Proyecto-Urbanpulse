@@ -32,6 +32,29 @@ export const getIncidentById = async (id) => {
 };
 
 /**
+ * Realiza una busqueda multicriterio de incidencias combinando todos los criterios activos
+ * mediante conjuncion logica AND. Los parametros internos (status, priority, departmentId,
+ * unassignedDepartment) son ignorados por el backend si el usuario es CITIZEN o anonimo.
+ *
+ * @param {Object} [params={}] - Criterios de busqueda de incidencias.
+ * @param {string} [params.text] - Texto libre sobre titulo o descripcion.
+ * @param {string} [params.category] - Categoria tematica de la incidencia.
+ * @param {string} [params.start] - Fecha inicial del rango (formato ISO).
+ * @param {string} [params.end] - Fecha final del rango (formato ISO).
+ * @param {string} [params.status] - Estado del ciclo de vida (solo roles internos).
+ * @param {string} [params.district] - Distrito municipal.
+ * @param {string} [params.priority] - Prioridad tecnica (solo roles internos).
+ * @param {number|string} [params.departmentId] - Identificador del departamento (solo roles internos).
+ * @param {boolean} [params.unassignedDepartment] - Filtra incidencias sin departamento asignado (solo roles internos).
+ * @returns {Promise<Object>} Resultado de la busqueda devuelto por el servidor.
+ * @throws {import('axios').AxiosError} Si ocurre un error durante la peticion HTTP.
+ */
+export const searchIncidents = async (params = {}) => {
+  const response = await api.get('/api/v2/incidents/search', { params });
+  return response.data;
+};
+
+/**
  * Recupera el listado paginado de incidencias urbanas reportadas por el ciudadano autenticado.
  * Permite filtrar opcionalmente por estado de ciclo de vida (status) y paginar resultados.
  *
@@ -199,6 +222,7 @@ export const removeIncidentAsset = async (incidentId, assetId) => {
 const incidentService = {
   getAllIncidents,
   getIncidentById,
+  searchIncidents,
   getMyIncidents,
   reverseGeocode,
   createIncident,

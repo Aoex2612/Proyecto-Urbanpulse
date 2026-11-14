@@ -11,8 +11,8 @@ import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.EstadoIncidencia;
+import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.entity.RolUsuario;
-import org.bulbaseros.entity.Usuario;
 import org.bulbaseros.repository.UserRepository;
 import org.bulbaseros.service.AttachmentService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -373,19 +373,25 @@ public class IncidentController {
     }
 
     /**
-     * Busca incidencias aplicando filtros multicriterio: texto libre, categoría, rango de fechas
-     * y estado del ciclo de vida (HU-19).
+     * Busca incidencias aplicando filtros multicriterio: texto libre, categoría, rango de fechas,
+     * distrito, estado, prioridad y departamento (HU-19, RF-1, RF-4, RF-8, RF-9, RF-11, RF-12).
      * <p>
-     * El filtro por estado ({@code status}) se encuentra restringido a perfiles internos; si la petición
-     * es realizada por un ciudadano ({@link RolUsuario#CITIZEN}), el parámetro es ignorado automáticamente.
+     * Los filtros internos ({@code status}, {@code priority}, {@code departmentId} y
+     * {@code unassignedDepartment}) son ignorados silenciosamente por el servicio cuando la petición
+     * procede de un ciudadano ({@link RolUsuario#CITIZEN}) o de un usuario anónimo (RNF-1).
+     * El filtro de distrito es público y se aplica para todos los perfiles.
      * </p>
      *
-     * @param text      Texto libre en título o descripción (opcional).
-     * @param category  Categoría temática de la incidencia (opcional).
-     * @param startDate Fecha inicial del rango de creación (opcional).
-     * @param endDate   Fecha final del rango de creación (opcional).
-     * @param status    Estado de triaje de la incidencia (opcional, ignorado para CITIZEN).
-     * @param auth      Contexto de autenticación del usuario.
+     * @param text                 Texto libre en título o descripción (opcional).
+     * @param category             Categoría temática de la incidencia (opcional).
+     * @param startDate            Fecha inicial del rango de creación (opcional).
+     * @param endDate              Fecha final del rango de creación (opcional).
+     * @param status               Estado de triaje de la incidencia (opcional, ignorado sin acceso interno).
+     * @param district             Distrito municipal de la incidencia (opcional).
+     * @param priority             Prioridad técnica de la incidencia (opcional, ignorada sin acceso interno).
+     * @param departmentId         Identificador numérico del departamento (opcional, ignorado sin acceso interno).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (opcional, ignorado sin acceso interno).
+     * @param auth                 Contexto de autenticación del usuario.
      * @return Lista de incidencias que satisfacen los criterios combinados.
      */
     @GetMapping("/search")
@@ -395,25 +401,15 @@ public class IncidentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime endDate,
             @RequestParam(required = false) EstadoIncidencia status,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) PrioridadIncidencia priority,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(defaultValue = "false") boolean unassignedDepartment,
             Authentication auth) {
 
-        boolean includeStatus = false;
-        if (auth != null && auth.isAuthenticated()) {
-            boolean hasCitizenRole = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_CITIZEN") || a.getAuthority().equals("CITIZEN"));
-            if (!hasCitizenRole && userRepository != null) {
-                java.util.Optional<Usuario> userOpt = userRepository.findByEmail(auth.getName());
-                if (userOpt.isPresent()) {
-                    includeStatus = userOpt.get().getRole() != RolUsuario.CITIZEN;
-                } else {
-                    includeStatus = true;
-                }
-            } else {
-                includeStatus = !hasCitizenRole;
-            }
-        }
-
-        List<IncidentResponse> results = incidentService.searchIncidents(text, category, startDate, endDate, status, includeStatus);
+        String userEmail = auth != null ? auth.getName() : null;
+        List<IncidentResponse> results = incidentService.searchIncidents(text, category, startDate, endDate,
+                status, district, priority, departmentId, unassignedDepartment, userEmail);
         return ResponseEntity.ok(results);
     }
 }

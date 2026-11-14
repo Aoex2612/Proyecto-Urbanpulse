@@ -24,6 +24,34 @@ import notificationService from '../services/notificationService';
 import './OperatorPanelPage.css';
 
 /**
+ * Criterios que se resuelven en servidor y activan la busqueda multicriterio (RF-12).
+ * Las fechas se mantienen en cliente.
+ * @type {string[]}
+ */
+const SERVER_FILTER_KEYS = ['text', 'category', 'status', 'district', 'priority', 'department'];
+
+/**
+ * Transforma los criterios de la barra de filtros en parametros de `searchIncidents`.
+ * Los valores vacios se envian como `undefined` para que Axios los omita.
+ * El departamento `unassigned` se traduce al flag `unassignedDepartment`.
+ *
+ * @param {Object} criteria - Criterios emitidos por `IncidentFilterBar`.
+ * @returns {Object} Parametros de la busqueda multicriterio.
+ */
+const toSearchParams = (criteria) => ({
+  text: criteria.text || undefined,
+  category: criteria.category || undefined,
+  status: criteria.status || undefined,
+  district: criteria.district || undefined,
+  priority: criteria.priority || undefined,
+  departmentId:
+    criteria.department && criteria.department !== 'unassigned'
+      ? criteria.department
+      : undefined,
+  unassignedDepartment: criteria.department === 'unassigned' ? true : undefined,
+});
+
+/**
  * Componente principal del Panel de Operador / Centro de Triaje y Operaciones Urbanas.
  *
  * @returns {import('react').JSX.Element} Vista del panel de operador protegida por RBAC conectada a PostgreSQL.
@@ -48,7 +76,24 @@ export default function OperatorPanelPage() {
   const [reasonModalState, setReasonModalState] = useState(null); // { isOpen, incident, actionType }
   const [commentsModalIncident, setCommentsModalIncident] = useState(null);
   const [duplicateIncidentIds, setDuplicateIncidentIds] = useState(new Set());
-  const [filterCriteria, setFilterCriteria] = useState({ text: '', category: '', startDate: '', endDate: '', status: '' });
+  const [filterCriteria, setFilterCriteria] = useState({
+    text: '',
+    category: '',
+    startDate: '',
+    endDate: '',
+    status: '',
+    district: '',
+    priority: '',
+    department: '',
+  });
+
+  // Resultado de la busqueda multicriterio en servidor (null = usar el conjunto completo)
+  const [searchResults, setSearchResults] = useState(null);
+
+  // Catalogo de departamentos para el selector interno (no bloqueante)
+  const [departments, setDepartments] = useState([]);
+
+  const canFilterInternal = Boolean(user?.role) && user.role !== 'CITIZEN';
 
   /**
    * Carga el listado de incidencias activas desde la API backend.
@@ -77,6 +122,20 @@ export default function OperatorPanelPage() {
       }
     });
 
+    // Catalogo de departamentos solo para roles internos (requiere autenticacion)
+    if (canFilterInternal && typeof triageService.getDepartments === 'function') {
+      triageService
+        .getDepartments()
+        .then((data) => {
+          if (isMounted && Array.isArray(data)) {
+            setDepartments(data);
+          }
+        })
+        .catch((err) => {
+          console.error('No se pudo cargar el catalogo de departamentos:', err);
+        });
+    }
+
     if (canOperateTriage && notificationService?.getNotifications) {
       notificationService
         .getNotifications()
@@ -96,7 +155,39 @@ export default function OperatorPanelPage() {
     return () => {
       isMounted = false;
     };
-  }, [fetchIncidents, canOperateTriage]);
+  }, [fetchIncidents, canOperateTriage, canFilterInternal]);
+
+  // Criterios "de servidor" activos; las fechas se filtran en cliente
+  const hasServerCriteria = SERVER_FILTER_KEYS.some((key) => filterCriteria[key]);
+
+  // Busqueda multicriterio con debounce de 300 ms y descarte de respuestas obsoletas
+  useEffect(() => {
+    if (!hasServerCriteria) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      incidentService
+        .searchIncidents(toSearchParams(filterCriteria))
+        .then((data) => {
+          if (!cancelled) {
+            setSearchResults(Array.isArray(data) ? data : []);
+          }
+        })
+        .catch((err) => {
+          console.error('Error en la busqueda multicriterio de incidencias:', err);
+          if (!cancelled) {
+            setSearchResults(null);
+          }
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [hasServerCriteria, filterCriteria]);
 
   /**
    * Manejador para el cierre de sesión seguro del operador.
@@ -335,7 +426,9 @@ export default function OperatorPanelPage() {
 
   // Incidencias filtradas según los criterios de IncidentFilterBar (HU19)
   const displayedIncidents = useMemo(() => {
-    return incidents.filter((incident) => {
+    // Fallback resiliente: si no hay criterios de servidor o la busqueda falla, se usa el conjunto completo
+    const baseIncidents = (hasServerCriteria ? searchResults : null) ?? incidents;
+    return baseIncidents.filter((incident) => {
       if (filterCriteria.text) {
         const q = filterCriteria.text.toLowerCase();
         const matchTitle = (incident.title || '').toLowerCase().includes(q);
@@ -347,6 +440,31 @@ export default function OperatorPanelPage() {
       }
       if (filterCriteria.status && incident.status !== filterCriteria.status) {
         return false;
+      }
+      if (filterCriteria.district) {
+        const incidentDistrict = (incident.district || '').trim().toLowerCase();
+        if (!incidentDistrict || incidentDistrict !== filterCriteria.district.trim().toLowerCase()) {
+          return false;
+        }
+      }
+      if (filterCriteria.priority && incident.priority !== filterCriteria.priority) {
+        return false;
+      }
+      if (filterCriteria.department) {
+        const activeAssignments = (
+          incident.activeAssignments ||
+          incident.assignments ||
+          []
+        ).filter((a) => a.isActive !== false);
+        if (filterCriteria.department === 'unassigned') {
+          if (activeAssignments.length > 0) return false;
+        } else if (
+          !activeAssignments.some(
+            (a) => String(a.departmentId) === String(filterCriteria.department)
+          )
+        ) {
+          return false;
+        }
       }
       if (filterCriteria.startDate) {
         const created = new Date(incident.createdAt);
@@ -361,7 +479,7 @@ export default function OperatorPanelPage() {
       }
       return true;
     });
-  }, [incidents, filterCriteria]);
+  }, [incidents, searchResults, hasServerCriteria, filterCriteria]);
 
   return (
     <div className="operator-container">
@@ -500,6 +618,7 @@ export default function OperatorPanelPage() {
           <IncidentFilterBar
             onFilterChange={setFilterCriteria}
             userRole={user?.role}
+            departments={departments}
             hasResults={displayedIncidents.length > 0}
           />
 
