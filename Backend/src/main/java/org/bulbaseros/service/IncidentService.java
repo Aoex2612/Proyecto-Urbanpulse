@@ -3,6 +3,7 @@ package org.bulbaseros.service;
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.ExternalObservationResponse;
 import org.bulbaseros.dto.IncidentAssetResponse;
+import org.bulbaseros.dto.IncidentFilterCriteria;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
@@ -10,6 +11,7 @@ import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.CambiosEstado;
+import org.bulbaseros.entity.Departamento;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.dto.v2.IncidentResponseV2;
@@ -25,6 +27,7 @@ import org.bulbaseros.mappers.StatusChangeMapperV2;
 
 import java.util.UUID;
 import org.bulbaseros.repository.CambiosEstadoRepository;
+import org.bulbaseros.repository.DepartamentoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Tareas;
@@ -110,6 +113,17 @@ public class IncidentService {
     private final IncidentMapperV2 incidentMapperV2;
     private final StatusChangeMapperV2 statusChangeMapperV2;
 
+    /**
+     * Repositorio opcional de departamentos municipales para la resolucion de identificadores publicos (UUID) en API v2.
+     */
+    private final DepartamentoRepository departamentoRepository;
+
+    /**
+     * Roles internos con acceso a los filtros operativos (estado, prioridad y departamento).
+     */
+    private static final Set<RolUsuario> INTERNAL_ROLES =
+            Set.of(RolUsuario.OPERATOR, RolUsuario.TECHNICIAN, RolUsuario.ADMIN, RolUsuario.ANALYST);
+
     public static final Map<EstadoIncidencia, Set<EstadoIncidencia>> ALLOWED_TRANSITIONS = Map.of(
             EstadoIncidencia.REPORTED, Set.of(EstadoIncidencia.VALIDATED, EstadoIncidencia.REJECTED),
             EstadoIncidencia.VALIDATED, Set.of(EstadoIncidencia.ASSIGNED),
@@ -135,6 +149,9 @@ public class IncidentService {
      * @param externalContextService     Servicio opcional de ingesta y consulta de contexto externo.
      * @param notificationService        Servicio opcional de notificaciones in-app.
      * @param duplicateDetectionService  Servicio opcional de detección y notificación de duplicados.
+     * @param incidentMapperV2           Mapeador opcional de incidencias a DTOs v2.
+     * @param statusChangeMapperV2       Mapeador opcional de cambios de estado a DTOs v2.
+     * @param departamentoRepository     Repositorio opcional de departamentos municipales (resolucion de UUID en API v2).
      */
     @Autowired
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -149,7 +166,8 @@ public class IncidentService {
                            @Autowired(required = false) NotificationService notificationService,
                            @Autowired(required = false) DuplicateDetectionService duplicateDetectionService,
                            @Autowired(required = false) IncidentMapperV2 incidentMapperV2,
-                           @Autowired(required = false) StatusChangeMapperV2 statusChangeMapperV2) {
+                           @Autowired(required = false) StatusChangeMapperV2 statusChangeMapperV2,
+                           @Autowired(required = false) DepartamentoRepository departamentoRepository) {
         this.incidenciaRepository = incidenciaRepository;
         this.cambiosEstadoRepository = cambiosEstadoRepository;
         this.userRepository = userRepository;
@@ -163,6 +181,7 @@ public class IncidentService {
         this.duplicateDetectionService = duplicateDetectionService;
         this.incidentMapperV2 = incidentMapperV2 != null ? incidentMapperV2 : new IncidentMapperV2();
         this.statusChangeMapperV2 = statusChangeMapperV2 != null ? statusChangeMapperV2 : new StatusChangeMapperV2();
+        this.departamentoRepository = departamentoRepository;
     }
 
     public IncidentService(IncidenciaRepository incidenciaRepository,
@@ -171,7 +190,7 @@ public class IncidentService {
                            IncidentMapper incidentMapper,
                            StatusChangeMapper statusChangeMapper,
                            MalagaOpenDataService malagaOpenDataService) {
-        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null, null, null, null, null);
+        this(incidenciaRepository, cambiosEstadoRepository, userRepository, incidentMapper, statusChangeMapper, malagaOpenDataService, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -619,6 +638,118 @@ public class IncidentService {
         return incidentMapper.toDtoList(results);
     }
 
+    /**
+     * Busca incidencias aplicando filtros multicriterio con control de acceso RBAC centralizado (RF-6, RF-11, RF-12).
+     * <p>
+     * Los filtros de texto, categoría, fechas y distrito se aplican siempre. Los filtros internos
+     * (estado, prioridad, departamento y "sin departamento") solo se aplican si el usuario autenticado
+     * posee un rol interno; en caso contrario se ignoran silenciosamente (RNF-1).
+     * </p>
+     *
+     * @param text                 Texto libre para buscar en título y descripción (opcional).
+     * @param category             Categoría de la incidencia (opcional).
+     * @param start                Fecha de inicio del rango de creación (opcional).
+     * @param end                  Fecha de fin del rango de creación (opcional).
+     * @param status               Estado del ciclo de vida (filtro interno, ignorado sin acceso).
+     * @param district             Distrito municipal (filtro público).
+     * @param priority             Prioridad técnica (filtro interno, ignorado sin acceso).
+     * @param departmentId         Identificador numérico del departamento (filtro interno, ignorado sin acceso).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (filtro interno, ignorado sin acceso).
+     * @param userEmail            Correo electrónico del usuario autenticado (opcional).
+     * @return Lista de DTOs {@link IncidentResponse} que cumplen los criterios autorizados.
+     */
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> searchIncidents(String text, String category,
+                                                   OffsetDateTime start, OffsetDateTime end,
+                                                   EstadoIncidencia status, String district,
+                                                   PrioridadIncidencia priority, Long departmentId,
+                                                   boolean unassignedDepartment, String userEmail) {
+        IncidentFilterCriteria criteria = buildFilterCriteria(text, category, start, end, status, district,
+                priority, departmentId, unassignedDepartment, userEmail);
+        List<Incidencia> results = incidenciaRepository.findAll(IncidentSpecifications.build(criteria));
+        return incidentMapper.toDtoList(results);
+    }
+
+    /**
+     * Determina si el usuario autenticado dispone de acceso a los filtros internos según su rol.
+     * <p>
+     * Se consideran roles internos {@code OPERATOR}, {@code TECHNICIAN}, {@code ADMIN} y {@code ANALYST}.
+     * Un correo nulo o vacío implica ausencia de acceso. Un usuario no encontrado en la base de datos
+     * conserva el comportamiento previo del controlador y se trata como interno.
+     * </p>
+     *
+     * @param userEmail Correo electrónico del usuario autenticado (opcional).
+     * @return {@code true} si puede aplicar filtros internos; {@code false} en caso contrario.
+     */
+    boolean hasInternalAccess(String userEmail) {
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            return false;
+        }
+        Optional<Usuario> user = userRepository.findByEmail(userEmail.trim().toLowerCase());
+        if (user.isEmpty()) {
+            return true;
+        }
+        return INTERNAL_ROLES.contains(user.get().getRole());
+    }
+
+    /**
+     * Construye los criterios de búsqueda aplicando la guarda RBAC sobre los filtros internos (RNF-1).
+     *
+     * @param text                 Texto libre para buscar en título y descripción (opcional).
+     * @param category             Categoría de la incidencia (opcional).
+     * @param start                Fecha de inicio del rango de creación (opcional).
+     * @param end                  Fecha de fin del rango de creación (opcional).
+     * @param status               Estado del ciclo de vida (filtro interno).
+     * @param district             Distrito municipal (filtro público).
+     * @param priority             Prioridad técnica (filtro interno).
+     * @param departmentId         Identificador numérico del departamento (filtro interno).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (filtro interno).
+     * @param userEmail            Correo electrónico del usuario autenticado (opcional).
+     * @return Criterios de búsqueda con los filtros internos anulados si el usuario carece de acceso.
+     */
+    IncidentFilterCriteria buildFilterCriteria(String text, String category,
+                                               OffsetDateTime start, OffsetDateTime end,
+                                               EstadoIncidencia status, String district,
+                                               PrioridadIncidencia priority, Long departmentId,
+                                               boolean unassignedDepartment, String userEmail) {
+        return buildFilterCriteria(text, category, start, end, status, district, priority, departmentId,
+                unassignedDepartment, hasInternalAccess(userEmail));
+    }
+
+    /**
+     * Construye los criterios de búsqueda con un veredicto de acceso ya calculado.
+     *
+     * @param text                 Texto libre para buscar en título y descripción (opcional).
+     * @param category             Categoría de la incidencia (opcional).
+     * @param start                Fecha de inicio del rango de creación (opcional).
+     * @param end                  Fecha de fin del rango de creación (opcional).
+     * @param status               Estado del ciclo de vida (filtro interno).
+     * @param district             Distrito municipal (filtro público).
+     * @param priority             Prioridad técnica (filtro interno).
+     * @param departmentId         Identificador numérico del departamento (filtro interno).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (filtro interno).
+     * @param internalAccess       {@code true} si el usuario puede aplicar filtros internos.
+     * @return Criterios de búsqueda con los filtros internos anulados si {@code internalAccess} es {@code false}.
+     */
+    private IncidentFilterCriteria buildFilterCriteria(String text, String category,
+                                                       OffsetDateTime start, OffsetDateTime end,
+                                                       EstadoIncidencia status, String district,
+                                                       PrioridadIncidencia priority, Long departmentId,
+                                                       boolean unassignedDepartment, boolean internalAccess) {
+        return new IncidentFilterCriteria(
+                text,
+                category,
+                start,
+                end,
+                internalAccess ? status : null,
+                district,
+                internalAccess ? priority : null,
+                internalAccess ? departmentId : null,
+                internalAccess && unassignedDepartment,
+                internalAccess
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<IncidentResponseV2> getActiveIncidentsV2() {
         List<Incidencia> activeIncidents = incidenciaRepository.findByStatusNotIn(
@@ -736,6 +867,49 @@ public class IncidentService {
                                                      EstadoIncidencia status, boolean includeStatus) {
         Specification<Incidencia> spec = IncidentSpecifications.build(text, category, start, end, status, includeStatus);
         List<Incidencia> results = incidenciaRepository.findAll(spec);
+        return incidentMapperV2.toDtoList(results);
+    }
+
+    /**
+     * Busca incidencias en API v2 aplicando filtros multicriterio con control de acceso RBAC (RF-6, RF-11, RF-12, C-4).
+     * <p>
+     * El departamento se recibe como identificador público (UUID) y se resuelve a su clave numérica. Si el
+     * identificador no existe se devuelve una lista vacía sin lanzar excepciones (caso límite C-4). Sin acceso
+     * interno, el UUID y los demás filtros internos se ignoran silenciosamente (RNF-1).
+     * </p>
+     *
+     * @param text                 Texto libre para buscar en título y descripción (opcional).
+     * @param category             Categoría de la incidencia (opcional).
+     * @param start                Fecha de inicio del rango de creación (opcional).
+     * @param end                  Fecha de fin del rango de creación (opcional).
+     * @param status               Estado del ciclo de vida (filtro interno, ignorado sin acceso).
+     * @param district             Distrito municipal (filtro público).
+     * @param priority             Prioridad técnica (filtro interno, ignorado sin acceso).
+     * @param departmentPublicId   Identificador público del departamento (filtro interno, ignorado sin acceso).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (filtro interno, ignorado sin acceso).
+     * @param userEmail            Correo electrónico del usuario autenticado (opcional).
+     * @return Lista de DTOs {@link IncidentResponseV2} que cumplen los criterios autorizados.
+     */
+    @Transactional(readOnly = true)
+    public List<IncidentResponseV2> searchIncidentsV2(String text, String category,
+                                                      OffsetDateTime start, OffsetDateTime end,
+                                                      EstadoIncidencia status, String district,
+                                                      PrioridadIncidencia priority, UUID departmentPublicId,
+                                                      boolean unassignedDepartment, String userEmail) {
+        boolean internalAccess = hasInternalAccess(userEmail);
+        Long departmentId = null;
+        if (internalAccess && departmentPublicId != null) {
+            Optional<Departamento> departamento = departamentoRepository == null
+                    ? Optional.empty()
+                    : departamentoRepository.findByPublicId(departmentPublicId);
+            if (departamento.isEmpty()) {
+                return List.of();
+            }
+            departmentId = departamento.get().getId();
+        }
+        IncidentFilterCriteria criteria = buildFilterCriteria(text, category, start, end, status, district,
+                priority, departmentId, unassignedDepartment, internalAccess);
+        List<Incidencia> results = incidenciaRepository.findAll(IncidentSpecifications.build(criteria));
         return incidentMapperV2.toDtoList(results);
     }
 }

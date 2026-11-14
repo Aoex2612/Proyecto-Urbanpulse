@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -218,5 +219,93 @@ class IncidentControllerV2Test {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(publicId.toString()))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/v2/incidents/search con OPERATOR debe delegar filtros avanzados y UUID de departamento")
+    void searchIncidents_withOperator_shouldDelegateAdvancedFilters() throws Exception {
+        UUID departmentId = UUID.randomUUID();
+        UUID publicId = UUID.randomUUID();
+        IncidentResponseV2 incident = IncidentResponseV2.builder()
+                .id(publicId.toString())
+                .title("Farola critica")
+                .status(EstadoIncidencia.REPORTED)
+                .priority(PrioridadIncidencia.CRITICAL)
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .build();
+
+        when(incidentService.searchIncidentsV2(any(), any(), any(), any(), any(), any(), any(), any(),
+                eq(false), eq("operador@urbanpulse.es")))
+                .thenReturn(List.of(incident));
+
+        mockMvc.perform(get("/api/v2/incidents/search")
+                        .param("priority", "CRITICAL")
+                        .param("district", "Centro")
+                        .param("departmentId", departmentId.toString())
+                        .param("unassignedDepartment", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(publicId.toString()));
+
+        verify(incidentService).searchIncidentsV2(isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq("Centro"), eq(PrioridadIncidencia.CRITICAL), eq(departmentId), eq(false),
+                eq("operador@urbanpulse.es"));
+    }
+
+    @Test
+    @WithMockUser(username = "ciudadano@malaga.es", roles = "CITIZEN")
+    @DisplayName("GET /api/v2/incidents/search con CITIZEN debe pasar los parametros y su email al servicio")
+    void searchIncidents_withCitizen_shouldPassCitizenEmail() throws Exception {
+        UUID departmentId = UUID.randomUUID();
+        UUID publicId = UUID.randomUUID();
+        IncidentResponseV2 incident = IncidentResponseV2.builder()
+                .id(publicId.toString())
+                .title("Bache calzada")
+                .status(EstadoIncidencia.REPORTED)
+                .priority(PrioridadIncidencia.LOW)
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .build();
+
+        when(incidentService.searchIncidentsV2(any(), any(), any(), any(), any(), any(), any(), any(),
+                eq(false), eq("ciudadano@malaga.es")))
+                .thenReturn(List.of(incident));
+
+        mockMvc.perform(get("/api/v2/incidents/search")
+                        .param("text", "bache")
+                        .param("priority", "HIGH")
+                        .param("district", "Centro")
+                        .param("departmentId", departmentId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(publicId.toString()));
+
+        verify(incidentService).searchIncidentsV2(eq("bache"), any(), any(), any(), any(), eq("Centro"),
+                eq(PrioridadIncidencia.HIGH), eq(departmentId), eq(false), eq("ciudadano@malaga.es"));
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/v2/incidents/search con UUID de departamento inexistente debe responder 200 con lista vacia (C-4)")
+    void searchIncidents_withUnknownDepartment_shouldReturnEmptyList() throws Exception {
+        UUID missingDepartmentId = UUID.randomUUID();
+        when(incidentService.searchIncidentsV2(any(), any(), any(), any(), any(), any(), any(),
+                eq(missingDepartmentId), eq(false), eq("operador@urbanpulse.es")))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v2/incidents/search")
+                        .param("departmentId", missingDepartmentId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/v2/incidents/search con status invalido debe responder 400 Bad Request")
+    void searchIncidents_withInvalidStatus_shouldReturn400() throws Exception {
+        mockMvc.perform(get("/api/v2/incidents/search")
+                        .param("status", "ESTADO_INEXISTENTE"))
+                .andExpect(status().isBadRequest());
     }
 }

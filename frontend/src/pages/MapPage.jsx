@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import authService from '../services/authService';
 import incidentService from '../services/incidentService';
+import triageService from '../services/triageService';
 import {
   IncidentsMap,
   CreateIncidentModal,
@@ -19,6 +20,34 @@ import {
 import { filterIncidentsByDate, DATE_FILTER_PRESETS } from '../utils/dateUtils';
 import IncidentFilterBar from '../components/Filters/IncidentFilterBar';
 import './MapPage.css';
+
+/**
+ * Criterios que se resuelven en servidor y activan la busqueda multicriterio (RF-12).
+ * Las fechas se mantienen en cliente.
+ * @type {string[]}
+ */
+const SERVER_FILTER_KEYS = ['text', 'category', 'status', 'district', 'priority', 'department'];
+
+/**
+ * Transforma los criterios de la barra de filtros en parametros de `searchIncidents`.
+ * Los valores vacios se envian como `undefined` para que Axios los omita.
+ * El departamento `unassigned` se traduce al flag `unassignedDepartment`.
+ *
+ * @param {Object} criteria - Criterios emitidos por `IncidentFilterBar`.
+ * @returns {Object} Parametros de la busqueda multicriterio.
+ */
+const toSearchParams = (criteria) => ({
+  text: criteria.text || undefined,
+  category: criteria.category || undefined,
+  status: criteria.status || undefined,
+  district: criteria.district || undefined,
+  priority: criteria.priority || undefined,
+  departmentId:
+    criteria.department && criteria.department !== 'unassigned'
+      ? criteria.department
+      : undefined,
+  unassignedDepartment: criteria.department === 'unassigned' ? true : undefined,
+});
 
 /**
  * Componente principal de la pagina del Mapa de Incidencias Urbanas.
@@ -39,7 +68,22 @@ export default function MapPage() {
   });
 
   // Criterios de filtrado multicriterio (HU19)
-  const [multiFilterCriteria, setMultiFilterCriteria] = useState({ text: '', category: '', startDate: '', endDate: '', status: '' });
+  const [multiFilterCriteria, setMultiFilterCriteria] = useState({
+    text: '',
+    category: '',
+    startDate: '',
+    endDate: '',
+    status: '',
+    district: '',
+    priority: '',
+    department: '',
+  });
+
+  // Resultado de la busqueda multicriterio en servidor (null = usar el conjunto completo)
+  const [searchResults, setSearchResults] = useState(null);
+
+  // Catalogo de departamentos para el selector interno (no bloqueante)
+  const [departments, setDepartments] = useState([]);
 
   // Estados de flujo de creacion asistida
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
@@ -63,6 +107,7 @@ export default function MapPage() {
   }, []);
 
   const hasOperatorAccess = authService.hasAnyRole(['OPERATOR', 'ADMIN']);
+  const canFilterInternal = Boolean(currentUser?.role) && currentUser.role !== 'CITIZEN';
 
   /**
    * Carga desde el backend la lista de incidencias urbanas activas.
@@ -100,10 +145,56 @@ export default function MapPage() {
       }
     });
 
+    // Catalogo de departamentos solo para roles internos (requiere autenticacion)
+    if (canFilterInternal && typeof triageService.getDepartments === 'function') {
+      triageService
+        .getDepartments()
+        .then((data) => {
+          if (isMounted && Array.isArray(data)) {
+            setDepartments(data);
+          }
+        })
+        .catch((err) => {
+          console.error('No se pudo cargar el catalogo de departamentos:', err);
+        });
+    }
+
     return () => {
       isMounted = false;
     };
-  }, [loadIncidents]);
+  }, [loadIncidents, canFilterInternal]);
+
+  // Criterios "de servidor" activos; las fechas se filtran en cliente
+  const hasServerCriteria = SERVER_FILTER_KEYS.some((key) => multiFilterCriteria[key]);
+
+  // Busqueda multicriterio con debounce de 300 ms y descarte de respuestas obsoletas
+  useEffect(() => {
+    if (!hasServerCriteria) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      incidentService
+        .searchIncidents(toSearchParams(multiFilterCriteria))
+        .then((data) => {
+          if (!cancelled) {
+            setSearchResults(Array.isArray(data) ? data : []);
+          }
+        })
+        .catch((err) => {
+          console.error('Error en la busqueda multicriterio de incidencias:', err);
+          if (!cancelled) {
+            setSearchResults(null);
+          }
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [hasServerCriteria, multiFilterCriteria]);
 
   /**
    * Conmuta el modo de seleccion geografica en el mapa (RF-6 y RF-7).
@@ -194,7 +285,9 @@ export default function MapPage() {
 
   // Filtrado temporal y multicriterio memoizado (HU19)
   const filteredIncidents = useMemo(() => {
-    const dateFiltered = filterIncidentsByDate(incidents, dateFilter);
+    // Fallback resiliente: si no hay criterios de servidor o la busqueda falla, se usa el conjunto completo
+    const baseIncidents = (hasServerCriteria ? searchResults : null) ?? incidents;
+    const dateFiltered = filterIncidentsByDate(baseIncidents, dateFilter);
     return dateFiltered.filter((incident) => {
       if (multiFilterCriteria.text) {
         const q = multiFilterCriteria.text.toLowerCase();
@@ -207,6 +300,34 @@ export default function MapPage() {
       }
       if (multiFilterCriteria.status && incident.status !== multiFilterCriteria.status) {
         return false;
+      }
+      if (multiFilterCriteria.district) {
+        const incidentDistrict = (incident.district || '').trim().toLowerCase();
+        if (
+          !incidentDistrict ||
+          incidentDistrict !== multiFilterCriteria.district.trim().toLowerCase()
+        ) {
+          return false;
+        }
+      }
+      if (multiFilterCriteria.priority && incident.priority !== multiFilterCriteria.priority) {
+        return false;
+      }
+      if (multiFilterCriteria.department) {
+        const activeAssignments = (
+          incident.activeAssignments ||
+          incident.assignments ||
+          []
+        ).filter((a) => a.isActive !== false);
+        if (multiFilterCriteria.department === 'unassigned') {
+          if (activeAssignments.length > 0) return false;
+        } else if (
+          !activeAssignments.some(
+            (a) => String(a.departmentId) === String(multiFilterCriteria.department)
+          )
+        ) {
+          return false;
+        }
       }
       if (multiFilterCriteria.startDate) {
         const created = new Date(incident.createdAt);
@@ -221,7 +342,7 @@ export default function MapPage() {
       }
       return true;
     });
-  }, [incidents, dateFilter, multiFilterCriteria]);
+  }, [incidents, searchResults, hasServerCriteria, dateFilter, multiFilterCriteria]);
 
   // Recuento de incidencias activas globales en la plataforma
   const totalActiveCount = useMemo(() => {
@@ -338,6 +459,7 @@ export default function MapPage() {
         <IncidentFilterBar
           onFilterChange={setMultiFilterCriteria}
           userRole={currentUser?.role}
+          departments={departments}
           hasResults={filteredIncidents.length > 0}
         />
       )}

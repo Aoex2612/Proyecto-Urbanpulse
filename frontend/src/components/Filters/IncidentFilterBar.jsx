@@ -1,12 +1,25 @@
 /**
  * @fileoverview Barra de búsqueda y filtrado multicriterio de incidencias con control RBAC.
- * Permite filtrar por texto libre, categoría temática y rango de fechas a todos los roles,
- * restringiendo el filtrado por estado de triaje exclusivamente a roles internos (no CITIZEN) (HU19).
+ * Permite filtrar por texto libre, categoría temática, rango de fechas y distrito a todos los roles,
+ * restringiendo el filtrado por estado de triaje, prioridad y departamento exclusivamente a roles
+ * internos (no CITIZEN ni anónimos) (HU19, feature 010).
  */
 
 import { useState } from 'react';
-import { INCIDENT_CATEGORIES, INCIDENT_STATUSES, getStatusLabel } from '../Map/mapConstants';
+import {
+  INCIDENT_CATEGORIES,
+  INCIDENT_STATUSES,
+  getStatusLabel,
+  getPriorityLabel,
+} from '../Map/mapConstants';
+import { MALAGA_DISTRICTS } from '../../utils/analyticsConstants';
 import './IncidentFilterBar.css';
+
+/**
+ * Niveles de prioridad técnica de una incidencia.
+ * @type {string[]}
+ */
+const INCIDENT_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 /**
  * Componente de barra de filtros multicriterio con control de acceso basado en roles.
@@ -15,18 +28,28 @@ import './IncidentFilterBar.css';
  * @param {Function} props.onFilterChange - Callback invocado al modificar cualquier filtro con el objeto de criterios.
  * @param {string} [props.userRole] - Rol funcional del usuario autenticado (ej. CITIZEN, OPERATOR, ADMIN).
  * @param {boolean} [props.hasResults=true] - Indicador booleano para mostrar aviso de búsqueda sin resultados.
+ * @param {Array<{id?: number|string, publicId?: string, name: string}>} [props.departments=[]] - Catálogo de departamentos municipales.
  * @returns {import('react').JSX.Element} Elemento JSX de la barra de filtros.
  */
-export default function IncidentFilterBar({ onFilterChange, userRole, hasResults = true }) {
+export default function IncidentFilterBar({
+  onFilterChange,
+  userRole,
+  hasResults = true,
+  departments = [],
+}) {
   const [filters, setFilters] = useState({
     text: '',
     category: '',
     startDate: '',
     endDate: '',
     status: '',
+    district: '',
+    priority: '',
+    department: '',
   });
 
-  const canFilterByStatus = userRole !== 'CITIZEN';
+  const canFilterInternal = Boolean(userRole) && userRole !== 'CITIZEN';
+  const departmentOptions = Array.isArray(departments) ? departments : [];
 
   /**
    * Maneja el cambio de valores en los campos de filtrado y notifica al componente padre.
@@ -52,6 +75,9 @@ export default function IncidentFilterBar({ onFilterChange, userRole, hasResults
       startDate: '',
       endDate: '',
       status: '',
+      district: '',
+      priority: '',
+      department: '',
     };
     setFilters(reset);
     if (onFilterChange) {
@@ -112,7 +138,25 @@ export default function IncidentFilterBar({ onFilterChange, userRole, hasResults
         />
       </div>
 
-      {canFilterByStatus && (
+      <div className="filter-group">
+        <label htmlFor="filter-district" className="filter-label">Distrito:</label>
+        <select
+          id="filter-district"
+          className="filter-select"
+          aria-label="Distrito"
+          value={filters.district}
+          onChange={(e) => handleChange('district', e.target.value)}
+        >
+          <option value="">Todos los distritos</option>
+          {MALAGA_DISTRICTS.map((district) => (
+            <option key={district} value={district}>
+              {district}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {canFilterInternal && (
         <div className="filter-group">
           <label htmlFor="filter-status" className="filter-label">Estado:</label>
           <select
@@ -125,6 +169,47 @@ export default function IncidentFilterBar({ onFilterChange, userRole, hasResults
             {INCIDENT_STATUSES.map((st) => (
               <option key={st} value={st}>
                 {getStatusLabel(st)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {canFilterInternal && (
+        <div className="filter-group">
+          <label htmlFor="filter-priority" className="filter-label">Prioridad:</label>
+          <select
+            id="filter-priority"
+            className="filter-select"
+            aria-label="Prioridad"
+            value={filters.priority}
+            onChange={(e) => handleChange('priority', e.target.value)}
+          >
+            <option value="">Todas las prioridades</option>
+            {INCIDENT_PRIORITIES.map((priority) => (
+              <option key={priority} value={priority}>
+                {getPriorityLabel(priority)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {canFilterInternal && (
+        <div className="filter-group">
+          <label htmlFor="filter-department" className="filter-label">Departamento:</label>
+          <select
+            id="filter-department"
+            className="filter-select"
+            aria-label="Departamento"
+            value={filters.department}
+            onChange={(e) => handleChange('department', e.target.value)}
+          >
+            <option value="">Todos los departamentos</option>
+            <option value="unassigned">Sin departamento asignado</option>
+            {departmentOptions.map((dept) => (
+              <option key={dept.id ?? dept.publicId} value={dept.id ?? dept.publicId}>
+                {dept.name}
               </option>
             ))}
           </select>

@@ -3,13 +3,16 @@ package org.bulbaseros.service;
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.ExternalObservationResponse;
 import org.bulbaseros.dto.IncidentAssetResponse;
+import org.bulbaseros.dto.IncidentFilterCriteria;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
 import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
+import org.bulbaseros.dto.v2.IncidentResponseV2;
 import org.bulbaseros.entity.CambiosEstado;
+import org.bulbaseros.entity.Departamento;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.PrioridadIncidencia;
@@ -19,6 +22,7 @@ import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.IncidentMapper;
 import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
+import org.bulbaseros.repository.DepartamentoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
@@ -36,14 +40,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -109,6 +116,12 @@ class IncidentServiceTest {
      */
     @Mock
     private MalagaOpenDataService malagaOpenDataService;
+
+    /**
+     * Mock del repositorio de departamentos municipales para la resolucion de UUID en API v2.
+     */
+    @Mock
+    private DepartamentoRepository departamentoRepository;
 
     /**
      * Instancia real del mapeador de incidencias.
@@ -1106,5 +1119,145 @@ class IncidentServiceTest {
         incidentService.updateIncidentStatus(10L, request, "operador@urbanpulse.es");
 
         verify(notificationService).createNotification(eq(testCitizen), eq(inc), eq("STATUS_CHANGE"), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("buildFilterCriteria: CITIZEN ignora prioridad, departamento y sin departamento (RNF-1)")
+    void shouldIgnoreInternalFiltersForCitizen() {
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+
+        IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                "farola", "Alumbrado", null, null, EstadoIncidencia.REPORTED, "Centro",
+                PrioridadIncidencia.HIGH, 7L, true, "ciudadano@urbanpulse.es");
+
+        assertFalse(criteria.includeInternalFilters());
+        assertNull(criteria.status());
+        assertNull(criteria.priority());
+        assertNull(criteria.departmentId());
+        assertFalse(criteria.unassignedDepartment());
+        assertEquals("Centro", criteria.district());
+        assertEquals("farola", criteria.text());
+    }
+
+    @Test
+    @DisplayName("buildFilterCriteria: email nulo o vacio no tiene acceso interno y omite los filtros operativos")
+    void shouldIgnoreInternalFiltersWhenEmailIsNullOrBlank() {
+        assertFalse(incidentService.hasInternalAccess(null));
+        assertFalse(incidentService.hasInternalAccess("   "));
+
+        IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                null, null, null, null, EstadoIncidencia.VALIDATED, "Centro",
+                PrioridadIncidencia.CRITICAL, 9L, true, null);
+
+        assertFalse(criteria.includeInternalFilters());
+        assertNull(criteria.status());
+        assertNull(criteria.priority());
+        assertNull(criteria.departmentId());
+        assertFalse(criteria.unassignedDepartment());
+    }
+
+    @Test
+    @DisplayName("buildFilterCriteria: OPERATOR, TECHNICIAN, ADMIN y ANALYST conservan los filtros internos")
+    void shouldPreserveInternalFiltersForInternalRoles() {
+        for (RolUsuario role : List.of(RolUsuario.OPERATOR, RolUsuario.TECHNICIAN,
+                RolUsuario.ADMIN, RolUsuario.ANALYST)) {
+            String email = role.name().toLowerCase() + "@urbanpulse.es";
+            when(userRepository.findByEmail(email))
+                    .thenReturn(Optional.of(new Usuario(email, "hash", "Interno", role)));
+
+            assertTrue(incidentService.hasInternalAccess(email));
+
+            IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                    null, null, null, null, EstadoIncidencia.VALIDATED, "Centro",
+                    PrioridadIncidencia.CRITICAL, 9L, true, email);
+
+            assertTrue(criteria.includeInternalFilters());
+            assertEquals(EstadoIncidencia.VALIDATED, criteria.status());
+            assertEquals(PrioridadIncidencia.CRITICAL, criteria.priority());
+            assertEquals(9L, criteria.departmentId());
+            assertTrue(criteria.unassignedDepartment());
+        }
+    }
+
+    @Test
+    @DisplayName("hasInternalAccess: un usuario inexistente conserva el comportamiento previo y se trata como interno")
+    void shouldTreatUnknownUserAsInternal() {
+        when(userRepository.findByEmail("fantasma@urbanpulse.es")).thenReturn(Optional.empty());
+
+        assertTrue(incidentService.hasInternalAccess("fantasma@urbanpulse.es"));
+
+        IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                null, null, null, null, EstadoIncidencia.VALIDATED, null,
+                PrioridadIncidencia.HIGH, 4L, false, "fantasma@urbanpulse.es");
+
+        assertTrue(criteria.includeInternalFilters());
+        assertEquals(PrioridadIncidencia.HIGH, criteria.priority());
+        assertEquals(4L, criteria.departmentId());
+    }
+
+    @Test
+    @DisplayName("searchIncidents: delega en la especificacion y devuelve los DTOs mapeados (RF-12)")
+    void shouldSearchIncidentsWithNewCriteria() {
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(incidenciaRepository.findAll(any(Specification.class))).thenReturn(List.of(testIncident));
+
+        List<IncidentResponse> result = incidentService.searchIncidents("farola", "Alumbrado", null, null,
+                EstadoIncidencia.REPORTED, "Centro", PrioridadIncidencia.MEDIUM, 3L, false,
+                "operador@urbanpulse.es");
+
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getId());
+        assertEquals("Farola rota", result.get(0).getTitle());
+        verify(incidenciaRepository).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("searchIncidentsV2: traduce el UUID del departamento a su id numerico y devuelve los DTOs v2")
+    void shouldSearchIncidentsV2ResolvingDepartmentPublicId() {
+        UUID departmentPublicId = UUID.randomUUID();
+        Departamento departamento = new Departamento();
+        departamento.setId(55L);
+        departamento.setPublicId(departmentPublicId);
+
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(departamentoRepository.findByPublicId(departmentPublicId)).thenReturn(Optional.of(departamento));
+        when(incidenciaRepository.findAll(any(Specification.class))).thenReturn(List.of(testIncident));
+
+        List<IncidentResponseV2> result = incidentService.searchIncidentsV2("farola", null, null, null,
+                null, "Centro", PrioridadIncidencia.LOW, departmentPublicId, false, "operador@urbanpulse.es");
+
+        assertEquals(1, result.size());
+        assertEquals("Farola rota", result.get(0).getTitle());
+        verify(departamentoRepository).findByPublicId(departmentPublicId);
+        verify(incidenciaRepository).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("searchIncidentsV2: UUID de departamento inexistente con rol interno devuelve lista vacia sin consultar incidencias (C-4)")
+    void shouldReturnEmptyListWhenDepartmentPublicIdDoesNotExistForInternalUser() {
+        UUID departmentPublicId = UUID.randomUUID();
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(departamentoRepository.findByPublicId(departmentPublicId)).thenReturn(Optional.empty());
+
+        List<IncidentResponseV2> result = incidentService.searchIncidentsV2(null, null, null, null,
+                null, null, null, departmentPublicId, false, "operador@urbanpulse.es");
+
+        assertTrue(result.isEmpty());
+        verify(incidenciaRepository, never()).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("searchIncidentsV2: UUID de departamento inexistente con CITIZEN se ignora y se consultan incidencias (RF-11)")
+    void shouldIgnoreDepartmentPublicIdForCitizenInV2() {
+        UUID departmentPublicId = UUID.randomUUID();
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.findAll(any(Specification.class))).thenReturn(List.of(testIncident));
+
+        List<IncidentResponseV2> result = incidentService.searchIncidentsV2(null, null, null, null,
+                null, null, null, departmentPublicId, true, "ciudadano@urbanpulse.es");
+
+        assertEquals(1, result.size());
+        verify(departamentoRepository, never()).findByPublicId(any());
+        verify(incidenciaRepository).findAll(any(Specification.class));
     }
 }

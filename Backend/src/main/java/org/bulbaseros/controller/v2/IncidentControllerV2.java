@@ -11,8 +11,7 @@ import org.bulbaseros.dto.v2.IncidentResponseV2;
 import org.bulbaseros.dto.v2.IncidentStatusResponseV2;
 import org.bulbaseros.dto.v2.StatusChangeResponseV2;
 import org.bulbaseros.entity.EstadoIncidencia;
-import org.bulbaseros.entity.RolUsuario;
-import org.bulbaseros.entity.Usuario;
+import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.repository.UserRepository;
 import org.bulbaseros.service.AttachmentService;
 import org.bulbaseros.service.IncidentService;
@@ -173,6 +172,28 @@ public class IncidentControllerV2 {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Busca incidencias aplicando filtros multicriterio: texto libre, categoría, rango de fechas,
+     * distrito, estado, prioridad y departamento (HU-19, RF-1, RF-4, RF-8, RF-9, RF-11, RF-12).
+     * <p>
+     * El departamento se recibe como identificador público (UUID). Los filtros internos
+     * ({@code status}, {@code priority}, {@code departmentId} y {@code unassignedDepartment}) son
+     * ignorados silenciosamente por el servicio para ciudadanos o usuarios anónimos (RNF-1).
+     * Si el UUID de departamento no existe, la respuesta es HTTP 200 con lista vacía (C-4).
+     * </p>
+     *
+     * @param text                 Texto libre en título o descripción (opcional).
+     * @param category             Categoría temática de la incidencia (opcional).
+     * @param start                Fecha inicial del rango de creación (opcional).
+     * @param end                  Fecha final del rango de creación (opcional).
+     * @param statusStr            Estado de triaje como texto (opcional, ignorado sin acceso interno).
+     * @param district             Distrito municipal de la incidencia (opcional).
+     * @param priority             Prioridad técnica de la incidencia (opcional, ignorada sin acceso interno).
+     * @param departmentId         Identificador público UUID del departamento (opcional, ignorado sin acceso interno).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (opcional, ignorado sin acceso interno).
+     * @param authentication       Contexto de autenticación del usuario.
+     * @return Lista de incidencias que satisfacen los criterios combinados.
+     */
     @GetMapping("/search")
     public ResponseEntity<List<IncidentResponseV2>> search(
             @RequestParam(value = "text", required = false) String text,
@@ -180,6 +201,10 @@ public class IncidentControllerV2 {
             @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime start,
             @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end,
             @RequestParam(value = "status", required = false) String statusStr,
+            @RequestParam(value = "district", required = false) String district,
+            @RequestParam(value = "priority", required = false) PrioridadIncidencia priority,
+            @RequestParam(value = "departmentId", required = false) UUID departmentId,
+            @RequestParam(value = "unassignedDepartment", defaultValue = "false") boolean unassignedDepartment,
             Authentication authentication
     ) {
         EstadoIncidencia status = null;
@@ -191,14 +216,8 @@ public class IncidentControllerV2 {
             }
         }
 
-        boolean includeStatus = true;
-        if (authentication != null && userRepository != null) {
-            Usuario user = userRepository.findByEmail(authentication.getName()).orElse(null);
-            if (user != null && user.getRole() == RolUsuario.CITIZEN) {
-                includeStatus = false;
-            }
-        }
-
-        return ResponseEntity.ok(incidentService.searchIncidentsV2(text, category, start, end, status, includeStatus));
+        String userEmail = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.ok(incidentService.searchIncidentsV2(text, category, start, end, status, district,
+                priority, departmentId, unassignedDepartment, userEmail));
     }
 }

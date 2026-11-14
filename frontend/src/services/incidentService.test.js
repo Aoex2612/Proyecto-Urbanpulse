@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import incidentService, {
+  searchIncidents,
   getMyIncidents,
   reverseGeocode,
   getIncidentPublicComments,
@@ -17,6 +18,39 @@ vi.mock('./api', () => ({
 describe('incidentService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('searchIncidents', () => {
+    it('realiza una busqueda multicriterio en /api/v2/incidents/search propagando los filtros', async () => {
+      const mockResponse = { content: [{ id: 1, title: 'Farola rota' }], totalElements: 1 };
+      api.get.mockResolvedValueOnce({ data: mockResponse });
+
+      const params = {
+        text: 'farola',
+        category: 'Alumbrado',
+        start: '2026-01-01',
+        end: '2026-02-01',
+        status: 'REPORTED',
+        district: 'Centro',
+        priority: 'HIGH',
+        departmentId: 3,
+        unassignedDepartment: false,
+      };
+      const result = await searchIncidents(params);
+
+      expect(api.get).toHaveBeenCalledTimes(1);
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/search', { params });
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('usa un objeto de parametros vacio por defecto y esta disponible en el default export', async () => {
+      api.get.mockResolvedValueOnce({ data: [] });
+
+      const result = await incidentService.searchIncidents();
+
+      expect(api.get).toHaveBeenCalledWith('/api/v2/incidents/search', { params: {} });
+      expect(result).toEqual([]);
+    });
   });
 
   describe('getMyIncidents', () => {
