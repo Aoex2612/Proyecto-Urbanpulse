@@ -537,37 +537,63 @@ class IncidentControllerTest {
 
     @Test
     @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
-    @DisplayName("GET /api/incidents/search con OPERATOR permite incluir filtro de estado")
-    void shouldSearchIncidentsWithStatusForOperator() throws Exception {
+    @DisplayName("GET /api/incidents/search con OPERATOR debe delegar todos los filtros avanzados al servicio")
+    void shouldSearchIncidentsWithAdvancedFiltersForOperator() throws Exception {
         IncidentResponse item = createSampleIncidentResponse(201L, "Farola rota", EstadoIncidencia.VALIDATED);
-        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), eq(true)))
+        when(incidentService.searchIncidents(eq("farola"), eq("Alumbrado"), isNull(), isNull(),
+                isNull(), eq("Centro"), eq(PrioridadIncidencia.HIGH), eq(10L), eq(false),
+                eq("operador@urbanpulse.es")))
                 .thenReturn(List.of(item));
 
         mockMvc.perform(get("/api/incidents/search")
                         .param("text", "farola")
                         .param("category", "Alumbrado")
-                        .param("status", "VALIDATED"))
+                        .param("priority", "HIGH")
+                        .param("district", "Centro")
+                        .param("departmentId", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(201L))
                 .andExpect(jsonPath("$[0].title").value("Farola rota"));
 
-        verify(incidentService).searchIncidents(eq("farola"), eq("Alumbrado"), isNull(), isNull(), eq(EstadoIncidencia.VALIDATED), eq(true));
+        verify(incidentService).searchIncidents(eq("farola"), eq("Alumbrado"), isNull(), isNull(),
+                isNull(), eq("Centro"), eq(PrioridadIncidencia.HIGH), eq(10L), eq(false),
+                eq("operador@urbanpulse.es"));
     }
 
     @Test
     @WithMockUser(username = "ciudadano@urbanpulse.es", roles = "CITIZEN")
-    @DisplayName("GET /api/incidents/search con CITIZEN ignora el filtro de estado")
-    void shouldSearchIncidentsIgnoringStatusForCitizen() throws Exception {
+    @DisplayName("GET /api/incidents/search con CITIZEN debe pasar los parámetros y su email al servicio")
+    void shouldSearchIncidentsPassingCitizenEmailToService() throws Exception {
         IncidentResponse item = createSampleIncidentResponse(202L, "Bache calzada", EstadoIncidencia.REPORTED);
-        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), eq(false)))
+        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), any(), any(), any(),
+                eq(false), eq("ciudadano@urbanpulse.es")))
                 .thenReturn(List.of(item));
 
         mockMvc.perform(get("/api/incidents/search")
                         .param("text", "bache")
-                        .param("status", "VALIDATED"))
+                        .param("category", "Alumbrado")
+                        .param("priority", "HIGH")
+                        .param("district", "Centro")
+                        .param("departmentId", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(202L));
 
-        verify(incidentService).searchIncidents(eq("bache"), isNull(), isNull(), isNull(), eq(EstadoIncidencia.VALIDATED), eq(false));
+        verify(incidentService).searchIncidents(eq("bache"), any(), any(), any(), any(), any(), any(), any(),
+                eq(false), eq("ciudadano@urbanpulse.es"));
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/incidents/search con departmentId inexistente debe responder 200 con lista vacia (C-4)")
+    void shouldReturnEmptyListWhenDepartmentDoesNotExist() throws Exception {
+        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), any(), any(), eq(9999L),
+                eq(false), eq("operador@urbanpulse.es")))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/incidents/search")
+                        .param("departmentId", "9999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
     }
 }
