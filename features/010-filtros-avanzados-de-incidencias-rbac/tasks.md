@@ -25,10 +25,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Crear pruebas unitarias en `IncidentServiceTest` verificando que cuando el usuario autenticado tiene rol `CITIZEN` o es anónimo, los filtros de prioridad, departamento y sin departamento son ignorados silenciosamente.
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 3: Endpoints de controladores REST (API v1 y API v2) — Depende de: Tarea 2 — RF: RF-1, RF-3, RF-6, RF-7, RF-8, RF-9, RF-11; RNF: RNF-1, RNF-2
-- [ ] Extender `IncidentController.java` (API v1) con los `@RequestParam` opcionales: `district`, `priority`, `departmentId` y `unassignedDepartment`, delegando a `IncidentService`.
-- [ ] Extender `IncidentControllerV2.java` (API v2) con los `@RequestParam` opcionales: `district`, `priority`, `departmentId` (UUID público mapeado a departamento) y `unassignedDepartment`.
-- [ ] Añadir pruebas de integración en `IncidentControllerTest` y `IncidentControllerV2Test` con MockMvc:
+## [x] Tarea 3: Endpoints de controladores REST (API v1 y API v2) — Depende de: Tarea 2 — RF: RF-1, RF-3, RF-6, RF-7, RF-8, RF-9, RF-11; RNF: RNF-1, RNF-2
+- [x] Extender `IncidentController.java` (API v1) con los `@RequestParam` opcionales: `district`, `priority`, `departmentId` y `unassignedDepartment`, delegando a `IncidentService`.
+- [x] Extender `IncidentControllerV2.java` (API v2) con los `@RequestParam` opcionales: `district`, `priority`, `departmentId` (UUID público mapeado a departamento) y `unassignedDepartment`.
+- [x] Añadir pruebas de integración en `IncidentControllerTest` y `IncidentControllerV2Test` con MockMvc:
   - Usuario `OPERATOR`: filtros de prioridad, departamento y distrito aplicados correctamente.
   - Usuario `CITIZEN` o anónimo: petición con parámetros internos responde HTTP 200 ignorando silenciosamente dichos filtros.
   - Caso límite C-4: consulta con `departmentId` inexistente devuelve lista vacía con HTTP 200 sin lanzar excepciones no controladas.
