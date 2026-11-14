@@ -2,21 +2,22 @@
 
 _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas pequeñas y concretas; marca `[x]` al completarlas._
 
-## [ ] Tarea 1: DTO de criterios de filtrado y predicados en Criteria API — Depende de: Ninguna — RF: RF-1, RF-2, RF-4, RF-8, RF-9, RF-12; RNF: RNF-1, RNF-2
-- [ ] Crear el DTO inmutable/record `IncidentFilterCriteria` en `org.bulbaseros.dto` con los campos de búsqueda (texto, categoría, fechas, estado, prioridad, distrito, id de departamento, flag sin departamento e indicador de inclusión de filtros internos).
-- [ ] Implementar en `IncidentSpecifications` los métodos estáticos:
+## [x] Tarea 1: DTO de criterios de filtrado y predicados en Criteria API — Depende de: Ninguna — RF: RF-1, RF-2, RF-4, RF-8, RF-9, RF-12; RNF: RNF-1, RNF-2
+- [x] Crear el DTO inmutable/record `IncidentFilterCriteria` en `org.bulbaseros.dto` con los campos de búsqueda (texto, categoría, fechas, estado, prioridad, distrito, id de departamento, flag sin departamento e indicador de inclusión de filtros internos).
+- [x] Implementar en `IncidentSpecifications` los métodos estáticos:
   - `hasDistrict(String district)` con comparación exacta insensible a mayúsculas (`LOWER(TRIM(...))`).
   - `hasPriority(PrioridadIncidencia priority)`.
   - `hasDepartment(Long departmentId)` mediante subconsulta `EXISTS` sobre `Tareas` con `isActive = true`.
   - `hasNoDepartment()` mediante subconsulta `NOT EXISTS` sobre `Tareas` con `isActive = true`.
-- [ ] Añadir método sobrecargado `build(IncidentFilterCriteria criteria)` en `IncidentSpecifications` manteniendo la compatibilidad con el método `build(...)` previo.
-- [ ] Crear pruebas unitarias en `IncidentSpecificationsTest`:
+- [x] Añadir método sobrecargado `build(IncidentFilterCriteria criteria)` en `IncidentSpecifications` manteniendo la compatibilidad con el método `build(...)` previo.
+- [x] Crear pruebas unitarias en `IncidentSpecificationsTest`:
   - Verificar no-regresión de filtros previos (texto, categoría, fechas, estado).
   - Comprobar caso límite C-1: incidencias con `district` nulo o vacío se excluyen al filtrar por un distrito concreto y se incluyen con "Todos los distritos".
   - Comprobar predicados de prioridad (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`).
   - Comprobar departamento asignado activo (`isActive = true`), departamento inactivo (`isActive = false`) y sin departamento.
   - Comprobar combinaciones multicriterio con conjunción lógica `AND`.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
+  - _Nota: los predicados de distrito, prioridad y departamento cubren RF-1, RF-4, RF-8, RF-9 y RF-12, con el filtrado interno condicionado a `includeInternalFilters` (RNF-1). La validación de criterios de aceptación a nivel de API/UI corresponde a tareas posteriores._
 
 ## [ ] Tarea 2: Adaptación de la capa de servicio y control de acceso RBAC en backend — Depende de: Tarea 1 — RF: RF-6, RF-11, RF-12; RNF: RNF-1
 - [ ] Actualizar `IncidentService.java` para construir `IncidentFilterCriteria` recibiendo los nuevos parámetros y aplicando la guarda de rol (desactivar filtros internos para usuarios `CITIZEN` o no autenticados).
