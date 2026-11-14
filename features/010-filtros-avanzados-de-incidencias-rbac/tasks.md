@@ -19,10 +19,10 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Validar contra los criterios de aceptación de `spec.md`.
   - _Nota: los predicados de distrito, prioridad y departamento cubren RF-1, RF-4, RF-8, RF-9 y RF-12, con el filtrado interno condicionado a `includeInternalFilters` (RNF-1). La validación de criterios de aceptación a nivel de API/UI corresponde a tareas posteriores._
 
-## [ ] Tarea 2: Adaptación de la capa de servicio y control de acceso RBAC en backend — Depende de: Tarea 1 — RF: RF-6, RF-11, RF-12; RNF: RNF-1
-- [ ] Actualizar `IncidentService.java` para construir `IncidentFilterCriteria` recibiendo los nuevos parámetros y aplicando la guarda de rol (desactivar filtros internos para usuarios `CITIZEN` o no autenticados).
-- [ ] Actualizar los métodos de consulta y paginación en `IncidentService` para consumir la especificación construida.
-- [ ] Crear pruebas unitarias en `IncidentServiceTest` verificando que cuando el usuario autenticado tiene rol `CITIZEN` o es anónimo, los filtros de prioridad, departamento y sin departamento son ignorados silenciosamente.
+## [x] Tarea 2: Adaptación de la capa de servicio y control de acceso RBAC en backend — Depende de: Tarea 1 — RF: RF-6, RF-11, RF-12; RNF: RNF-1
+- [x] Actualizar `IncidentService.java` para construir `IncidentFilterCriteria` recibiendo los nuevos parámetros y aplicando la guarda de rol (desactivar filtros internos para usuarios `CITIZEN` o no autenticados).
+- [x] Actualizar los métodos de consulta y paginación en `IncidentService` para consumir la especificación construida.
+- [x] Crear pruebas unitarias en `IncidentServiceTest` verificando que cuando el usuario autenticado tiene rol `CITIZEN` o es anónimo, los filtros de prioridad, departamento y sin departamento son ignorados silenciosamente.
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 3: Endpoints de controladores REST (API v1 y API v2) — Depende de: Tarea 2 — RF: RF-1, RF-3, RF-6, RF-7, RF-8, RF-9, RF-11; RNF: RNF-1, RNF-2
