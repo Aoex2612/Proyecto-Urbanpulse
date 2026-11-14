@@ -57,7 +57,7 @@ export const options = {
             rate: __ENV.RATE ? parseInt(__ENV.RATE) : 100, // Tasa deseada (ej. 50, 100, 200 req/s)
             timeUnit: '1s',
             duration: __ENV.DURATION || '2m',
-            preAllocatedVUs: 20,
+            preAllocatedVUs: __ENV.PRE_VUS ? parseInt(__ENV.PRE_VUS) : Math.min(10, __ENV.MAX_VUS ? parseInt(__ENV.MAX_VUS) : 20),
             maxVUs: __ENV.MAX_VUS ? parseInt(__ENV.MAX_VUS) : 100,
           },
         }
