@@ -4,6 +4,7 @@ import IncidentDetailModal from './IncidentDetailModal'
 import incidentService from '../../services/incidentService'
 import authService from '../../services/authService'
 import triageService from '../../services/triageService'
+import logger from '../../utils/logger'
 
 vi.mock('../../services/incidentService', () => ({
   default: {
@@ -24,6 +25,14 @@ vi.mock('../../services/triageService', () => ({
     getIncidentComments: vi.fn(),
     addIncidentComment: vi.fn(),
     updateIncidentComment: vi.fn(),
+  },
+}))
+
+vi.mock('../../utils/logger', () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -62,6 +71,24 @@ describe('IncidentDetailModal', () => {
       <IncidentDetailModal isOpen={true} incident={null} />
     )
     expect(container2.firstChild).toBeNull()
+  })
+
+  it('registra el fallo al recuperar adjuntos con contexto de incidencia', async () => {
+    const attachmentsError = new Error('Servicio no disponible')
+    incidentService.getIncidentAttachments.mockRejectedValueOnce(attachmentsError)
+
+    render(<IncidentDetailModal isOpen={true} incident={mockIncident} />)
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error al recuperar adjuntos de la incidencia',
+        {
+          operation: 'getIncidentAttachments',
+          incidentId: 42,
+          error: attachmentsError,
+        }
+      )
+    })
   })
 
   it('muestra la información y metadatos básicos de la incidencia', async () => {

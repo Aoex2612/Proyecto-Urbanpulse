@@ -13,6 +13,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import incidentService from '../../services/incidentService';
 import { INCIDENT_CATEGORIES } from './mapConstants';
 import { isGeolocationSupported, getCurrentCoordinates } from '../../utils/geolocationUtils';
+import logger from '../../utils/logger';
 import './Map.css';
 
 /**
@@ -464,7 +465,12 @@ export default function CreateIncidentModal({
         try {
           await incidentService.uploadIncidentAttachment(createdIncident.id, selectedFile);
         } catch (uploadErr) {
-          console.error('Error al subir la imagen adjunta a la incidencia:', uploadErr);
+          logger.error('Error al subir la imagen adjunta a la incidencia', {
+            operation: 'uploadIncidentAttachment',
+            incidentId: createdIncident.id,
+            fileName: selectedFile.name,
+            error: uploadErr,
+          });
         }
       }
 
