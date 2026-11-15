@@ -6,30 +6,30 @@ _Checklist accionable derivado del `plan.md`. Tareas principales y subtareas peq
 
 - [x] Añadir logger con `@Slf4j` al `GlobalExceptionHandler`.
 - [x] Registrar errores no controlados con `log.error` e incluir stacktrace.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [x] Tarea 2: Eventos de seguridad y autenticación (RF: RF-2, RNF: NFR-1)
 
 - [x] Registrar token inválido/expirado y acceso denegado con nivel `WARN` y URI de la petición.
 - [x] Aplicar política de no-redacción de credenciales en logs.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 3: Cobertura de logs en services faltantes y controllers (RF: RF-3, RF-4)
+## [x] Tarea 3: Cobertura de logs en services faltantes y controllers (RF: RF-3, RF-4)
 
-- [ ] Añadir `@Slf4j` a los services sin logger: `AuthService`, `AssignmentService`, `CommentService`, `DuplicateDetectionService`, `IncidentTriageService`, `NotificationService`, `PriorityService`, `UrbanAssetService`, `AttachmentService`.
-- [ ] Registrar fallos recuperables previos a fallback (RF-3) y contexto de incidencia en eventos de creación/cambio de estado (RF-4).
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Añadir `@Slf4j` a los services sin logger: `AuthService`, `AssignmentService`, `CommentService`, `DuplicateDetectionService`, `IncidentTriageService`, `NotificationService`, `PriorityService`, `UrbanAssetService`, `AttachmentService`.
+- [x] Registrar fallos recuperables previos a fallback (RF-3) y contexto de incidencia en eventos de creación/cambio de estado (RF-4).
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 4: Configuración de niveles de log por perfil (RF: RF-6)
+## [x] Tarea 4: Configuración de niveles de log por perfil (RF: RF-6)
 
-- [ ] Configurar niveles de log en `application.properties` y `application-dev.properties` para ERROR, WARN, INFO y DEBUG.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Configurar niveles de log en `application.properties` y `application-dev.properties` para ERROR, WARN, INFO y DEBUG.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 5: Logger centralizado en frontend y reemplazo de console (RF: RF-5)
+## [x] Tarea 5: Logger centralizado en frontend y reemplazo de console (RF: RF-5)
 
-- [ ] Crear utilidad de logging centralizado en `frontend/src/utils/logger.js`.
-- [ ] Reemplazar `console.error` en `incidentService.js`, `CreateIncidentModal.jsx` e `IncidentDetailModal.jsx`.
-- [ ] Validar contra los criterios de aceptación de `spec.md`.
+- [x] Crear utilidad de logging centralizado en `frontend/src/utils/logger.js`.
+- [x] Reemplazar `console.error` en `incidentService.js`, `CreateIncidentModal.jsx` e `IncidentDetailModal.jsx`.
+- [x] Validar contra los criterios de aceptación de `spec.md`.
 
 ---
 

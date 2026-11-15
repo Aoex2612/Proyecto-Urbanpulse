@@ -1,6 +1,6 @@
 # Spec 011 — Logging y Observabilidad
 
-**Estado:** propuesta
+**Estado:** completada
 
 ## Contexto y objetivo
 UrbanPulse registra logs de forma parcial y dispersa: solo algunos servicios (analytics, incidentes, contexto externo, circuit breaker) y el filtro JWT cuentan con logger, el manejador global de excepciones no registra los errores capturados, los controllers y services restantes no disponen de logger, y el frontend no centraliza la captura de errores (uso directo de `console`). La cobertura actual es insuficiente para la depuración en desarrollo y para la trazabilidad operativa en incidentes. Esta especificación define los requisitos para completar la cobertura de logs en backend y frontend, sin alterar la lógica de negocio existente.
@@ -49,13 +49,13 @@ UrbanPulse registra logs de forma parcial y dispersa: solo algunos servicios (an
 
 _Cada criterio debe cumplirse con prueba o demostración para dar por terminada la funcionalidad._
 
-- [ ] La RF-1 quedará verificada con un test unitario/integración que confirme que el error no controlado se registra con nivel ERROR y stacktrace.
-- [ ] La RF-2 quedará verificada con test que confirme el registro del evento de validación JWT o acceso denegado.
-- [ ] La RF-3 quedará verificada con test que confirme el registro WARN previo al fallback en fallos recuperables.
-- [ ] La RF-4 quedará verificada con test que confirme el contexto del identificador de incidencia en los eventos de creación/cambio de estado.
-- [ ] La RF-5 quedará verificada con test del mecanismo centralizado de registro en el frontend.
-- [ ] La RF-6 quedará verificada con la configuración de niveles por perfil de ejecución.
-- [ ] La NFR-1 quedará verificada en el contenido de los mensajes de log generados.
+- [x] La RF-1 queda verificada con un test unitario/integración que confirma que el error no controlado se registra con nivel ERROR y stacktrace.
+- [x] La RF-2 queda verificada con tests que confirman el registro del evento de validación JWT y acceso denegado.
+- [x] La RF-3 queda verificada con tests que confirman el registro WARN previo al fallback en fallos recuperables.
+- [x] La RF-4 queda verificada con tests que confirman el contexto del identificador de incidencia en los eventos de creación/cambio de estado.
+- [x] La RF-5 queda verificada con tests del mecanismo centralizado de registro en el frontend.
+- [x] La RF-6 queda verificada con la configuración de niveles por perfil de ejecución.
+- [x] La NFR-1 queda verificada en el contenido de los mensajes de log generados.
 
 ## Dudas abiertas
 - **Resuelta (Opción A):** Se determinó que los eventos de autenticación/autorización se registran con nivel `WARN` (token inválido/expirado y acceso denegado), y que la política de redacción excluye contraseñas y tokens completos de los logs.
