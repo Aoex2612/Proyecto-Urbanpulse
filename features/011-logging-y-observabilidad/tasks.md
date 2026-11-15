@@ -2,10 +2,10 @@
 
 _Checklist accionable derivado del `plan.md`. Tareas principales y subtareas pequeñas y concretas; marca `[x]` al completarlas._
 
-## [ ] Tarea 1: Registro de errores no controlados en backend (RF: RF-1, RNF: NFR-2)
+## [x] Tarea 1: Registro de errores no controlados en backend (RF: RF-1, RNF: NFR-2)
 
-- [ ] Añadir logger con `@Slf4j` al `GlobalExceptionHandler`.
-- [ ] Registrar errores no controlados con `log.error` e incluir stacktrace.
+- [x] Añadir logger con `@Slf4j` al `GlobalExceptionHandler`.
+- [x] Registrar errores no controlados con `log.error` e incluir stacktrace.
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 2: Eventos de seguridad y autenticación (RF: RF-2, RNF: NFR-1)
