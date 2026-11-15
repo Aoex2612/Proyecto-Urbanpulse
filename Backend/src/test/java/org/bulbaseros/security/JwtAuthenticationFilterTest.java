@@ -1,5 +1,9 @@
 package org.bulbaseros.security;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -20,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -61,6 +66,7 @@ class JwtAuthenticationFilterTest {
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
     private MockFilterChain filterChain;
+    private ListAppender<ILoggingEvent> logbackAppender;
 
     @BeforeEach
     void setUp() {
@@ -73,11 +79,20 @@ class JwtAuthenticationFilterTest {
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
         filterChain = spy(new MockFilterChain());
+
+        Logger logger = (Logger) LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+        logbackAppender = new ListAppender<>();
+        logbackAppender.start();
+        logger.addAppender(logbackAppender);
+        logger.setLevel(Level.DEBUG);
     }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+        Logger logger = (Logger) LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+        logger.detachAppender(logbackAppender);
+        logbackAppender.stop();
     }
 
     @Test
@@ -434,5 +449,45 @@ class JwtAuthenticationFilterTest {
     void shouldSupportSingleParameterConstructor() {
         JwtAuthenticationFilter singleParamFilter = new JwtAuthenticationFilter(jwtService);
         assertNotNull(singleParamFilter);
+    }
+
+    @Test
+    @DisplayName("Debería registrar evento de token expirado con nivel WARN e incluir la URI de la peticion")
+    void shouldLogExpiredTokenWithWarnLevelAndRequestUri() throws Exception {
+        JwtService expiredJwtService = new JwtService(SECRET_KEY, -1000L);
+        String expiredToken = expiredJwtService.generateToken("expirado@urbanpulse.es", "CITIZEN");
+
+        request.setRequestURI("/api/incidents");
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + expiredToken);
+
+        filter.doFilter(request, response, filterChain);
+
+        List<ILoggingEvent> events = logbackAppender.list;
+        assertEquals(1, events.size());
+
+        ILoggingEvent event = events.get(0);
+        assertEquals(Level.WARN, event.getLevel());
+        String formattedMessage = event.getFormattedMessage();
+        assertNotNull(formattedMessage);
+        assertTrue(formattedMessage.contains("/api/incidents"));
+        assertFalse(formattedMessage.contains(expiredToken), "El log no debe incluir el token completo (NFR-1)");
+    }
+
+    @Test
+    @DisplayName("Debería registrar evento de token malformado con nivel WARN e incluir la URI de la peticion")
+    void shouldLogMalformedTokenWithWarnLevelAndRequestUri() throws Exception {
+        request.setRequestURI("/api/incidents/1/status");
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer token.malformado.invalido");
+
+        filter.doFilter(request, response, filterChain);
+
+        List<ILoggingEvent> events = logbackAppender.list;
+        assertEquals(1, events.size());
+
+        ILoggingEvent event = events.get(0);
+        assertEquals(Level.WARN, event.getLevel());
+        String formattedMessage = event.getFormattedMessage();
+        assertNotNull(formattedMessage);
+        assertTrue(formattedMessage.contains("/api/incidents/1/status"));
     }
 }

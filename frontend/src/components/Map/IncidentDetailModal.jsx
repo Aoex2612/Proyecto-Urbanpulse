@@ -16,6 +16,7 @@ import {
   canViewAuditHistory,
 } from './mapConstants';
 import { formatDate } from '../../utils/dateUtils';
+import logger from '../../utils/logger';
 import StatusTimeline from '../Timeline/StatusTimeline';
 import { IncidentCommentsSection } from '../Comments';
 import IncidentAssetCard from './IncidentAssetCard';
@@ -114,7 +115,11 @@ export default function IncidentDetailModal({
         }
       })
       .catch((err) => {
-        console.error('Error al recuperar adjuntos de la incidencia:', err);
+        logger.error('Error al recuperar adjuntos de la incidencia', {
+          operation: 'getIncidentAttachments',
+          incidentId: incident.id,
+          error: err,
+        });
         if (isMounted) {
           setAttachments([]);
         }

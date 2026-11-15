@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +32,8 @@ import java.nio.charset.StandardCharsets;
  */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
     private final ObjectMapper objectMapper;
 
@@ -55,6 +59,10 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     /**
      * Intercepta las solicitudes no autorizadas y escribe en la respuesta HTTP un error 401 estructurado en JSON.
+     * <p>
+     * Antes de emitir la respuesta registra el evento de autenticación fallida con nivel WARN,
+     * incluyendo la URI de la petición y el motivo, sin exponer credenciales en el log (NFR-1).
+     * </p>
      *
      * @param request       la petición HTTP entrante.
      * @param response      la respuesta HTTP saliente.
@@ -66,6 +74,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
+        String reason = sanitizeLogReason(authException == null ? null : authException.getMessage());
+        log.warn("Autenticación rechazada en la ruta {}. Motivo: {}", request.getRequestURI(), reason);
+
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -91,5 +102,23 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         String json = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(json);
         response.getWriter().flush();
+    }
+
+    /**
+     * Elimina credenciales o tokens completos del motivo antes de escribirlo en el log.
+     *
+     * @param reason motivo original del fallo de autenticación.
+     * @return motivo seguro y limitado para registro.
+     */
+    private String sanitizeLogReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return "token ausente o inválido";
+        }
+
+        String sanitized = reason
+                .replaceAll("(?i)bearer\\s+[^\\s,;]+", "Bearer [REDACTED]")
+                .replaceAll("(?i)\\b[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\b", "[REDACTED]")
+                .replaceAll("(?i)(password|passwd|token|credential)s?\\s*[:=]\\s*[^\\s,;]+", "$1=[REDACTED]");
+        return sanitized.substring(0, Math.min(sanitized.length(), 200));
     }
 }

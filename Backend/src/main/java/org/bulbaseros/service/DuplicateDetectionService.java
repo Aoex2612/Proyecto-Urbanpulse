@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.RolUsuario;
 import org.bulbaseros.entity.Usuario;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class DuplicateDetectionService {
 
     /** Radio de la Tierra en metros utilizado en el cálculo de la fórmula de Haversine. */

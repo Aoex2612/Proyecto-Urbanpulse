@@ -1,6 +1,7 @@
 package org.bulbaseros.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import java.util.Map;
  * @author UrbanPulse Team
  * @version 1.2
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -273,7 +275,8 @@ public class GlobalExceptionHandler {
      * Manejador por defecto para cualquier otra excepción no controlada en el servidor.
      * <p>
      * Retorna HTTP 500 Internal Server Error con un mensaje genérico para salvaguardar
-     * la integridad y los detalles internos del sistema.
+     * la integridad y los detalles internos del sistema. Adicionalmente registra la excepción
+     * con nivel {@code ERROR} incluyendo el stacktrace para facilitar la depuración.
      * </p>
      *
      * @param ex      Excepción no controlada capturada.
@@ -285,6 +288,8 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
+        log.error("Error no controlado en el procesamiento de la peticion", ex);
+
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),

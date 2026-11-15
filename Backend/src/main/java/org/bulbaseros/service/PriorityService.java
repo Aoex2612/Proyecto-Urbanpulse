@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.PriorityCalculationRequest;
 import org.bulbaseros.dto.PriorityCalculationResponse;
 import org.bulbaseros.dto.SafetyRiskLevel;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class PriorityService {
 
     /**

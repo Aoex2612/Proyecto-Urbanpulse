@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AttachmentResponse;
 import org.bulbaseros.dto.v2.AttachmentResponseV2;
 import org.bulbaseros.entity.ArchivoAdjunto;
@@ -40,6 +41,7 @@ import java.util.UUID;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class AttachmentService {
 
     /**
