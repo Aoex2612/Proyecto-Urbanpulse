@@ -1,9 +1,14 @@
 package org.bulbaseros.security;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.bulbaseros.dto.ErrorResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,7 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Pruebas unitarias para {@link CustomAccessDeniedHandler}.
  * <p>
  * Verifica la captura de excepciones por permisos insuficientes (403 Forbidden), la serialización
- * del cuerpo JSON según {@link ErrorResponse}, y el registro adecuado de {@link JavaTimeModule}.
+ * del cuerpo JSON según {@link ErrorResponse}, el registro del evento de seguridad con nivel WARN
+ * e incluyendo la URI de la petición, y el registro adecuado de {@link JavaTimeModule}.
  * </p>
  *
  * @author UrbanPulse Team
@@ -34,6 +43,7 @@ class CustomAccessDeniedHandlerTest {
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
     private ObjectMapper objectMapper;
+    private ListAppender<ILoggingEvent> logbackAppender;
 
     @BeforeEach
     void setUp() {
@@ -41,6 +51,19 @@ class CustomAccessDeniedHandlerTest {
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+        Logger logger = (Logger) LoggerFactory.getLogger(CustomAccessDeniedHandler.class);
+        logbackAppender = new ListAppender<>();
+        logbackAppender.start();
+        logger.addAppender(logbackAppender);
+        logger.setLevel(Level.DEBUG);
+    }
+
+    @AfterEach
+    void tearDown() {
+        Logger logger = (Logger) LoggerFactory.getLogger(CustomAccessDeniedHandler.class);
+        logger.detachAppender(logbackAppender);
+        logbackAppender.stop();
     }
 
     @Test
@@ -128,5 +151,23 @@ class CustomAccessDeniedHandlerTest {
         ErrorResponse errorResponse = objectMapper.readValue(response.getContentAsString(), ErrorResponse.class);
         assertEquals(403, errorResponse.getStatus());
         assertEquals("/api/custom-test", errorResponse.getPath());
+    }
+
+    @Test
+    @DisplayName("Debería registrar evento de acceso denegado con nivel WARN e incluir la URI de la peticion")
+    void shouldLogAccessDeniedWithWarnLevelAndRequestUri() throws Exception {
+        request.setRequestURI("/api/incidents/1/status");
+        AccessDeniedException accessDeniedException = new AccessDeniedException("Access is denied");
+
+        accessDeniedHandler.handle(request, response, accessDeniedException);
+
+        List<ILoggingEvent> events = logbackAppender.list;
+        assertEquals(1, events.size());
+
+        ILoggingEvent event = events.get(0);
+        assertEquals(Level.WARN, event.getLevel());
+        String formattedMessage = event.getFormattedMessage();
+        assertNotNull(formattedMessage);
+        assertTrue(formattedMessage.contains("/api/incidents/1/status"));
     }
 }

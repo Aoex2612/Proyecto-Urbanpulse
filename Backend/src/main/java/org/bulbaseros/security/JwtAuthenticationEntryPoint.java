@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +32,8 @@ import java.nio.charset.StandardCharsets;
  */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
     private final ObjectMapper objectMapper;
 
@@ -55,6 +59,10 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     /**
      * Intercepta las solicitudes no autorizadas y escribe en la respuesta HTTP un error 401 estructurado en JSON.
+     * <p>
+     * Antes de emitir la respuesta registra el evento de autenticación fallida con nivel WARN,
+     * incluyendo la URI de la petición y el motivo, sin exponer credenciales en el log (NFR-1).
+     * </p>
      *
      * @param request       la petición HTTP entrante.
      * @param response      la respuesta HTTP saliente.
@@ -66,6 +74,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
+        log.warn("Token de autenticación ausente o inválido en la ruta {}", request.getRequestURI(), authException);
+
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

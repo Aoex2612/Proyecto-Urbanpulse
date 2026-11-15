@@ -8,10 +8,10 @@ _Checklist accionable derivado del `plan.md`. Tareas principales y subtareas peq
 - [x] Registrar errores no controlados con `log.error` e incluir stacktrace.
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
-## [ ] Tarea 2: Eventos de seguridad y autenticación (RF: RF-2, RNF: NFR-1)
+## [x] Tarea 2: Eventos de seguridad y autenticación (RF: RF-2, RNF: NFR-1)
 
-- [ ] Registrar token inválido/expirado y acceso denegado con nivel `WARN` y URI de la petición.
-- [ ] Aplicar política de no-redacción de credenciales en logs.
+- [x] Registrar token inválido/expirado y acceso denegado con nivel `WARN` y URI de la petición.
+- [x] Aplicar política de no-redacción de credenciales en logs.
 - [ ] Validar contra los criterios de aceptación de `spec.md`.
 
 ## [ ] Tarea 3: Cobertura de logs en services faltantes y controllers (RF: RF-3, RF-4)
