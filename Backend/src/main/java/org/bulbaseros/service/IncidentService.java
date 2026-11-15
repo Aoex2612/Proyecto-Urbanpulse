@@ -378,6 +378,7 @@ public class IncidentService {
         incidencia.setUpdatedAt(OffsetDateTime.now());
 
         Incidencia savedIncident = incidenciaRepository.save(incidencia);
+        log.info("IncidentService: Incidencia creada con ID {}", savedIncident.getId());
 
         if (duplicateDetectionService != null) {
             List<Incidencia> potentialDuplicates = duplicateDetectionService.findPotentialDuplicates(
@@ -477,6 +478,7 @@ public class IncidentService {
         incidencia.setStatus(toStatus);
         incidencia.setUpdatedAt(OffsetDateTime.now());
         Incidencia updatedIncident = incidenciaRepository.save(incidencia);
+        log.info("IncidentService: Incidencia {} cambia de estado de {} a {}", updatedIncident.getId(), fromStatus, toStatus);
 
         CambiosEstado cambio = new CambiosEstado(
                 updatedIncident,

@@ -74,7 +74,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        log.warn("Acceso denegado en la ruta {}", request.getRequestURI(), accessDeniedException);
+        String reason = sanitizeLogReason(accessDeniedException == null
+                ? "permisos insuficientes"
+                : accessDeniedException.getMessage());
+        log.warn("Acceso denegado en la ruta {}. Motivo: {}", request.getRequestURI(), reason);
 
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -96,5 +99,23 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         String json = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(json);
         response.getWriter().flush();
+    }
+
+    /**
+     * Elimina credenciales o tokens completos de un motivo antes de escribirlo en el log.
+     *
+     * @param reason motivo original de la denegación.
+     * @return motivo seguro y limitado para registro.
+     */
+    private String sanitizeLogReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return "permisos insuficientes";
+        }
+
+        String sanitized = reason
+                .replaceAll("(?i)bearer\\s+[^\\s,;]+", "Bearer [REDACTED]")
+                .replaceAll("(?i)\\b[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\b", "[REDACTED]")
+                .replaceAll("(?i)(password|passwd|token|credential)s?\\s*[:=]\\s*[^\\s,;]+", "$1=[REDACTED]");
+        return sanitized.substring(0, Math.min(sanitized.length(), 200));
     }
 }

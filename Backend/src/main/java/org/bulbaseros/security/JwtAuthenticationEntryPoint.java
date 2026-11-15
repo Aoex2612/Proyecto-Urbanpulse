@@ -74,7 +74,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        log.warn("Token de autenticación ausente o inválido en la ruta {}", request.getRequestURI(), authException);
+        String reason = sanitizeLogReason(authException == null ? null : authException.getMessage());
+        log.warn("Autenticación rechazada en la ruta {}. Motivo: {}", request.getRequestURI(), reason);
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -101,5 +102,23 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         String json = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(json);
         response.getWriter().flush();
+    }
+
+    /**
+     * Elimina credenciales o tokens completos del motivo antes de escribirlo en el log.
+     *
+     * @param reason motivo original del fallo de autenticación.
+     * @return motivo seguro y limitado para registro.
+     */
+    private String sanitizeLogReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return "token ausente o inválido";
+        }
+
+        String sanitized = reason
+                .replaceAll("(?i)bearer\\s+[^\\s,;]+", "Bearer [REDACTED]")
+                .replaceAll("(?i)\\b[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\b", "[REDACTED]")
+                .replaceAll("(?i)(password|passwd|token|credential)s?\\s*[:=]\\s*[^\\s,;]+", "$1=[REDACTED]");
+        return sanitized.substring(0, Math.min(sanitized.length(), 200));
     }
 }

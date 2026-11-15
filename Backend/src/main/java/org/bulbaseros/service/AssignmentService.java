@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AssignIncidentRequest;
 import org.bulbaseros.dto.AssignmentResponse;
 import org.bulbaseros.dto.DeactivateAssignmentRequest;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class AssignmentService {
 
     private final TareasRepository tareasRepository;

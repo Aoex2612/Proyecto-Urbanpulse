@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.NotificationResponse;
 import org.bulbaseros.dto.v2.NotificationResponseV2;
 import org.bulbaseros.entity.Incidencia;
@@ -31,6 +32,7 @@ import java.util.UUID;
  * @version 1.0
  */
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class NotificationService {
 

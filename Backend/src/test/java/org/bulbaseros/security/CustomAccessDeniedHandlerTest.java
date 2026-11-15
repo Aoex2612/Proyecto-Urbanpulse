@@ -169,5 +169,22 @@ class CustomAccessDeniedHandlerTest {
         String formattedMessage = event.getFormattedMessage();
         assertNotNull(formattedMessage);
         assertTrue(formattedMessage.contains("/api/incidents/1/status"));
+        assertTrue(formattedMessage.contains("Access is denied"));
+        assertFalse(formattedMessage.contains("Bearer"));
+    }
+
+    @Test
+    @DisplayName("Debería redactar tokens completos del motivo de acceso denegado")
+    void shouldRedactCredentialsFromAccessDeniedReason() throws Exception {
+        request.setRequestURI("/api/admin");
+        String token = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
+
+        accessDeniedHandler.handle(request, response,
+                new AccessDeniedException("token=" + token));
+
+        assertEquals(1, logbackAppender.list.size());
+        String formattedMessage = logbackAppender.list.get(0).getFormattedMessage();
+        assertFalse(formattedMessage.contains(token));
+        assertTrue(formattedMessage.contains("[REDACTED]"));
     }
 }

@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.CommentResponse;
 import org.bulbaseros.dto.CreateCommentRequest;
 import org.bulbaseros.dto.UpdateCommentRequest;
@@ -38,6 +39,7 @@ import java.util.UUID;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class CommentService {
 
     private final ComentariosIncidenciasRepository comentariosRepository;

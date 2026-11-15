@@ -186,5 +186,20 @@ class JwtAuthenticationEntryPointTest {
         String formattedMessage = event.getFormattedMessage();
         assertNotNull(formattedMessage);
         assertTrue(formattedMessage.contains("/api/incidents/1/status"));
+        assertTrue(formattedMessage.contains("Full authentication is required"));
+    }
+
+    @Test
+    @DisplayName("Debería redactar tokens completos del motivo de autenticación")
+    void shouldRedactCredentialsFromAuthenticationReason() throws Exception {
+        request.setRequestURI("/api/protected");
+        String token = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
+
+        entryPoint.commence(request, response, new BadCredentialsException("token=" + token));
+
+        assertEquals(1, logbackAppender.list.size());
+        String formattedMessage = logbackAppender.list.get(0).getFormattedMessage();
+        assertFalse(formattedMessage.contains(token));
+        assertTrue(formattedMessage.contains("[REDACTED]"));
     }
 }
