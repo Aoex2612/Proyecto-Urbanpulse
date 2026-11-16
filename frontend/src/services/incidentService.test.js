@@ -6,12 +6,21 @@ import incidentService, {
   getIncidentPublicComments,
 } from './incidentService';
 import api from './api';
+import logger from '../utils/logger';
 
 vi.mock('./api', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
+  },
+}));
+
+vi.mock('../utils/logger', () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -109,8 +118,8 @@ describe('incidentService', () => {
     });
 
     it('aplica degradación controlada retornando nulls si el servidor falla o hay error de red', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      api.get.mockRejectedValueOnce(new Error('500 Internal Server Error'));
+      const error = new Error('500 Internal Server Error');
+      api.get.mockRejectedValueOnce(error);
 
       const result = await reverseGeocode(36.7213, -4.4214);
 
@@ -120,7 +129,15 @@ describe('incidentService', () => {
         neighborhood: null,
       });
 
-      consoleSpy.mockRestore();
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error al resolver la geocodificación inversa',
+        {
+          operation: 'reverseGeocode',
+          latitude: 36.7213,
+          longitude: -4.4214,
+          error,
+        }
+      );
     });
 
     it('también está disponible a través del objeto default export', async () => {

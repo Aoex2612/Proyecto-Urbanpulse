@@ -1,9 +1,14 @@
 package org.bulbaseros.security;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.bulbaseros.dto.ErrorResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,8 +18,10 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -37,6 +44,7 @@ class JwtAuthenticationEntryPointTest {
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
     private ObjectMapper objectMapper;
+    private ListAppender<ILoggingEvent> logbackAppender;
 
     @BeforeEach
     void setUp() {
@@ -44,6 +52,19 @@ class JwtAuthenticationEntryPointTest {
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+        Logger logger = (Logger) LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
+        logbackAppender = new ListAppender<>();
+        logbackAppender.start();
+        logger.addAppender(logbackAppender);
+        logger.setLevel(Level.DEBUG);
+    }
+
+    @AfterEach
+    void tearDown() {
+        Logger logger = (Logger) LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
+        logger.detachAppender(logbackAppender);
+        logbackAppender.stop();
     }
 
     @Test
@@ -146,5 +167,39 @@ class JwtAuthenticationEntryPointTest {
         ErrorResponse errorResponse = objectMapper.readValue(response.getContentAsString(), ErrorResponse.class);
         assertEquals(401, errorResponse.getStatus());
         assertEquals("/api/custom-test", errorResponse.getPath());
+    }
+
+    @Test
+    @DisplayName("Debería registrar evento de autenticacion fallido con nivel WARN e incluir la URI de la peticion")
+    void shouldLogAuthenticationFailureWithWarnLevelAndRequestUri() throws Exception {
+        request.setRequestURI("/api/incidents/1/status");
+        InsufficientAuthenticationException authException =
+                new InsufficientAuthenticationException("Full authentication is required to access this resource");
+
+        entryPoint.commence(request, response, authException);
+
+        List<ILoggingEvent> events = logbackAppender.list;
+        assertEquals(1, events.size());
+
+        ILoggingEvent event = events.get(0);
+        assertEquals(Level.WARN, event.getLevel());
+        String formattedMessage = event.getFormattedMessage();
+        assertNotNull(formattedMessage);
+        assertTrue(formattedMessage.contains("/api/incidents/1/status"));
+        assertTrue(formattedMessage.contains("Full authentication is required"));
+    }
+
+    @Test
+    @DisplayName("Debería redactar tokens completos del motivo de autenticación")
+    void shouldRedactCredentialsFromAuthenticationReason() throws Exception {
+        request.setRequestURI("/api/protected");
+        String token = "eyJhbGciOiJIUzI1NiJ9.payload.signature";
+
+        entryPoint.commence(request, response, new BadCredentialsException("token=" + token));
+
+        assertEquals(1, logbackAppender.list.size());
+        String formattedMessage = logbackAppender.list.get(0).getFormattedMessage();
+        assertFalse(formattedMessage.contains(token));
+        assertTrue(formattedMessage.contains("[REDACTED]"));
     }
 }

@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.v2.IncidentResponseV2;
 import org.bulbaseros.dto.PriorityCalculationRequest;
@@ -48,6 +49,7 @@ import java.time.OffsetDateTime;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class IncidentTriageService {
 
     private final IncidenciaRepository incidenciaRepository;

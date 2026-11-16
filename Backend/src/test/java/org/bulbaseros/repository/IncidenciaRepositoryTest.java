@@ -122,24 +122,24 @@ class IncidenciaRepositoryTest {
     @DisplayName("Deberia recuperar incidencias paginadas de un ciudadano ordenadas descendentemente por fecha")
     void shouldFindPagedIncidentsByCitizenIdOrderedByCreatedAtDesc() {
         Usuario otherCitizen = new Usuario("otro.ciudadano@urbanpulse.es", "$2a$10$hashedPass", "Otro Ciudadano");
-        entityManager.persist(otherCitizen);
+        entityManager.persistAndFlush(otherCitizen);
 
         Incidencia inc1 = new Incidencia("Aviso Antiguo", "Desc 1", "Alumbrado", 36.72, -4.42, citizen);
-        inc1.setCreatedAt(OffsetDateTime.now().minusDays(3));
-        entityManager.persist(inc1);
+        entityManager.persistAndFlush(inc1);
 
         Incidencia inc2 = new Incidencia("Aviso Medio", "Desc 2", "Limpieza", 36.73, -4.43, citizen);
-        inc2.setCreatedAt(OffsetDateTime.now().minusDays(1));
-        entityManager.persist(inc2);
+        entityManager.persistAndFlush(inc2);
 
         Incidencia inc3 = new Incidencia("Aviso Reciente", "Desc 3", "Parques", 36.74, -4.44, citizen);
-        inc3.setCreatedAt(OffsetDateTime.now());
-        entityManager.persist(inc3);
+        entityManager.persistAndFlush(inc3);
 
         Incidencia incOther = new Incidencia("Aviso Ajeno", "Desc otro", "Vias", 36.75, -4.45, otherCitizen);
-        entityManager.persist(incOther);
+        entityManager.persistAndFlush(incOther);
 
-        entityManager.flush();
+        setCreatedAt(inc1, OffsetDateTime.parse("2026-01-01T10:00:00Z"));
+        setCreatedAt(inc2, OffsetDateTime.parse("2026-01-02T10:00:00Z"));
+        setCreatedAt(inc3, OffsetDateTime.parse("2026-01-03T10:00:00Z"));
+        entityManager.clear();
 
         entityManager.getEntityManager()
                 .createNativeQuery("UPDATE incidents SET created_at = :d WHERE id = :id")
@@ -173,6 +173,21 @@ class IncidenciaRepositoryTest {
         assertEquals(2, pageResult.getContent().size(), "La primera pagina debe contener 2 elementos");
         assertEquals("Aviso Reciente", pageResult.getContent().get(0).getTitle(), "El primer elemento debe ser el mas reciente");
         assertEquals("Aviso Medio", pageResult.getContent().get(1).getTitle());
+    }
+
+    /**
+     * Fija la fecha directamente en la base de datos para evitar que
+     * {@code @CreationTimestamp} dependa de la precisión del reloj del proveedor JPA.
+     *
+     * @param incidencia incidencia persistida cuyo timestamp se actualiza.
+     * @param createdAt fecha de creación determinista para la prueba.
+     */
+    private void setCreatedAt(Incidencia incidencia, OffsetDateTime createdAt) {
+        entityManager.getEntityManager()
+                .createNativeQuery("UPDATE incidents SET created_at = :createdAt WHERE id = :id")
+                .setParameter("createdAt", createdAt)
+                .setParameter("id", incidencia.getId())
+                .executeUpdate();
     }
 
     @Test

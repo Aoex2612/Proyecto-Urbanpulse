@@ -2,12 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import CreateIncidentModal from './CreateIncidentModal'
 import incidentService from '../../services/incidentService'
+import logger from '../../utils/logger'
 
 vi.mock('../../services/incidentService', () => ({
   default: {
     createIncident: vi.fn(),
     uploadIncidentAttachment: vi.fn(),
     reverseGeocode: vi.fn(),
+  },
+}))
+
+vi.mock('../../utils/logger', () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -153,6 +162,48 @@ describe('CreateIncidentModal', () => {
       expect(incidentService.uploadIncidentAttachment).toHaveBeenCalledTimes(1)
       expect(incidentService.uploadIncidentAttachment).toHaveBeenCalledWith(101, validFile)
       expect(handleCreated).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('registra el fallo de subida del adjunto con contexto de incidencia', async () => {
+    const uploadError = new Error('Fallo de almacenamiento')
+    incidentService.createIncident.mockResolvedValueOnce({ id: 103 })
+    incidentService.uploadIncidentAttachment.mockRejectedValueOnce(uploadError)
+
+    render(
+      <CreateIncidentModal
+        isOpen={true}
+        selectedLocation={mockLocation}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/Título/i), {
+      target: { value: 'Adjunto con error' },
+    })
+    fireEvent.change(screen.getByLabelText(/Categoría/i), {
+      target: { value: 'Alumbrado' },
+    })
+    fireEvent.change(screen.getByLabelText(/Descripción/i), {
+      target: { value: 'Descripción suficientemente extensa.' },
+    })
+    fireEvent.change(screen.getByLabelText(/Seleccionar imagen adjunta/i), {
+      target: {
+        files: [new File(['image'], 'incidencia.jpg', { type: 'image/jpeg' })],
+      },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Guardar incidencia/i }))
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error al subir la imagen adjunta a la incidencia',
+        {
+          operation: 'uploadIncidentAttachment',
+          incidentId: 103,
+          fileName: 'incidencia.jpg',
+          error: uploadError,
+        }
+      )
     })
   })
 

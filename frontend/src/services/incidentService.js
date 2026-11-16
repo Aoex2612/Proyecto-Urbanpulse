@@ -6,6 +6,7 @@
  */
 
 import api from './api';
+import logger from '../utils/logger';
 
 /**
  * Obtiene la lista de todas las incidencias urbanas activas para representar en el mapa.
@@ -90,7 +91,12 @@ export const reverseGeocode = async (latitude, longitude) => {
       neighborhood: response.data?.neighborhood ?? null,
     };
   } catch (error) {
-    console.error('Error al resolver la geocodificación inversa:', error);
+    logger.error('Error al resolver la geocodificación inversa', {
+      operation: 'reverseGeocode',
+      latitude,
+      longitude,
+      error,
+    });
     return {
       address: null,
       district: null,

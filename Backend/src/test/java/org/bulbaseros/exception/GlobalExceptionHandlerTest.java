@@ -1,7 +1,13 @@
 package org.bulbaseros.exception;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.core.read.ListAppender;
 import org.bulbaseros.dto.ErrorResponse;
 import org.bulbaseros.dto.RegisterRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +20,14 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pruebas unitarias para el manejador global de excepciones {@link GlobalExceptionHandler}.
@@ -34,12 +43,26 @@ class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler exceptionHandler;
     private MockHttpServletRequest request;
+    private ListAppender<ILoggingEvent> logbackAppender;
 
     @BeforeEach
     void setUp() {
         exceptionHandler = new GlobalExceptionHandler();
         request = new MockHttpServletRequest();
         request.setRequestURI("/api/auth/register");
+
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        logbackAppender = new ListAppender<>();
+        logbackAppender.start();
+        logger.addAppender(logbackAppender);
+        logger.setLevel(Level.DEBUG);
+    }
+
+    @AfterEach
+    void tearDown() {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        logger.detachAppender(logbackAppender);
+        logbackAppender.stop();
     }
 
     /**
@@ -182,6 +205,31 @@ class GlobalExceptionHandlerTest {
         assertEquals("Internal Server Error", response.getBody().getError());
         assertEquals("Ha ocurrido un error interno en el servidor", response.getBody().getMessage());
         assertEquals("/api/auth/register", response.getBody().getPath());
+    }
+
+    /**
+     * Verifica que la excepcion no controlada se registre en el logger global con nivel ERROR
+     * e incluyendo el stacktrace de la excepcion capturada.
+     */
+    @Test
+    @DisplayName("Debería registrar la excepcion no controlada con nivel ERROR y stacktrace")
+    void shouldLogGenericExceptionWithErrorLevelAndStacktrace() {
+        RuntimeException ex = new RuntimeException("Error inesperado en base de datos");
+
+        exceptionHandler.handleGenericException(ex, request);
+
+        List<ILoggingEvent> events = logbackAppender.list;
+        assertEquals(1, events.size());
+
+        ILoggingEvent event = events.get(0);
+        assertEquals(Level.ERROR, event.getLevel());
+        assertNotNull(event.getFormattedMessage());
+        assertEquals("Error no controlado en el procesamiento de la peticion", event.getFormattedMessage());
+        assertNotNull(event.getThrowableProxy());
+
+        ThrowableProxy throwableProxy = (ThrowableProxy) event.getThrowableProxy();
+        assertNotNull(throwableProxy.getThrowable());
+        assertTrue(throwableProxy.getThrowable().getStackTrace().length > 0);
     }
 
     /**

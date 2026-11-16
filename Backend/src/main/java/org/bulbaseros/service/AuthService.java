@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AuthResponse;
 import org.bulbaseros.dto.LoginRequest;
 import org.bulbaseros.dto.RegisterRequest;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;

@@ -179,10 +179,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
-            log.debug("Token JWT expirado al acceder a {}: {}", request.getRequestURI(), e.getMessage());
             handleAuthenticationFailure(request, response, "Token de autenticación expirado o inválido", e);
         } catch (JwtException | IllegalArgumentException e) {
-            log.debug("Error de validación JWT al acceder a {}: {}", request.getRequestURI(), e.getMessage());
             handleAuthenticationFailure(request, response, "Token de autenticación expirado o inválido", e);
         }
     }
@@ -239,8 +237,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * Gestiona de manera centralizada los fallos de autenticación capturados en el filtro,
-     * limpiando el contexto de seguridad, fijando el atributo de error en la petición y delegando
-     * en {@link JwtAuthenticationEntryPoint} para emitir la respuesta 401 en formato JSON.
+     * limpiando el contexto de seguridad, fijando el atributo de error en la petición, registrando
+     * el evento de seguridad con nivel WARN (token inválido/expirado) incluyendo la URI de la
+     * petición y el motivo, y delegando en {@link JwtAuthenticationEntryPoint} para emitir la
+     * respuesta 401 en formato JSON.
      *
      * @param request      la petición HTTP entrante.
      * @param response     la respuesta HTTP saliente.
@@ -255,6 +255,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                              Exception cause) throws IOException, ServletException {
         SecurityContextHolder.clearContext();
         request.setAttribute("auth_error_message", errorMessage);
+
+        log.warn("Token de autenticación inválido o expirado en la ruta {}: {}", request.getRequestURI(), errorMessage);
 
         if (authenticationEntryPoint != null) {
             AuthenticationException authException = (cause instanceof AuthenticationException ae)

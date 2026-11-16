@@ -1,5 +1,10 @@
 package org.bulbaseros.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+
 import org.bulbaseros.dto.CreateIncidentRequest;
 import org.bulbaseros.dto.ExternalObservationResponse;
 import org.bulbaseros.dto.IncidentAssetResponse;
@@ -27,6 +32,7 @@ import org.bulbaseros.repository.IncidenciaRepository;
 import org.bulbaseros.entity.Tareas;
 import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +41,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -77,6 +84,8 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 class IncidentServiceTest {
+
+    private ListAppender<ILoggingEvent> logbackAppender;
 
     /**
      * Mock del repositorio de datos para la entidad {@link Incidencia}.
@@ -161,6 +170,12 @@ class IncidentServiceTest {
      */
     @BeforeEach
     void setUp() {
+        Logger logger = (Logger) LoggerFactory.getLogger(IncidentService.class);
+        logbackAppender = new ListAppender<>();
+        logbackAppender.start();
+        logger.addAppender(logbackAppender);
+        logger.setLevel(Level.DEBUG);
+
         testCitizen = new Usuario("ciudadano@urbanpulse.es", "hash123", "Juan Perez", RolUsuario.CITIZEN);
         testCitizen.setId(10L);
 
@@ -191,6 +206,13 @@ class IncidentServiceTest {
                     return lat >= MalagaOpenDataService.MIN_LATITUDE && lat <= MalagaOpenDataService.MAX_LATITUDE
                             && lon >= MalagaOpenDataService.MIN_LONGITUDE && lon <= MalagaOpenDataService.MAX_LONGITUDE;
                 });
+    }
+
+    @AfterEach
+    void tearDown() {
+                Logger logger = (Logger) LoggerFactory.getLogger(IncidentService.class);
+                logger.detachAppender(logbackAppender);
+                logbackAppender.stop();
     }
 
     /**
@@ -375,6 +397,9 @@ class IncidentServiceTest {
         assertEquals(EstadoIncidencia.REPORTED, response.getStatus());
         assertEquals(PrioridadIncidencia.MEDIUM, response.getPriority());
         assertEquals(10L, response.getCitizenId());
+        assertTrue(logbackAppender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.INFO
+                        && event.getFormattedMessage().contains("Incidencia creada con ID 100")));
 
         Incidencia captured = captor.getValue();
         assertEquals("Contenedor desbordado", captured.getTitle());
@@ -444,6 +469,9 @@ class IncidentServiceTest {
         assertEquals(1L, response.getId());
         assertEquals(EstadoIncidencia.VALIDATED, response.getStatus());
         assertEquals("Estado de la incidencia actualizado exitosamente", response.getMessage());
+        assertTrue(logbackAppender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.INFO
+                        && event.getFormattedMessage().contains("Incidencia 1 cambia de estado de REPORTED a VALIDATED")));
 
         CambiosEstado capturedCambio = cambioCaptor.getValue();
         assertNotNull(capturedCambio);
@@ -458,6 +486,39 @@ class IncidentServiceTest {
         verify(userRepository).findByEmail("operador@urbanpulse.es");
         verify(incidenciaRepository).save(any(Incidencia.class));
         verify(cambiosEstadoRepository).save(any(CambiosEstado.class));
+    }
+
+    /**
+     * Verifica que un fallo recuperable de enriquecimiento se registre con WARN antes
+     * de devolver el fallback vacío asociado a la incidencia.
+     */
+    @Test
+    @DisplayName("Debería registrar WARN con ID antes del fallback de activos urbanos")
+    void shouldLogWarnBeforeUrbanAssetsFallback() {
+        CreateIncidentRequest request = new CreateIncidentRequest(
+                "Contenedor desbordado",
+                "Basura acumulada en la acera",
+                "Limpieza",
+                36.7200,
+                -4.4250
+        );
+        request.setDistrict("Centro");
+        request.setNeighborhood("La Merced");
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenReturn(testIncident);
+        org.mockito.Mockito.doThrow(new IllegalStateException("servicio no disponible"))
+                .when(urbanAssetService).associateNearbyAssets(testIncident);
+
+        IncidentResponse response = incidentService.createIncident(request, "ciudadano@urbanpulse.es");
+
+        assertNotNull(response);
+        assertTrue(response.getUrbanAssets().isEmpty());
+        assertTrue(logbackAppender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.WARN
+                        && event.getFormattedMessage().contains("incidencia 1")
+                        && event.getFormattedMessage().contains("Fallo al asociar activos urbanos")));
+        verify(urbanAssetService).associateNearbyAssets(testIncident);
     }
 
     /**

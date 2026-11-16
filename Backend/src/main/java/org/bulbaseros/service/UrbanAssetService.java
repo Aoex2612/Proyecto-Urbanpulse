@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.v2.IncidentAssetResponseV2;
 import org.bulbaseros.entity.ActivoUrbano;
@@ -37,6 +38,7 @@ import java.util.UUID;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class UrbanAssetService {
 
     /**
