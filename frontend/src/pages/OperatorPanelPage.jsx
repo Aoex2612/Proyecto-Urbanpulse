@@ -11,6 +11,7 @@ import authService from '../services/authService';
 import incidentService from '../services/incidentService';
 import triageService from '../services/triageService';
 import { formatDateTime } from '../utils/dateUtils';
+import logger from '../utils/logger';
 import { getStatusLabel, getPriorityLabel } from '../components/Map/mapConstants';
 import {
   PriorityAssistantModal,
@@ -132,7 +133,10 @@ export default function OperatorPanelPage() {
           }
         })
         .catch((err) => {
-          console.error('No se pudo cargar el catalogo de departamentos:', err);
+          logger.error('No se pudo cargar el catalogo de departamentos', {
+            operation: 'getDepartments',
+            error: err,
+          });
         });
     }
 
@@ -149,7 +153,12 @@ export default function OperatorPanelPage() {
             setDuplicateIncidentIds(dupIds);
           }
         })
-        .catch(() => {});
+        .catch((err) => {
+          logger.error('No se pudieron cargar las notificaciones de sugerencias de duplicados', {
+            operation: 'getNotifications',
+            error: err,
+          });
+        });
     }
 
     return () => {
@@ -176,7 +185,11 @@ export default function OperatorPanelPage() {
           }
         })
         .catch((err) => {
-          console.error('Error en la busqueda multicriterio de incidencias:', err);
+          logger.error('Error en la busqueda multicriterio de incidencias', {
+            operation: 'searchIncidents',
+            criteria: toSearchParams(filterCriteria),
+            error: err,
+          });
           if (!cancelled) {
             setSearchResults(null);
           }

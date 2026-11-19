@@ -12,11 +12,27 @@ import OperatorPanelPage from './OperatorPanelPage';
 import incidentService from '../services/incidentService';
 import triageService from '../services/triageService';
 import authService from '../services/authService';
+import notificationService from '../services/notificationService';
+import logger from '../utils/logger';
+
+vi.mock('../utils/logger', () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 vi.mock('../services/notificationService', () => ({
   default: {
     getNotifications: vi.fn(() => Promise.resolve([])),
     markAsRead: vi.fn(() => Promise.resolve()),
+  },
+}));
+
+vi.mock('../services/analyticsService', () => ({
+  default: {
+    getDepartmentRecommendation: vi.fn(() => Promise.resolve(null)),
   },
 }));
 
@@ -155,6 +171,7 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
     incidentService.getAllIncidents.mockResolvedValue(mockIncidents);
     incidentService.searchIncidents.mockResolvedValue(mockIncidents);
     triageService.getDepartments.mockResolvedValue([]);
+    notificationService.getNotifications.mockResolvedValue([]);
   });
 
   const renderPanel = () =>
@@ -537,6 +554,65 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
             priority: 'HIGH',
             departmentId: undefined,
             unassignedDepartment: true,
+          })
+        );
+      },
+      { timeout: 3000 }
+    );
+  });
+
+  it('registra el fallo al cargar notificaciones sin silenciarlo y mantiene la vista operativa', async () => {
+    const error = new Error('Notificaciones no disponibles');
+    notificationService.getNotifications.mockRejectedValue(error);
+
+    renderPanel();
+
+    expect(await screen.findByText('Bache profundo en calzada')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('notificaciones'),
+        expect.objectContaining({
+          operation: 'getNotifications',
+          error,
+        })
+      );
+    });
+  });
+
+  it('registra en el logger el fallo al cargar el catalogo de departamentos', async () => {
+    const error = new Error('Catalogo no disponible');
+    triageService.getDepartments.mockRejectedValue(error);
+
+    renderPanel();
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('departamentos'),
+        expect.objectContaining({
+          operation: 'getDepartments',
+          error,
+        })
+      );
+    });
+  });
+
+  it('registra en el logger el fallo de la busqueda multicriterio', async () => {
+    const error = new Error('Busqueda no disponible');
+    incidentService.searchIncidents.mockRejectedValue(error);
+
+    renderPanel();
+
+    await screen.findByText('Bache profundo en calzada');
+    fireEvent.change(screen.getByLabelText(/Distrito:/i), { target: { value: 'Centro' } });
+
+    await waitFor(
+      () => {
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('busqueda multicriterio'),
+          expect.objectContaining({
+            operation: 'searchIncidents',
+            error,
           })
         );
       },
