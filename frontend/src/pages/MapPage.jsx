@@ -18,6 +18,7 @@ import {
   MapDateFilter,
 } from '../components/Map';
 import { filterIncidentsByDate, DATE_FILTER_PRESETS } from '../utils/dateUtils';
+import logger from '../utils/logger';
 import IncidentFilterBar from '../components/Filters/IncidentFilterBar';
 import './MapPage.css';
 
@@ -155,7 +156,10 @@ export default function MapPage() {
           }
         })
         .catch((err) => {
-          console.error('No se pudo cargar el catalogo de departamentos:', err);
+          logger.error('No se pudo cargar el catalogo de departamentos', {
+            operation: 'getDepartments',
+            error: err,
+          });
         });
     }
 
@@ -183,7 +187,11 @@ export default function MapPage() {
           }
         })
         .catch((err) => {
-          console.error('Error en la busqueda multicriterio de incidencias:', err);
+          logger.error('Error en la busqueda multicriterio de incidencias', {
+            operation: 'searchIncidents',
+            criteria: toSearchParams(multiFilterCriteria),
+            error: err,
+          });
           if (!cancelled) {
             setSearchResults(null);
           }
