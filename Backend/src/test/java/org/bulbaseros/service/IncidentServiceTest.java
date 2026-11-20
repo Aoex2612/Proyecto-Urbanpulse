@@ -1,13 +1,23 @@
 package org.bulbaseros.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.ExternalObservationResponse;
+import org.bulbaseros.dto.IncidentAssetResponse;
+import org.bulbaseros.dto.IncidentFilterCriteria;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
 import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
+import org.bulbaseros.dto.v2.IncidentResponseV2;
 import org.bulbaseros.entity.CambiosEstado;
+import org.bulbaseros.entity.Departamento;
 import org.bulbaseros.entity.EstadoIncidencia;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.PrioridadIncidencia;
@@ -17,8 +27,12 @@ import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.IncidentMapper;
 import org.bulbaseros.mappers.StatusChangeMapper;
 import org.bulbaseros.repository.CambiosEstadoRepository;
+import org.bulbaseros.repository.DepartamentoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
+import org.bulbaseros.entity.Tareas;
+import org.bulbaseros.repository.TareasRepository;
 import org.bulbaseros.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,24 +41,29 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -66,6 +85,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class IncidentServiceTest {
 
+    private ListAppender<ILoggingEvent> logbackAppender;
+
     /**
      * Mock del repositorio de datos para la entidad {@link Incidencia}.
      */
@@ -84,11 +105,32 @@ class IncidentServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private TareasRepository tareasRepository;
+
+    @Mock
+    private UrbanAssetService urbanAssetService;
+
+    @Mock
+    private ExternalContextService externalContextService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private DuplicateDetectionService duplicateDetectionService;
+
     /**
      * Mock del servicio de integracion con datos abiertos de Malaga.
      */
     @Mock
     private MalagaOpenDataService malagaOpenDataService;
+
+    /**
+     * Mock del repositorio de departamentos municipales para la resolucion de UUID en API v2.
+     */
+    @Mock
+    private DepartamentoRepository departamentoRepository;
 
     /**
      * Instancia real del mapeador de incidencias.
@@ -128,6 +170,12 @@ class IncidentServiceTest {
      */
     @BeforeEach
     void setUp() {
+        Logger logger = (Logger) LoggerFactory.getLogger(IncidentService.class);
+        logbackAppender = new ListAppender<>();
+        logbackAppender.start();
+        logger.addAppender(logbackAppender);
+        logger.setLevel(Level.DEBUG);
+
         testCitizen = new Usuario("ciudadano@urbanpulse.es", "hash123", "Juan Perez", RolUsuario.CITIZEN);
         testCitizen.setId(10L);
 
@@ -160,6 +208,13 @@ class IncidentServiceTest {
                 });
     }
 
+    @AfterEach
+    void tearDown() {
+                Logger logger = (Logger) LoggerFactory.getLogger(IncidentService.class);
+                logger.detachAppender(logbackAppender);
+                logbackAppender.stop();
+    }
+
     /**
      * Verifica que getActiveIncidents invoque la consulta excluyendo CLOSED y REJECTED
      * y retorne los registros transformados a DTOs IncidentResponse.
@@ -185,6 +240,67 @@ class IncidentServiceTest {
         assertEquals(2L, result.get(1).getId());
         assertEquals(EstadoIncidencia.IN_PROGRESS, result.get(1).getStatus());
 
+        verify(incidenciaRepository).findByStatusNotIn(any());
+    }
+
+    @Test
+    @DisplayName("getActiveIncidents: para rol TECHNICIAN debe retornar únicamente incidencias asignadas activas (RF-25)")
+    void shouldReturnOnlyAssignedIncidentsForTechnician() {
+        Usuario technician = new Usuario("tech@urbanpulse.es", "hash", "Técnico Campo", RolUsuario.TECHNICIAN);
+        technician.setId(33L);
+
+        Incidencia inc1 = new Incidencia("Bache calzada", "Bache profundo", "Vías", 36.72, -4.42, testCitizen);
+        inc1.setId(10L);
+        inc1.setStatus(EstadoIncidencia.ASSIGNED);
+
+        Tareas task1 = new Tareas();
+        task1.setId(101L);
+        task1.setIncident(inc1);
+        task1.setIsActive(true);
+
+        when(userRepository.findByEmail("tech@urbanpulse.es")).thenReturn(Optional.of(technician));
+        when(tareasRepository.findByTechnicianIdAndIsActiveTrue(33L)).thenReturn(List.of(task1));
+        when(incidenciaRepository.findAllById(any())).thenReturn(List.of(inc1));
+
+        List<IncidentResponse> result = incidentService.getActiveIncidents("tech@urbanpulse.es");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(10L, result.get(0).getId());
+        verify(incidenciaRepository, never()).findByStatusNotIn(any());
+    }
+
+    @Test
+    @DisplayName("getActiveIncidents: para rol TECHNICIAN sin asignaciones activas debe retornar lista vacía (RF-25)")
+    void shouldReturnEmptyListWhenTechnicianHasNoActiveAssignments() {
+        Usuario technician = new Usuario("tech@urbanpulse.es", "hash", "Técnico Campo", RolUsuario.TECHNICIAN);
+        technician.setId(33L);
+
+        when(userRepository.findByEmail("tech@urbanpulse.es")).thenReturn(Optional.of(technician));
+        when(tareasRepository.findByTechnicianIdAndIsActiveTrue(33L)).thenReturn(List.of());
+
+        List<IncidentResponse> result = incidentService.getActiveIncidents("tech@urbanpulse.es");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(incidenciaRepository, never()).findAllById(any());
+        verify(incidenciaRepository, never()).findByStatusNotIn(any());
+    }
+
+    @Test
+    @DisplayName("getActiveIncidents: para rol OPERATOR o ADMIN debe retornar todas las incidencias activas")
+    void shouldReturnAllActiveIncidentsWhenUserIsOperatorOrAdmin() {
+        Usuario operator = new Usuario("operador@urbanpulse.es", "hash", "Operador", RolUsuario.OPERATOR);
+        operator.setId(22L);
+
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(operator));
+        when(incidenciaRepository.findByStatusNotIn(any())).thenReturn(List.of(testIncident));
+
+        List<IncidentResponse> result = incidentService.getActiveIncidents("operador@urbanpulse.es");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(tareasRepository, never()).findByTechnicianIdAndIsActiveTrue(any());
         verify(incidenciaRepository).findByStatusNotIn(any());
     }
 
@@ -281,6 +397,9 @@ class IncidentServiceTest {
         assertEquals(EstadoIncidencia.REPORTED, response.getStatus());
         assertEquals(PrioridadIncidencia.MEDIUM, response.getPriority());
         assertEquals(10L, response.getCitizenId());
+        assertTrue(logbackAppender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.INFO
+                        && event.getFormattedMessage().contains("Incidencia creada con ID 100")));
 
         Incidencia captured = captor.getValue();
         assertEquals("Contenedor desbordado", captured.getTitle());
@@ -350,6 +469,9 @@ class IncidentServiceTest {
         assertEquals(1L, response.getId());
         assertEquals(EstadoIncidencia.VALIDATED, response.getStatus());
         assertEquals("Estado de la incidencia actualizado exitosamente", response.getMessage());
+        assertTrue(logbackAppender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.INFO
+                        && event.getFormattedMessage().contains("Incidencia 1 cambia de estado de REPORTED a VALIDATED")));
 
         CambiosEstado capturedCambio = cambioCaptor.getValue();
         assertNotNull(capturedCambio);
@@ -364,6 +486,39 @@ class IncidentServiceTest {
         verify(userRepository).findByEmail("operador@urbanpulse.es");
         verify(incidenciaRepository).save(any(Incidencia.class));
         verify(cambiosEstadoRepository).save(any(CambiosEstado.class));
+    }
+
+    /**
+     * Verifica que un fallo recuperable de enriquecimiento se registre con WARN antes
+     * de devolver el fallback vacío asociado a la incidencia.
+     */
+    @Test
+    @DisplayName("Debería registrar WARN con ID antes del fallback de activos urbanos")
+    void shouldLogWarnBeforeUrbanAssetsFallback() {
+        CreateIncidentRequest request = new CreateIncidentRequest(
+                "Contenedor desbordado",
+                "Basura acumulada en la acera",
+                "Limpieza",
+                36.7200,
+                -4.4250
+        );
+        request.setDistrict("Centro");
+        request.setNeighborhood("La Merced");
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenReturn(testIncident);
+        org.mockito.Mockito.doThrow(new IllegalStateException("servicio no disponible"))
+                .when(urbanAssetService).associateNearbyAssets(testIncident);
+
+        IncidentResponse response = incidentService.createIncident(request, "ciudadano@urbanpulse.es");
+
+        assertNotNull(response);
+        assertTrue(response.getUrbanAssets().isEmpty());
+        assertTrue(logbackAppender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.WARN
+                        && event.getFormattedMessage().contains("incidencia 1")
+                        && event.getFormattedMessage().contains("Fallo al asociar activos urbanos")));
+        verify(urbanAssetService).associateNearbyAssets(testIncident);
     }
 
     /**
@@ -844,5 +999,326 @@ class IncidentServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
 
         verify(malagaOpenDataService, never()).resolveLocation(any(), any());
+    }
+
+    // =========================================================================================
+    // Pruebas de integración de Activos Urbanos y Contexto Externo (RF-1, RF-5, RF-8, RF-10, RF-15)
+    // =========================================================================================
+
+    @Test
+    @DisplayName("Debería crear incidencia y enriquecer con activos cercanos y contexto exitosamente")
+    void shouldCreateIncidentWithAssetsAndContextSuccessfully() {
+        CreateIncidentRequest req = new CreateIncidentRequest(
+                "Farola fundida en Larios",
+                "Farola no enciende de noche",
+                "ALUMBRADO",
+                36.7213,
+                -4.4214,
+                5.0,
+                "Calle Marqués de Larios, 1",
+                "Centro",
+                "Centro Histórico"
+        );
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenAnswer(invocation -> {
+            Incidencia inc = invocation.getArgument(0);
+            inc.setId(55L);
+            return inc;
+        });
+
+        IncidentAssetResponse assetDto = IncidentAssetResponse.builder()
+                .assetId(101L)
+                .name("Farola Larios 1")
+                .type("FAROLA")
+                .assetCode("CALLE_LARIOS_01")
+                .distanceMeters(12.5)
+                .confidenceScore(0.85)
+                .isConfirmed(false)
+                .build();
+        when(urbanAssetService.associateNearbyAssets(any(Incidencia.class))).thenReturn(List.of(assetDto));
+
+        ExternalObservationResponse weatherDto = new ExternalObservationResponse(
+                1L, "Open-Meteo", "TEMPERATURE", 21.5, "21.5 °C", OffsetDateTime.now()
+        );
+        when(externalContextService.captureAndSaveContext(any(Incidencia.class))).thenReturn(List.of(weatherDto));
+
+        IncidentResponse response = incidentService.createIncident(req, "ciudadano@urbanpulse.es");
+
+        assertNotNull(response);
+        assertEquals(55L, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertEquals(1, response.getUrbanAssets().size());
+        assertEquals("Farola Larios 1", response.getUrbanAssets().get(0).getName());
+
+        assertNotNull(response.getUrbanContext());
+        assertEquals(1, response.getUrbanContext().size());
+        assertEquals("TEMPERATURE", response.getUrbanContext().get(0).getMetricType());
+
+        verify(urbanAssetService).associateNearbyAssets(any(Incidencia.class));
+        verify(externalContextService).captureAndSaveContext(any(Incidencia.class));
+    }
+
+    @Test
+    @DisplayName("Debería crear incidencia con degradación controlada cuando fallan activos y contexto externo (RF-15)")
+    void shouldCreateIncidentWithFallbackWhenAssetOrContextFails() {
+        CreateIncidentRequest req = new CreateIncidentRequest(
+                "Farola rota",
+                "Cristal roto en luminaria",
+                "ALUMBRADO",
+                36.7213,
+                -4.4214,
+                5.0,
+                "Calle Marqués de Larios, 1",
+                "Centro",
+                "Centro Histórico"
+        );
+
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenAnswer(invocation -> {
+            Incidencia inc = invocation.getArgument(0);
+            inc.setId(77L);
+            return inc;
+        });
+
+        // Simular que el servicio de activos arroja una excepción inesperada de base de datos o timeout
+        when(urbanAssetService.associateNearbyAssets(any(Incidencia.class)))
+                .thenThrow(new RuntimeException("Simulated database timeout in asset lookup"));
+
+        // Simular que el servicio de contexto lanza un error
+        when(externalContextService.captureAndSaveContext(any(Incidencia.class)))
+                .thenThrow(new RuntimeException("Remote weather API service unavailable"));
+
+        IncidentResponse response = incidentService.createIncident(req, "ciudadano@urbanpulse.es");
+
+        // La incidencia se debe crear sin propagar excepciones (HTTP 201 Created equivalente)
+        assertNotNull(response);
+        assertEquals(77L, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertTrue(response.getUrbanAssets().isEmpty(), "urbanAssets debe ser lista vacía ante degradación");
+        assertNotNull(response.getUrbanContext());
+        assertTrue(response.getUrbanContext().isEmpty(), "urbanContext debe ser lista vacía ante degradación");
+
+        verify(incidenciaRepository).save(any(Incidencia.class));
+    }
+
+    @Test
+    @DisplayName("Debería recuperar incidencia por ID e incorporar activos y contexto asociados (RF-5, RF-10)")
+    void shouldGetIncidentByIdWithAssetsAndContext() {
+        Long incidentId = 88L;
+        testIncident.setId(incidentId);
+
+        when(incidenciaRepository.findById(incidentId)).thenReturn(Optional.of(testIncident));
+
+        IncidentAssetResponse assetDto = IncidentAssetResponse.builder()
+                .assetId(202L)
+                .name("Contenedor Vidrio")
+                .type("CONTENEDOR")
+                .assetCode("CONT-VIDRIO-01")
+                .distanceMeters(18.0)
+                .confidenceScore(0.76)
+                .isConfirmed(true)
+                .build();
+        when(urbanAssetService.getAssetsByIncidentId(incidentId)).thenReturn(List.of(assetDto));
+
+        ExternalObservationResponse contextDto = new ExternalObservationResponse(
+                2L, "Malaga-Traffic", "TRAFFIC_LEVEL", 1.0, "FLUIDO", OffsetDateTime.now()
+        );
+        when(externalContextService.getContextByIncidentId(incidentId)).thenReturn(List.of(contextDto));
+
+        IncidentResponse response = incidentService.getIncidentById(incidentId);
+
+        assertNotNull(response);
+        assertEquals(incidentId, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertEquals(1, response.getUrbanAssets().size());
+        assertEquals("Contenedor Vidrio", response.getUrbanAssets().get(0).getName());
+        assertTrue(response.getUrbanAssets().get(0).getIsConfirmed());
+
+        assertNotNull(response.getUrbanContext());
+        assertEquals(1, response.getUrbanContext().size());
+        assertEquals("Malaga-Traffic", response.getUrbanContext().get(0).getSource());
+
+        verify(urbanAssetService).getAssetsByIncidentId(incidentId);
+        verify(externalContextService).getContextByIncidentId(incidentId);
+    }
+
+    @Test
+    @DisplayName("Debería recuperar incidencia por ID con degradación elegante si falla consulta de activos o contexto")
+    void shouldGetIncidentByIdWithGracefulDegradationWhenSubservicesFail() {
+        Long incidentId = 99L;
+        testIncident.setId(incidentId);
+
+        when(incidenciaRepository.findById(incidentId)).thenReturn(Optional.of(testIncident));
+        when(urbanAssetService.getAssetsByIncidentId(incidentId)).thenThrow(new RuntimeException("Asset repository down"));
+        when(externalContextService.getContextByIncidentId(incidentId)).thenThrow(new RuntimeException("Context repository down"));
+
+        IncidentResponse response = incidentService.getIncidentById(incidentId);
+
+        assertNotNull(response);
+        assertEquals(incidentId, response.getId());
+        assertNotNull(response.getUrbanAssets());
+        assertTrue(response.getUrbanAssets().isEmpty());
+        assertNotNull(response.getUrbanContext());
+        assertTrue(response.getUrbanContext().isEmpty());
+    }
+
+    @Test
+    @DisplayName("updateIncidentStatus: envia notificacion al ciudadano al actualizar estado")
+    void shouldSendNotificationOnUpdateIncidentStatus() {
+        Incidencia inc = new Incidencia();
+        inc.setId(10L);
+        inc.setTitle("Farola rota");
+        inc.setStatus(EstadoIncidencia.REPORTED);
+        inc.setCitizen(testCitizen);
+
+        when(incidenciaRepository.findById(10L)).thenReturn(Optional.of(inc));
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(incidenciaRepository.save(any(Incidencia.class))).thenReturn(inc);
+
+        UpdateIncidentStatusRequest request = new UpdateIncidentStatusRequest(EstadoIncidencia.VALIDATED, "Validacion correcta");
+        incidentService.updateIncidentStatus(10L, request, "operador@urbanpulse.es");
+
+        verify(notificationService).createNotification(eq(testCitizen), eq(inc), eq("STATUS_CHANGE"), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("buildFilterCriteria: CITIZEN ignora prioridad, departamento y sin departamento (RNF-1)")
+    void shouldIgnoreInternalFiltersForCitizen() {
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+
+        IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                "farola", "Alumbrado", null, null, EstadoIncidencia.REPORTED, "Centro",
+                PrioridadIncidencia.HIGH, 7L, true, "ciudadano@urbanpulse.es");
+
+        assertFalse(criteria.includeInternalFilters());
+        assertNull(criteria.status());
+        assertNull(criteria.priority());
+        assertNull(criteria.departmentId());
+        assertFalse(criteria.unassignedDepartment());
+        assertEquals("Centro", criteria.district());
+        assertEquals("farola", criteria.text());
+    }
+
+    @Test
+    @DisplayName("buildFilterCriteria: email nulo o vacio no tiene acceso interno y omite los filtros operativos")
+    void shouldIgnoreInternalFiltersWhenEmailIsNullOrBlank() {
+        assertFalse(incidentService.hasInternalAccess(null));
+        assertFalse(incidentService.hasInternalAccess("   "));
+
+        IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                null, null, null, null, EstadoIncidencia.VALIDATED, "Centro",
+                PrioridadIncidencia.CRITICAL, 9L, true, null);
+
+        assertFalse(criteria.includeInternalFilters());
+        assertNull(criteria.status());
+        assertNull(criteria.priority());
+        assertNull(criteria.departmentId());
+        assertFalse(criteria.unassignedDepartment());
+    }
+
+    @Test
+    @DisplayName("buildFilterCriteria: OPERATOR, TECHNICIAN, ADMIN y ANALYST conservan los filtros internos")
+    void shouldPreserveInternalFiltersForInternalRoles() {
+        for (RolUsuario role : List.of(RolUsuario.OPERATOR, RolUsuario.TECHNICIAN,
+                RolUsuario.ADMIN, RolUsuario.ANALYST)) {
+            String email = role.name().toLowerCase() + "@urbanpulse.es";
+            when(userRepository.findByEmail(email))
+                    .thenReturn(Optional.of(new Usuario(email, "hash", "Interno", role)));
+
+            assertTrue(incidentService.hasInternalAccess(email));
+
+            IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                    null, null, null, null, EstadoIncidencia.VALIDATED, "Centro",
+                    PrioridadIncidencia.CRITICAL, 9L, true, email);
+
+            assertTrue(criteria.includeInternalFilters());
+            assertEquals(EstadoIncidencia.VALIDATED, criteria.status());
+            assertEquals(PrioridadIncidencia.CRITICAL, criteria.priority());
+            assertEquals(9L, criteria.departmentId());
+            assertTrue(criteria.unassignedDepartment());
+        }
+    }
+
+    @Test
+    @DisplayName("hasInternalAccess: un usuario inexistente conserva el comportamiento previo y se trata como interno")
+    void shouldTreatUnknownUserAsInternal() {
+        when(userRepository.findByEmail("fantasma@urbanpulse.es")).thenReturn(Optional.empty());
+
+        assertTrue(incidentService.hasInternalAccess("fantasma@urbanpulse.es"));
+
+        IncidentFilterCriteria criteria = incidentService.buildFilterCriteria(
+                null, null, null, null, EstadoIncidencia.VALIDATED, null,
+                PrioridadIncidencia.HIGH, 4L, false, "fantasma@urbanpulse.es");
+
+        assertTrue(criteria.includeInternalFilters());
+        assertEquals(PrioridadIncidencia.HIGH, criteria.priority());
+        assertEquals(4L, criteria.departmentId());
+    }
+
+    @Test
+    @DisplayName("searchIncidents: delega en la especificacion y devuelve los DTOs mapeados (RF-12)")
+    void shouldSearchIncidentsWithNewCriteria() {
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(incidenciaRepository.findAll(any(Specification.class))).thenReturn(List.of(testIncident));
+
+        List<IncidentResponse> result = incidentService.searchIncidents("farola", "Alumbrado", null, null,
+                EstadoIncidencia.REPORTED, "Centro", PrioridadIncidencia.MEDIUM, 3L, false,
+                "operador@urbanpulse.es");
+
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getId());
+        assertEquals("Farola rota", result.get(0).getTitle());
+        verify(incidenciaRepository).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("searchIncidentsV2: traduce el UUID del departamento a su id numerico y devuelve los DTOs v2")
+    void shouldSearchIncidentsV2ResolvingDepartmentPublicId() {
+        UUID departmentPublicId = UUID.randomUUID();
+        Departamento departamento = new Departamento();
+        departamento.setId(55L);
+        departamento.setPublicId(departmentPublicId);
+
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(departamentoRepository.findByPublicId(departmentPublicId)).thenReturn(Optional.of(departamento));
+        when(incidenciaRepository.findAll(any(Specification.class))).thenReturn(List.of(testIncident));
+
+        List<IncidentResponseV2> result = incidentService.searchIncidentsV2("farola", null, null, null,
+                null, "Centro", PrioridadIncidencia.LOW, departmentPublicId, false, "operador@urbanpulse.es");
+
+        assertEquals(1, result.size());
+        assertEquals("Farola rota", result.get(0).getTitle());
+        verify(departamentoRepository).findByPublicId(departmentPublicId);
+        verify(incidenciaRepository).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("searchIncidentsV2: UUID de departamento inexistente con rol interno devuelve lista vacia sin consultar incidencias (C-4)")
+    void shouldReturnEmptyListWhenDepartmentPublicIdDoesNotExistForInternalUser() {
+        UUID departmentPublicId = UUID.randomUUID();
+        when(userRepository.findByEmail("operador@urbanpulse.es")).thenReturn(Optional.of(testOperator));
+        when(departamentoRepository.findByPublicId(departmentPublicId)).thenReturn(Optional.empty());
+
+        List<IncidentResponseV2> result = incidentService.searchIncidentsV2(null, null, null, null,
+                null, null, null, departmentPublicId, false, "operador@urbanpulse.es");
+
+        assertTrue(result.isEmpty());
+        verify(incidenciaRepository, never()).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("searchIncidentsV2: UUID de departamento inexistente con CITIZEN se ignora y se consultan incidencias (RF-11)")
+    void shouldIgnoreDepartmentPublicIdForCitizenInV2() {
+        UUID departmentPublicId = UUID.randomUUID();
+        when(userRepository.findByEmail("ciudadano@urbanpulse.es")).thenReturn(Optional.of(testCitizen));
+        when(incidenciaRepository.findAll(any(Specification.class))).thenReturn(List.of(testIncident));
+
+        List<IncidentResponseV2> result = incidentService.searchIncidentsV2(null, null, null, null,
+                null, null, null, departmentPublicId, true, "ciudadano@urbanpulse.es");
+
+        assertEquals(1, result.size());
+        verify(departamentoRepository, never()).findByPublicId(any());
+        verify(incidenciaRepository).findAll(any(Specification.class));
     }
 }

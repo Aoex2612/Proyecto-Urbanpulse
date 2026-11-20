@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import IncidentDetailModal from './IncidentDetailModal'
 import incidentService from '../../services/incidentService'
 import authService from '../../services/authService'
+import triageService from '../../services/triageService'
+import logger from '../../utils/logger'
 
 vi.mock('../../services/incidentService', () => ({
   default: {
@@ -15,6 +17,22 @@ vi.mock('../../services/authService', () => ({
   default: {
     getCurrentUser: vi.fn(),
     getUser: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/triageService', () => ({
+  default: {
+    getIncidentComments: vi.fn(),
+    addIncidentComment: vi.fn(),
+    updateIncidentComment: vi.fn(),
+  },
+}))
+
+vi.mock('../../utils/logger', () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -39,6 +57,7 @@ describe('IncidentDetailModal', () => {
     vi.clearAllMocks()
     incidentService.getIncidentAttachments.mockResolvedValue([])
     incidentService.getIncidentHistory.mockResolvedValue([])
+    triageService.getIncidentComments.mockResolvedValue([])
     authService.getCurrentUser.mockReturnValue({ role: 'CITIZEN' })
   })
 
@@ -52,6 +71,24 @@ describe('IncidentDetailModal', () => {
       <IncidentDetailModal isOpen={true} incident={null} />
     )
     expect(container2.firstChild).toBeNull()
+  })
+
+  it('registra el fallo al recuperar adjuntos con contexto de incidencia', async () => {
+    const attachmentsError = new Error('Servicio no disponible')
+    incidentService.getIncidentAttachments.mockRejectedValueOnce(attachmentsError)
+
+    render(<IncidentDetailModal isOpen={true} incident={mockIncident} />)
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error al recuperar adjuntos de la incidencia',
+        {
+          operation: 'getIncidentAttachments',
+          incidentId: 42,
+          error: attachmentsError,
+        }
+      )
+    })
   })
 
   it('muestra la información y metadatos básicos de la incidencia', async () => {
@@ -96,6 +133,36 @@ describe('IncidentDetailModal', () => {
     })
     expect(screen.getByText('Vista Administrador')).toBeInTheDocument()
     expect(incidentService.getIncidentHistory).toHaveBeenCalledWith(42)
+  })
+
+  it('integra el muro de comentarios consultando los comentarios de la incidencia', async () => {
+    triageService.getIncidentComments.mockResolvedValueOnce([
+      {
+        id: 1,
+        authorName: 'Técnico Manuel',
+        authorRole: 'TECHNICIAN',
+        comment: 'Aviso público de inspección técnica en curso',
+        isInternal: false,
+        createdAt: '2026-10-31T10:00:00Z',
+      },
+    ])
+
+    render(
+      <IncidentDetailModal
+        isOpen={true}
+        incident={mockIncident}
+        currentUser={{ role: 'CITIZEN' }}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Comentarios y Actuaciones/i)).toBeInTheDocument()
+    })
+
+    expect(triageService.getIncidentComments).toHaveBeenCalledWith(42)
+    await waitFor(() => {
+      expect(screen.getByText('Aviso público de inspección técnica en curso')).toBeInTheDocument()
+    })
   })
 
   it('llama a la función onClose al hacer clic en el botón de cerrar', async () => {

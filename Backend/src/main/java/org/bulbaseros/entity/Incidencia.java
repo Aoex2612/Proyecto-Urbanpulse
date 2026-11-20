@@ -18,6 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa una incidencia urbana reportada en la plataforma UrbanPulse.
@@ -41,6 +42,12 @@ public class Incidencia {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /**
+     * Identificador publico universal (UUID v4) de la incidencia para exposicion externa y API v2.
+     */
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Titulo sintetico y descriptivo de la incidencia urbana.
@@ -169,6 +176,9 @@ public class Incidencia {
      */
     @PrePersist
     protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
         }

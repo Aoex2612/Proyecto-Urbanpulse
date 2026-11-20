@@ -8,7 +8,7 @@ Este directorio reúne los **Software Design Documents** (también llamados *Des
 
 Siguiendo el apartado 7 del material de referencia, todo Design Doc incluye una sección **«Decisiones arquitectónicas derivadas»** con enlaces a los ADR que lo respaldan, y todo ADR incorpora un enlace inverso al Design Doc que lo origina. La relación es, por tanto, bidireccional.
 
-El ADR de geolocalización nativa, que antes compartía numeración con el ADR de Datos Abiertos de Málaga, se ha renombrado a **ADR-07** para eliminar la colisión. El ADR-06 permanece reservado a la integración con Datos Abiertos de Málaga y degradación controlada.
+El ADR de geolocalización nativa, que antes compartía numeración con el ADR de Datos Abiertos de Málaga, se ha renombrado a **ADR-07** para eliminar esa colisión. El ADR-06 permanece reservado a la integración con Datos Abiertos de Málaga y degradación controlada. La sincronización con `develop` incorpora además otro ADR-07 (gestión del ciclo de vida y asignación multidepartamental) y dos ADR-09; por eso todas las referencias de estos DD utilizan el nombre completo del archivo y no solo el número.
 
 ## Índice
 

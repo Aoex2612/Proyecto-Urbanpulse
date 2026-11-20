@@ -1,14 +1,17 @@
 package org.bulbaseros.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,8 +27,9 @@ import java.util.Map;
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.1
+ * @version 1.2
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -112,6 +116,37 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja excepciones de acceso denegado por insuficiencia de permisos o roles RBAC en métodos protegidos.
+     * <p>
+     * Retorna HTTP 403 Forbidden acompañado del DTO {@link ErrorResponse}.
+     * </p>
+     *
+     * @param ex      Excepción {@link AccessDeniedException} capturada.
+     * @param request Petición HTTP recibida.
+     * @return {@link ResponseEntity} con estado 403 y el DTO {@link ErrorResponse}.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        String message = "Acceso denegado: permisos insuficientes";
+        Object customMessage = request.getAttribute("access_denied_message");
+        if (customMessage instanceof String str && !str.isBlank()) {
+            message = str;
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    /**
      * Maneja excepciones de entidad de incidencia no encontrada en el sistema.
      * <p>
      * Retorna HTTP 404 Not Found acompañado del mensaje explicativo de la excepción.
@@ -188,18 +223,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Maneja excepciones de argumentos ilegales o no válidos.
+     * Maneja excepciones de argumentos ilegales o estados no válidos en el flujo de negocio.
      * <p>
      * Retorna HTTP 400 Bad Request acompañado del mensaje descriptivo del fallo.
      * </p>
      *
-     * @param ex      Excepción {@link IllegalArgumentException} capturada.
+     * @param ex      Excepción de runtime capturada ({@link IllegalArgumentException} o {@link IllegalStateException}).
      * @param request Petición HTTP recibida.
      * @return {@link ResponseEntity} con estado 400 y el DTO {@link ErrorResponse}.
      */
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex,
+            RuntimeException ex,
             HttpServletRequest request
     ) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -213,10 +248,35 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja excepciones de discordancia de tipos en parametros de peticion o variables de ruta (ej. UUID malformado).
+     *
+     * @param ex      Excepcion de tipo MethodArgumentTypeMismatchException.
+     * @param request Peticion HTTP recibida.
+     * @return ResponseEntity con estado 400 Bad Request y ErrorResponse estructurado.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
+    ) {
+        String paramName = ex.getName();
+        String message = String.format("Formato de parametro invalido para '%s': valor recibido '%s'", paramName, ex.getValue());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
      * Manejador por defecto para cualquier otra excepción no controlada en el servidor.
      * <p>
      * Retorna HTTP 500 Internal Server Error con un mensaje genérico para salvaguardar
-     * la integridad y los detalles internos del sistema.
+     * la integridad y los detalles internos del sistema. Adicionalmente registra la excepción
+     * con nivel {@code ERROR} incluyendo el stacktrace para facilitar la depuración.
      * </p>
      *
      * @param ex      Excepción no controlada capturada.
@@ -228,6 +288,8 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
+        log.error("Error no controlado en el procesamiento de la peticion", ex);
+
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),

@@ -2,6 +2,7 @@ package org.bulbaseros.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.PageResponse;
 import org.bulbaseros.dto.ReverseGeocodeResponse;
@@ -10,6 +11,7 @@ import org.bulbaseros.entity.PrioridadIncidencia;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.security.JwtService;
 import org.bulbaseros.service.IncidentService;
+import org.bulbaseros.service.UrbanAssetService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +76,9 @@ class IncidentControllerTest {
 
     @MockitoBean
     private IncidentService incidentService;
+
+    @MockitoBean
+    private UrbanAssetService urbanAssetService;
 
     @Autowired
     private IncidentController incidentController;
@@ -439,5 +444,156 @@ class IncidentControllerTest {
                         .param("longitude", "-4.4214"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.address").value("Calle Larios"));
+    }
+
+    @Test
+    @WithMockUser(username = "technician@urbanpulse.es", roles = "TECHNICIAN")
+    @DisplayName("GET /api/incidents con rol TECHNICIAN debe consultar incidencias filtradas por técnico (RF-25)")
+    void shouldReturnSegregatedIncidentsForTechnician() throws Exception {
+        IncidentResponse item = createSampleIncidentResponse(201L, "Tubería rota", EstadoIncidencia.ASSIGNED);
+        when(incidentService.getActiveIncidents(eq("technician@urbanpulse.es"))).thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/incidents"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").value(201))
+                .andExpect(jsonPath("$[0].title").value("Tubería rota"));
+
+        verify(incidentService).getActiveIncidents("technician@urbanpulse.es");
+    }
+
+    @Test
+    @WithMockUser(username = "admin@urbanpulse.es", roles = "ADMIN")
+    @DisplayName("GET /api/incidents con rol ADMIN debe invocar servicio pasando identidad de admin")
+    void shouldReturnAllActiveIncidentsForAdmin() throws Exception {
+        IncidentResponse item1 = createSampleIncidentResponse(101L, "Aviso 1", EstadoIncidencia.REPORTED);
+        IncidentResponse item2 = createSampleIncidentResponse(102L, "Aviso 2", EstadoIncidencia.VALIDATED);
+        when(incidentService.getActiveIncidents(eq("admin@urbanpulse.es"))).thenReturn(List.of(item1, item2));
+
+        mockMvc.perform(get("/api/incidents"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(incidentService).getActiveIncidents("admin@urbanpulse.es");
+    }
+
+    @Test
+    @DisplayName("Invocación directa de confirmAssetAssociation sin urbanAssetService debe arrojar 501 Not Implemented")
+    void shouldThrow501WhenUrbanAssetServiceNullOnConfirm() {
+        IncidentService mockService = mock(IncidentService.class);
+        IncidentController controller = new IncidentController(mockService);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> controller.confirmAssetAssociation(1L, 2L));
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Invocación directa de removeAssetAssociation sin urbanAssetService debe arrojar 501 Not Implemented")
+    void shouldThrow501WhenUrbanAssetServiceNullOnRemove() {
+        IncidentService mockService = mock(IncidentService.class);
+        IncidentController controller = new IncidentController(mockService);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> controller.removeAssetAssociation(1L, 2L));
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Invocación directa de confirmAssetAssociation debe delegar en urbanAssetService")
+    void shouldDelegateConfirmAssetAssociationDirectly() {
+        IncidentService mockService = mock(IncidentService.class);
+        UrbanAssetService mockAssetService = mock(UrbanAssetService.class);
+        IncidentController controller = new IncidentController(mockService, null, mockAssetService);
+
+        IncidentAssetResponse expected = IncidentAssetResponse.builder()
+                .assetId(5L)
+                .isConfirmed(true)
+                .build();
+        when(mockAssetService.confirmAssetAssociation(1L, 5L)).thenReturn(expected);
+
+        ResponseEntity<IncidentAssetResponse> response = controller.confirmAssetAssociation(1L, 5L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(5L, response.getBody().getAssetId());
+        assertEquals(true, response.getBody().getIsConfirmed());
+        verify(mockAssetService).confirmAssetAssociation(1L, 5L);
+    }
+
+    @Test
+    @DisplayName("Invocación directa de removeAssetAssociation debe delegar en urbanAssetService")
+    void shouldDelegateRemoveAssetAssociationDirectly() {
+        IncidentService mockService = mock(IncidentService.class);
+        UrbanAssetService mockAssetService = mock(UrbanAssetService.class);
+        IncidentController controller = new IncidentController(mockService, null, mockAssetService);
+
+        ResponseEntity<Void> response = controller.removeAssetAssociation(1L, 5L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(mockAssetService).removeAssetAssociation(1L, 5L);
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/incidents/search con OPERATOR debe delegar todos los filtros avanzados al servicio")
+    void shouldSearchIncidentsWithAdvancedFiltersForOperator() throws Exception {
+        IncidentResponse item = createSampleIncidentResponse(201L, "Farola rota", EstadoIncidencia.VALIDATED);
+        when(incidentService.searchIncidents(eq("farola"), eq("Alumbrado"), isNull(), isNull(),
+                isNull(), eq("Centro"), eq(PrioridadIncidencia.HIGH), eq(10L), eq(false),
+                eq("operador@urbanpulse.es")))
+                .thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/incidents/search")
+                        .param("text", "farola")
+                        .param("category", "Alumbrado")
+                        .param("priority", "HIGH")
+                        .param("district", "Centro")
+                        .param("departmentId", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(201L))
+                .andExpect(jsonPath("$[0].title").value("Farola rota"));
+
+        verify(incidentService).searchIncidents(eq("farola"), eq("Alumbrado"), isNull(), isNull(),
+                isNull(), eq("Centro"), eq(PrioridadIncidencia.HIGH), eq(10L), eq(false),
+                eq("operador@urbanpulse.es"));
+    }
+
+    @Test
+    @WithMockUser(username = "ciudadano@urbanpulse.es", roles = "CITIZEN")
+    @DisplayName("GET /api/incidents/search con CITIZEN debe pasar los parámetros y su email al servicio")
+    void shouldSearchIncidentsPassingCitizenEmailToService() throws Exception {
+        IncidentResponse item = createSampleIncidentResponse(202L, "Bache calzada", EstadoIncidencia.REPORTED);
+        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), any(), any(), any(),
+                eq(false), eq("ciudadano@urbanpulse.es")))
+                .thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/incidents/search")
+                        .param("text", "bache")
+                        .param("category", "Alumbrado")
+                        .param("priority", "HIGH")
+                        .param("district", "Centro")
+                        .param("departmentId", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(202L));
+
+        verify(incidentService).searchIncidents(eq("bache"), any(), any(), any(), any(), any(), any(), any(),
+                eq(false), eq("ciudadano@urbanpulse.es"));
+    }
+
+    @Test
+    @WithMockUser(username = "operador@urbanpulse.es", roles = "OPERATOR")
+    @DisplayName("GET /api/incidents/search con departmentId inexistente debe responder 200 con lista vacia (C-4)")
+    void shouldReturnEmptyListWhenDepartmentDoesNotExist() throws Exception {
+        when(incidentService.searchIncidents(any(), any(), any(), any(), any(), any(), any(), eq(9999L),
+                eq(false), eq("operador@urbanpulse.es")))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/incidents/search")
+                        .param("departmentId", "9999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
     }
 }

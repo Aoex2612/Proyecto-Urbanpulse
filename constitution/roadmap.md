@@ -10,24 +10,23 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 4. **003 · Mapa interactivo de incidencias con Leaflet, reporte geolocalizado y auditoría transversal** (`HU03`) — Visualización cartográfica con Leaflet de incidencias urbanas, creación ágil de incidencias marcando coordenadas en el mapa y registro inmutable de auditoría de cambios de estado (`status_changes`) con visualización de línea temporal (`features/003-mapa-incidencias-y-auditoria-transversal/`).
 5. **006 · Adjuntos multimedia en incidencias** (`HU05`) — Subida y asociación de fotos/evidencias a las incidencias reportadas con previsualización reactiva, almacenamiento en disco y galería en detalle (`features/006-adjuntos-multimedia-en-incidencias/`).
 6. **004 · Reporte y seguimiento de incidencias con detección territorial** (`HU04`, `HU06`, `HU15`) — Implementado y validado exitosamente.
+7. **005 · Gestión y triaje operativo de incidencias** (`HU07`–`HU12`) — Validación y rechazo con motivo auditable, asignación multidepartamental y técnica (`assignments`), máquina de estados del ciclo de vida, muro de comentarios (`incident_comments`) y priorización asistida (`features/005-gestion-y-triaje-operativo-de-incidencias/`).
+8. **009 · Analítica urbana y reportes** (`HU22`–`HU25`) — Métricas operativas (MTTT, MTTR, evaluación de SLAs con umbrales 3d/7d/15d/30d), análisis territorial y temporal con gráficos visuales SVG, exportación de informes oficiales en PDF y recomendación asistida con grado de confianza (`features/009-analitica-urbana-y-reportes/`).
+9. **008 · Búsqueda, Notificaciones y Duplicados** (`HU19`–`HU21`) — Filtrado multicriterio con JPA Specifications y RBAC, motor de detección de duplicados espaciotemporales ($\le 60\text{ m}$, $\le 48\text{ h}$, categoría y Jaccard $\ge 0.3$) con confirmación a `REJECTED`, y centro de notificaciones in-app con campana en navbar, badge numérico, lectura individual y apertura de detalle de incidencias (`features/008-busqueda-notificaciones-y-duplicados/`).
 
 ## En mejora 🛠️
 
-
-
 ## En curso 🔄
 
-_Ninguna feature en curso actualmente._
+- **010 · Filtros avanzados de incidencias con control de acceso RBAC** (`HU19` ampliación) — Filtros de distrito, prioridad y departamento con protección RBAC en UI y API, combinación multicriterio y limpieza integral (`features/010-filtros-avanzados-de-incidencias-rbac/`).
 
 ## Siguiente 🔜
 
-- **Validación asistida e inferencia de duplicados** — Sugerencia automática de incidencias similares y detección de proximidad espaciotemporal.
+- **Gestión e inventario de activos urbanos** — Consulta, alta y vinculación de elementos de mobiliario e infraestructura urbana con incidencias.
 
 ## Backlog / ideas 💡
 
-- **Validación asistida e inferencia de duplicados** — Sugerencia automática de incidencias similares y detección de proximidad espaciotemporal.
-- **Asignación departamental y gestión de técnicos** — Panel para operadores para asignar incidencias a departamentos y técnicos.
-- **Gestión e inventario de activos urbanos** — Consulta, alta y vinculación de elementos de mobiliario e infraestructura urbana con incidencias.
 - **Enriquecimiento contextual externo** — Integración de observaciones ambientales, climáticas o de tráfico asociadas a la zona de la incidencia.
+- **Notificaciones externas multicanal** — Notificaciones vía email, SMS o push móviles nativas (APNs/FCM).
 
 > Cada feature nueva se crea como `features/NNN-nombre-feature/` con `spec.md`, `plan.md` y `tasks.md` antes de tocar código.

@@ -16,7 +16,7 @@ import api from './api';
  * @throws {import('axios').AxiosError} Error si la validación falla (400) o el correo ya existe (409).
  */
 export const register = async (fullName, email, password) => {
-  const response = await api.post('/api/auth/register', {
+  const response = await api.post('/api/v2/auth/register', {
     fullName,
     email,
     password,
@@ -33,7 +33,7 @@ export const register = async (fullName, email, password) => {
  * @throws {import('axios').AxiosError} Error si las credenciales son inválidas (401) o los datos erróneos (400).
  */
 export const login = async (email, password) => {
-  const response = await api.post('/api/auth/login', {
+  const response = await api.post('/api/v2/auth/login', {
     email,
     password,
   });

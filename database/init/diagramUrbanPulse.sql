@@ -6,18 +6,22 @@
 -- Se usan VARCHAR + CHECK en lugar de CREATE TYPE ENUM nativo.
 -- =============================================================================
 
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- ---------------------------------------------------------------------------
 -- 1. TABLAS
 -- ---------------------------------------------------------------------------
 
 CREATE TABLE "departments" (
     "id"          BIGSERIAL PRIMARY KEY,
+    "public_id"   UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "name"        varchar(100) UNIQUE NOT NULL,
     "description" text
 );
 
 CREATE TABLE "users" (
     "id"            BIGSERIAL PRIMARY KEY,
+    "public_id"     UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "email"         varchar(150) UNIQUE NOT NULL,
     "password_hash" varchar(255) NOT NULL,
     "full_name"     varchar(150) NOT NULL,
@@ -29,6 +33,7 @@ CREATE TABLE "users" (
 
 CREATE TABLE "incidents" (
     "id"              BIGSERIAL PRIMARY KEY,
+    "public_id"       UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "title"           varchar(200) NOT NULL,
     "description"     text NOT NULL,
     "category"        varchar(50) NOT NULL,
@@ -51,6 +56,7 @@ CREATE TABLE "incidents" (
 
 CREATE TABLE "attachments" (
     "id"              BIGSERIAL PRIMARY KEY,
+    "public_id"       UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "incident_id"     bigint NOT NULL,
     "file_name"       varchar(255) NOT NULL,
     "file_url"        varchar(500) NOT NULL,
@@ -61,6 +67,7 @@ CREATE TABLE "attachments" (
 
 CREATE TABLE "status_changes" (
     "id"                 BIGSERIAL PRIMARY KEY,
+    "public_id"          UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "incident_id"        bigint NOT NULL,
     "from_status"        varchar(30) NOT NULL,
     "to_status"          varchar(30) NOT NULL,
@@ -71,6 +78,7 @@ CREATE TABLE "status_changes" (
 
 CREATE TABLE "assignments" (
     "id"             BIGSERIAL PRIMARY KEY,
+    "public_id"      UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "incident_id"    bigint NOT NULL,
     "department_id"  bigint NOT NULL,
     "technician_id"  bigint,
@@ -81,15 +89,18 @@ CREATE TABLE "assignments" (
 
 CREATE TABLE "incident_comments" (
     "id"          BIGSERIAL PRIMARY KEY,
+    "public_id"   UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "incident_id" bigint NOT NULL,
     "author_id"   bigint NOT NULL,
     "comment"     text NOT NULL,
     "is_internal" boolean DEFAULT true,
-    "created_at"  timestamptz DEFAULT CURRENT_TIMESTAMP
+    "created_at"  timestamptz DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"  timestamptz
 );
 
 CREATE TABLE "urban_assets" (
     "id"         BIGSERIAL PRIMARY KEY,
+    "public_id"  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "asset_code" varchar(100) UNIQUE NOT NULL,
     "type"       varchar(50) NOT NULL,
     "latitude"   double precision NOT NULL,
@@ -108,6 +119,7 @@ CREATE TABLE "incident_asset_associations" (
 
 CREATE TABLE "external_observations" (
     "id"          BIGSERIAL PRIMARY KEY,
+    "public_id"   UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     "source"      varchar(50) NOT NULL,
     "metric_type" varchar(50) NOT NULL,
     "value_num"   double precision,
@@ -119,6 +131,18 @@ CREATE TABLE "incident_contexts" (
     "incident_id"    bigint NOT NULL,
     "observation_id" bigint NOT NULL,
     PRIMARY KEY ("incident_id", "observation_id")
+);
+
+CREATE TABLE "notifications" (
+    "id"          BIGSERIAL PRIMARY KEY,
+    "public_id"   UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    "user_id"     bigint NOT NULL,
+    "incident_id" bigint NOT NULL,
+    "type"        varchar(50) NOT NULL,
+    "title"       varchar(150) NOT NULL,
+    "message"     text NOT NULL,
+    "is_read"     boolean DEFAULT false NOT NULL,
+    "created_at"  timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- ---------------------------------------------------------------------------
@@ -200,6 +224,16 @@ ALTER TABLE "incident_contexts"
     REFERENCES "external_observations" ("id") ON DELETE CASCADE
     DEFERRABLE INITIALLY IMMEDIATE;
 
+ALTER TABLE "notifications"
+    ADD FOREIGN KEY ("user_id")
+    REFERENCES "users" ("id") ON DELETE CASCADE
+    DEFERRABLE INITIALLY IMMEDIATE;
+
+ALTER TABLE "notifications"
+    ADD FOREIGN KEY ("incident_id")
+    REFERENCES "incidents" ("id") ON DELETE CASCADE
+    DEFERRABLE INITIALLY IMMEDIATE;
+
 -- ---------------------------------------------------------------------------
 -- 3. ÍNDICES DE RENDIMIENTO
 -- ---------------------------------------------------------------------------
@@ -210,6 +244,8 @@ CREATE INDEX idx_incidents_district    ON "incidents" ("district");
 CREATE INDEX idx_incidents_citizen_id  ON "incidents" ("citizen_id");
 CREATE INDEX idx_assignments_active    ON "assignments" ("is_active");
 CREATE INDEX idx_observations_observed ON "external_observations" ("observed_at");
+CREATE INDEX idx_notifications_user_id ON "notifications" ("user_id");
+CREATE INDEX idx_notifications_is_read ON "notifications" ("is_read");
 
 -- ---------------------------------------------------------------------------
 -- 4. TRIGGER — actualizar incidents.updated_at automáticamente
@@ -641,3 +677,4 @@ SELECT setval('status_changes_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "status
 SELECT setval('assignments_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "assignments"));
 SELECT setval('incident_comments_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "incident_comments"));
 SELECT setval('urban_assets_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "urban_assets"));
+SELECT setval('notifications_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "notifications"));

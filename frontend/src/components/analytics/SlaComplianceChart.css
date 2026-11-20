@@ -1,0 +1,110 @@
+/* Estilos para el Gráfico de Cumplimiento de SLA por Departamento (SlaComplianceChart) */
+
+.sla-chart-card {
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sla-target-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sla-target-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0284c7;
+}
+
+.sla-chart-svg {
+  width: 100%;
+  height: auto;
+  min-width: 320px;
+  display: block;
+}
+
+.sla-target-line {
+  stroke: #0284c7;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.sla-target-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #0284c7;
+  font-family: inherit;
+}
+
+.sla-chart-row {
+  cursor: pointer;
+  outline: none;
+}
+
+.sla-chart-row:focus-visible rect.chart-bar-track {
+  stroke: #0284c7;
+  stroke-width: 1.5;
+}
+
+.dept-axis-label {
+  font-size: 12px;
+  font-weight: 500;
+  fill: #334155;
+  font-family: inherit;
+}
+
+.sla-bar-fill {
+  transition: width 0.3s ease, opacity 0.15s ease;
+}
+
+.sla-chart-row:hover .sla-bar-fill,
+.sla-chart-row.is-active .sla-bar-fill {
+  opacity: 0.85;
+}
+
+.sla-percentage-label {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .sla-chart-card {
+    background-color: #1e2028;
+    border-color: #2e303a;
+  }
+
+  .dept-axis-label {
+    fill: #cbd5e1;
+  }
+
+  .sla-target-legend {
+    color: #94a3b8;
+  }
+
+  .sla-target-line {
+    stroke: #38bdf8;
+  }
+
+  .sla-target-label {
+    fill: #38bdf8;
+  }
+}

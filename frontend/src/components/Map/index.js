@@ -5,6 +5,8 @@
 export { default as IncidentsMap } from './IncidentsMap';
 export { default as CreateIncidentModal } from './CreateIncidentModal';
 export { default as IncidentDetailModal } from './IncidentDetailModal';
+export { default as IncidentAssetCard } from './IncidentAssetCard';
+export { default as IncidentContextCard } from './IncidentContextCard';
 export { default as MapDateFilter } from './MapDateFilter';
 export {
   DEFAULT_MAP_CENTER,

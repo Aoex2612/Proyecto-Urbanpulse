@@ -1,0 +1,573 @@
+/* Estilos para la Página Principal de Analítica Urbana (AnalyticsPage) */
+
+.analytics-page-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+/* 1. Cabecera Institucional */
+.analytics-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.analytics-brand-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.analytics-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analytics-badge-institutional {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0369a1;
+  background-color: #e0f2fe;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid #bae6fd;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.analytics-period-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.analytics-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-h, #0f172a);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.analytics-subtitle {
+  font-size: 13.5px;
+  color: var(--text, #64748b);
+  margin: 0;
+}
+
+.analytics-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analytics-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text, #475569);
+  text-decoration: none;
+  padding: 8px 14px;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  background-color: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.analytics-nav-link:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.analytics-nav-link:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.analytics-nav-icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* 2. Estado de Carga */
+.analytics-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px;
+  text-align: center;
+  gap: 16px;
+}
+
+.analytics-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3.5px solid #e2e8f0;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: analytics-spin 0.8s linear infinite;
+}
+
+@keyframes analytics-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.analytics-loading-text {
+  font-size: 14.5px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* 3. Estado de Error */
+.analytics-error-state {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+
+.analytics-error-icon {
+  width: 36px;
+  height: 36px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.analytics-error-details {
+  flex: 1;
+  min-width: 240px;
+}
+
+.analytics-error-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #991b1b;
+  margin: 0 0 4px 0;
+}
+
+.analytics-error-message {
+  font-size: 13.5px;
+  color: #7f1d1d;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.analytics-retry-button {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.analytics-retry-button:hover {
+  background-color: #b91c1c;
+}
+
+.analytics-retry-button:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* 4. Gráficos en Cuadrícula */
+.analytics-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+@media (min-width: 900px) {
+  .analytics-charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 5. Tabla Detallada de Incidencias */
+.analytics-table-section {
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.analytics-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.table-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-h, #0f172a);
+  margin: 0;
+}
+
+.table-count-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.table-filter-note {
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.analytics-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.analytics-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  white-space: nowrap;
+}
+
+.analytics-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--text, #334155);
+  vertical-align: middle;
+}
+
+.analytics-table-row:hover {
+  background-color: #f8fafc;
+}
+
+.font-mono {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.incident-title-text {
+  font-weight: 600;
+  color: var(--text-h, #0f172a);
+  max-width: 280px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.territory-district {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.territory-neighborhood {
+  color: #64748b;
+}
+
+.category-tag {
+  display: inline-block;
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* Insignias de Prioridad */
+.priority-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.priority-badge-critical {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.priority-badge-high {
+  background-color: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.priority-badge-medium {
+  background-color: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde047;
+}
+
+.priority-badge-low {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.priority-badge-default {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+/* Insignias de Estado */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge-resolved {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.status-badge-progress {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.status-badge-validated {
+  background-color: #faf5ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+.status-badge-rejected {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.status-badge-reported {
+  background-color: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* 6. Paginación */
+.analytics-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border, #e2e8f0);
+  background-color: #ffffff;
+}
+
+.pagination-btn {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.pagination-btn:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .analytics-header {
+    border-bottom-color: #2e303a;
+  }
+
+  .analytics-title {
+    color: #f8fafc;
+  }
+
+  .analytics-subtitle {
+    color: #94a3b8;
+  }
+
+  .analytics-badge-institutional {
+    background-color: rgba(2, 132, 199, 0.2);
+    color: #38bdf8;
+    border-color: rgba(2, 132, 199, 0.4);
+  }
+
+  .analytics-period-badge {
+    background-color: #272834;
+    color: #cbd5e1;
+    border-color: #3b3d4a;
+  }
+
+  .analytics-nav-link {
+    background-color: #1e2028;
+    border-color: #3b3d4a;
+    color: #cbd5e1;
+  }
+
+  .analytics-nav-link:hover {
+    background-color: #272834;
+    color: #f8fafc;
+    border-color: #64748b;
+  }
+
+  .analytics-table-section {
+    background-color: #1e2028;
+    border-color: #2e303a;
+  }
+
+  .analytics-table-header {
+    border-bottom-color: #2e303a;
+  }
+
+  .table-title {
+    color: #f8fafc;
+  }
+
+  .table-count-badge {
+    background-color: #272834;
+    color: #94a3b8;
+  }
+
+  .analytics-table th {
+    background-color: #171821;
+    color: #94a3b8;
+    border-bottom-color: #2e303a;
+  }
+
+  .analytics-table td {
+    border-bottom-color: #272834;
+    color: #cbd5e1;
+  }
+
+  .analytics-table-row:hover {
+    background-color: #272834;
+  }
+
+  .incident-title-text {
+    color: #f8fafc;
+  }
+
+  .territory-district {
+    color: #f8fafc;
+  }
+
+  .category-tag {
+    background-color: #272834;
+    color: #cbd5e1;
+  }
+
+  .analytics-pagination {
+    background-color: #1e2028;
+    border-top-color: #2e303a;
+  }
+
+  .pagination-btn {
+    background-color: #171821;
+    border-color: #3b3d4a;
+    color: #cbd5e1;
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    background-color: #272834;
+    color: #f8fafc;
+  }
+
+  .analytics-loading-text {
+    color: #94a3b8;
+  }
+
+  .analytics-error-state {
+    background-color: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.4);
+  }
+
+  .analytics-error-title {
+    color: #fca5a5;
+  }
+
+  .analytics-error-message {
+    color: #fecaca;
+  }
+}

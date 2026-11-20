@@ -3,6 +3,7 @@ package org.bulbaseros.controller;
 import jakarta.validation.Valid;
 import org.bulbaseros.dto.AttachmentResponse;
 import org.bulbaseros.dto.CreateIncidentRequest;
+import org.bulbaseros.dto.IncidentAssetResponse;
 import org.bulbaseros.dto.IncidentResponse;
 import org.bulbaseros.dto.IncidentStatusResponse;
 import org.bulbaseros.dto.PageResponse;
@@ -10,8 +11,14 @@ import org.bulbaseros.dto.ReverseGeocodeResponse;
 import org.bulbaseros.dto.StatusChangeResponse;
 import org.bulbaseros.dto.UpdateIncidentStatusRequest;
 import org.bulbaseros.entity.EstadoIncidencia;
+import org.bulbaseros.entity.PrioridadIncidencia;
+import org.bulbaseros.entity.RolUsuario;
+import org.bulbaseros.repository.UserRepository;
 import org.bulbaseros.service.AttachmentService;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.OffsetDateTime;
 import org.bulbaseros.service.IncidentService;
+import org.bulbaseros.service.UrbanAssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +26,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,19 +43,21 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 /**
- * Controlador REST que gestiona las operaciones del ciclo de vida, auditoria y adjuntos multimedia de incidencias en UrbanPulse.
+ * Controlador REST que gestiona las operaciones del ciclo de vida, auditoria, adjuntos multimedia
+ * y gestión de activos urbanos asociados a incidencias en UrbanPulse.
  * <p>
  * Expone endpoints protegidos mediante RBAC (Role-Based Access Control) para la consulta cartografica
  * de incidencias activas, obtencion del detalle individual, alta de reportes ciudadanos, triaje operativo
- * de estados con auditoria inmutable, inspeccion cronologica de transiciones para administradores
- * y subida/consulta de archivos multimedia adjuntos (imágenes JPEG y PNG).
+ * de estados con auditoria inmutable, inspeccion cronologica de transiciones para administradores,
+ * subida/consulta de archivos multimedia adjuntos (imágenes JPEG y PNG) y confirmación/desvinculación
+ * de elementos de equipamiento urbano (semáforos, fuentes, contenedores).
  * </p>
  *
  * @author UrbanPulse Team
- * @version 1.2
+ * @version 1.3
  */
 @RestController
-@RequestMapping("/api/incidents")
+@RequestMapping({"/api/v1/incidents", "/api/incidents"})
 public class IncidentController {
 
     /**
@@ -58,40 +69,81 @@ public class IncidentController {
      * Servicio de logica de negocio para la gestion y almacenamiento de archivos adjuntos.
      */
     private final AttachmentService attachmentService;
+    private final UserRepository userRepository;
 
     /**
-     * Constructor para compatibilidad con pruebas unitarias que no requieran servicio de adjuntos.
+     * Servicio de logica de negocio espacial y gestion de activos urbanos.
+     */
+    private final UrbanAssetService urbanAssetService;
+
+    /**
+     * Constructor para compatibilidad con pruebas unitarias que no requieran servicio de adjuntos ni de activos.
      *
      * @param incidentService Servicio de logica de negocio transaccional de incidencias.
      */
     public IncidentController(IncidentService incidentService) {
-        this(incidentService, null);
+        this(incidentService, null, null, null);
     }
 
     /**
-     * Constructor principal con inyeccion de dependencias para el controlador de incidencias.
+     * Constructor con inyección de dependencias para el controlador de incidencias y servicio de adjuntos.
      *
      * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
      * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
      */
+    public IncidentController(IncidentService incidentService, AttachmentService attachmentService) {
+        this(incidentService, attachmentService, null, null);
+    }
+
+    /**
+     * Constructor con inyección de dependencias para pruebas unitarias con activos urbanos.
+     *
+     * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
+     * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
+     * @param urbanAssetService Servicio de gestion espacial y vinculación de activos urbanos.
+     */
+    public IncidentController(IncidentService incidentService, AttachmentService attachmentService, UrbanAssetService urbanAssetService) {
+        this(incidentService, attachmentService, urbanAssetService, null);
+    }
+
+    /**
+     * Constructor principal con inyeccion de dependencias para el controlador de incidencias,
+     * almacenamiento de adjuntos, gestión espacial de activos urbanos y repositorio de usuarios.
+     *
+     * @param incidentService   Servicio de logica de negocio transaccional de incidencias.
+     * @param attachmentService Servicio de almacenamiento y gestion de archivos adjuntos.
+     * @param urbanAssetService Servicio de gestion espacial y vinculación de activos urbanos.
+     * @param userRepository    Repositorio de usuarios para control de roles en búsqueda.
+     */
     @Autowired
-    public IncidentController(IncidentService incidentService, @Autowired(required = false) AttachmentService attachmentService) {
+    public IncidentController(
+            IncidentService incidentService,
+            @Autowired(required = false) AttachmentService attachmentService,
+            @Autowired(required = false) UrbanAssetService urbanAssetService,
+            @Autowired(required = false) UserRepository userRepository
+    ) {
         this.incidentService = incidentService;
         this.attachmentService = attachmentService;
+        this.urbanAssetService = urbanAssetService;
+        this.userRepository = userRepository;
     }
 
     /**
      * Recupera todas las incidencias urbanas activas en la plataforma para su representacion en el mapa interactivo.
      * <p>
      * Excluye del resultado los estados finales de ciclo de vida (CLOSED y REJECTED).
-     * Requiere que la peticion provenga de un usuario autenticado con cualquier rol valido.
+     * Aplica segregación de incidencias según el perfil autenticado: si es un técnico en campo (TECHNICIAN),
+     * devuelve exclusivamente aquellas donde posea una asignación técnica activa (RF-25).
+     * Para operadores, administradores o ciudadanos, devuelve la totalidad de las incidencias activas.
      * </p>
      *
+     * @param authentication Contexto de autenticación de Spring Security para determinar la identidad y rol del usuario.
      * @return {@link ResponseEntity} con codigo HTTP 200 OK y la lista de {@link IncidentResponse} activas.
      */
     @GetMapping
-    public ResponseEntity<List<IncidentResponse>> getActiveIncidents() {
-        List<IncidentResponse> incidents = incidentService.getActiveIncidents();
+    public ResponseEntity<List<IncidentResponse>> getActiveIncidents(Authentication authentication) {
+        String userEmail = authentication != null ? authentication.getName() : null;
+        List<IncidentResponse> incidents = incidentService.getActiveIncidents(userEmail);
         return ResponseEntity.ok(incidents);
     }
 
@@ -270,5 +322,94 @@ public class IncidentController {
     public ResponseEntity<List<AttachmentResponse>> getAttachments(@PathVariable Long id) {
         List<AttachmentResponse> attachments = attachmentService.getAttachmentsByIncidentId(id);
         return ResponseEntity.ok(attachments);
+    }
+
+    /**
+     * Confirma formalmente la vinculación de un activo urbano a una incidencia.
+     * <p>
+     * Endpoint protegido con control de acceso perimetral restringido a usuarios con rol {@code OPERATOR} o {@code ADMIN}.
+     * Actualiza el indicador {@code isConfirmed} a {@code true} para el activo especificado.
+     * </p>
+     *
+     * @param incidentId Identificador único de la incidencia.
+     * @param assetId    Identificador único del activo urbano asociado.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y el DTO {@link IncidentAssetResponse} actualizado.
+     */
+    @PostMapping("/{incidentId}/assets/{assetId}/confirm")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<IncidentAssetResponse> confirmAssetAssociation(
+            @PathVariable("incidentId") Long incidentId,
+            @PathVariable("assetId") Long assetId
+    ) {
+        if (urbanAssetService == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Servicio de activos urbanos no disponible");
+        }
+        IncidentAssetResponse response = urbanAssetService.confirmAssetAssociation(incidentId, assetId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Elimina o desvincula la asociación entre un activo urbano y una incidencia de servicio.
+     * <p>
+     * Endpoint protegido con control de acceso perimetral restringido a usuarios con rol {@code OPERATOR} o {@code ADMIN}.
+     * Retorna HTTP 200 OK (o 204 No Content) tras completar la desvinculación.
+     * </p>
+     *
+     * @param incidentId Identificador único de la incidencia.
+     * @param assetId    Identificador único del activo urbano a desvincular.
+     * @return {@link ResponseEntity} con código HTTP 200 OK y confirmación de la supresión.
+     */
+    @DeleteMapping("/{incidentId}/assets/{assetId}")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<Void> removeAssetAssociation(
+            @PathVariable("incidentId") Long incidentId,
+            @PathVariable("assetId") Long assetId
+    ) {
+        if (urbanAssetService == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Servicio de activos urbanos no disponible");
+        }
+        urbanAssetService.removeAssetAssociation(incidentId, assetId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Busca incidencias aplicando filtros multicriterio: texto libre, categoría, rango de fechas,
+     * distrito, estado, prioridad y departamento (HU-19, RF-1, RF-4, RF-8, RF-9, RF-11, RF-12).
+     * <p>
+     * Los filtros internos ({@code status}, {@code priority}, {@code departmentId} y
+     * {@code unassignedDepartment}) son ignorados silenciosamente por el servicio cuando la petición
+     * procede de un ciudadano ({@link RolUsuario#CITIZEN}) o de un usuario anónimo (RNF-1).
+     * El filtro de distrito es público y se aplica para todos los perfiles.
+     * </p>
+     *
+     * @param text                 Texto libre en título o descripción (opcional).
+     * @param category             Categoría temática de la incidencia (opcional).
+     * @param startDate            Fecha inicial del rango de creación (opcional).
+     * @param endDate              Fecha final del rango de creación (opcional).
+     * @param status               Estado de triaje de la incidencia (opcional, ignorado sin acceso interno).
+     * @param district             Distrito municipal de la incidencia (opcional).
+     * @param priority             Prioridad técnica de la incidencia (opcional, ignorada sin acceso interno).
+     * @param departmentId         Identificador numérico del departamento (opcional, ignorado sin acceso interno).
+     * @param unassignedDepartment {@code true} para incidencias sin departamento activo (opcional, ignorado sin acceso interno).
+     * @param auth                 Contexto de autenticación del usuario.
+     * @return Lista de incidencias que satisfacen los criterios combinados.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<IncidentResponse>> searchIncidents(
+            @RequestParam(required = false) String text,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime endDate,
+            @RequestParam(required = false) EstadoIncidencia status,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) PrioridadIncidencia priority,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(defaultValue = "false") boolean unassignedDepartment,
+            Authentication auth) {
+
+        String userEmail = auth != null ? auth.getName() : null;
+        List<IncidentResponse> results = incidentService.searchIncidents(text, category, startDate, endDate,
+                status, district, priority, departmentId, unassignedDepartment, userEmail);
+        return ResponseEntity.ok(results);
     }
 }

@@ -2,6 +2,7 @@ package org.bulbaseros.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -11,6 +12,9 @@ public class ActivoUrbano {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     @Column(name = "asset_code", nullable = false, unique = true, length = 100)
     private String assetCode;
@@ -26,4 +30,11 @@ public class ActivoUrbano {
 
     @Column(length = 200)
     private String name;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
+    }
 }

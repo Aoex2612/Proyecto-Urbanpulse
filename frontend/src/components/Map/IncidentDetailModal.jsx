@@ -1,7 +1,8 @@
 /**
  * @fileoverview Modal de detalle exhaustivo de incidencia urbana para UrbanPulse.
  * Despliega la información completa de la incidencia seleccionada (título, categoría,
- * descripción, estado, prioridad, coordenadas, fecha de reporte y galería de fotografías adjuntas)
+ * descripción, estado, prioridad, coordenadas, fecha de reporte y galería de fotografías adjuntas),
+ * integra el muro interactivo de comentarios y avisos públicos para seguimiento ciudadano y personal municipal,
  * y, si el usuario en sesión dispone de rol administrativo (ADMIN), consulta e integra de forma condicional
  * la línea temporal de auditoría (StatusTimeline) con las transiciones históricas de estado.
  */
@@ -15,7 +16,11 @@ import {
   canViewAuditHistory,
 } from './mapConstants';
 import { formatDate } from '../../utils/dateUtils';
+import logger from '../../utils/logger';
 import StatusTimeline from '../Timeline/StatusTimeline';
+import { IncidentCommentsSection } from '../Comments';
+import IncidentAssetCard from './IncidentAssetCard';
+import IncidentContextCard from './IncidentContextCard';
 import './Map.css';
 
 /**
@@ -49,6 +54,8 @@ export default function IncidentDetailModal({
       ? authService.getCurrentUser()
       : authService.getUser());
   const isAuditAllowed = canViewAuditHistory(effectiveUser?.role);
+  const canManageAssets =
+    effectiveUser?.role === 'OPERATOR' || effectiveUser?.role === 'ADMIN';
 
   // Cierre memorizado para su invocación en eventos de teclado y clics
   const handleDismiss = useCallback(() => {
@@ -108,7 +115,11 @@ export default function IncidentDetailModal({
         }
       })
       .catch((err) => {
-        console.error('Error al recuperar adjuntos de la incidencia:', err);
+        logger.error('Error al recuperar adjuntos de la incidencia', {
+          operation: 'getIncidentAttachments',
+          incidentId: incident.id,
+          error: err,
+        });
         if (isMounted) {
           setAttachments([]);
         }
@@ -321,6 +332,28 @@ export default function IncidentDetailModal({
               </div>
             </section>
           )}
+
+          {/* Activos Urbanos Vinculados (HU16) */}
+          <IncidentAssetCard
+            incidentId={incident.id}
+            assets={incident.urbanAssets || []}
+            canManage={canManageAssets}
+          />
+
+          {/* Contexto Ambiental y de Tráfico (HU17) */}
+          <IncidentContextCard
+            observations={incident.urbanContext || []}
+          />
+
+          {/* Muro de Comentarios, Notas Internas y Avisos Públicos */}
+          <IncidentCommentsSection
+            incidentId={incident.id}
+            incidentStatus={incident.status}
+            isClosedOrRejected={
+              incident.status === 'CLOSED' || incident.status === 'REJECTED'
+            }
+            currentUser={effectiveUser}
+          />
 
           {/* Sección de Auditoría Transversal (Visualización Condicional por Rol) */}
           {isAuditAllowed && (

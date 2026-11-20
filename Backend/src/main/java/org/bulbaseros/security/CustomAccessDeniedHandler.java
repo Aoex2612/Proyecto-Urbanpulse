@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +32,8 @@ import java.nio.charset.StandardCharsets;
  */
 @Component
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomAccessDeniedHandler.class);
 
     private final ObjectMapper objectMapper;
 
@@ -55,6 +59,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
     /**
      * Intercepta las solicitudes con permisos insuficientes y escribe en la respuesta HTTP un error 403 estructurado en JSON.
+     * <p>
+     * Antes de emitir la respuesta registra el evento de seguridad con nivel WARN
+     * incluyendo la URI de la petición, sin exponer identidades ni credenciales en el log (NFR-1).
+     * </p>
      *
      * @param request               la petición HTTP entrante.
      * @param response              la respuesta HTTP saliente.
@@ -66,6 +74,11 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        String reason = sanitizeLogReason(accessDeniedException == null
+                ? "permisos insuficientes"
+                : accessDeniedException.getMessage());
+        log.warn("Acceso denegado en la ruta {}. Motivo: {}", request.getRequestURI(), reason);
+
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -86,5 +99,23 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         String json = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(json);
         response.getWriter().flush();
+    }
+
+    /**
+     * Elimina credenciales o tokens completos de un motivo antes de escribirlo en el log.
+     *
+     * @param reason motivo original de la denegación.
+     * @return motivo seguro y limitado para registro.
+     */
+    private String sanitizeLogReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return "permisos insuficientes";
+        }
+
+        String sanitized = reason
+                .replaceAll("(?i)bearer\\s+[^\\s,;]+", "Bearer [REDACTED]")
+                .replaceAll("(?i)\\b[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\b", "[REDACTED]")
+                .replaceAll("(?i)(password|passwd|token|credential)s?\\s*[:=]\\s*[^\\s,;]+", "$1=[REDACTED]");
+        return sanitized.substring(0, Math.min(sanitized.length(), 200));
     }
 }

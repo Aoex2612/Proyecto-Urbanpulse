@@ -1,8 +1,5 @@
-Universidad de Málaga. Eduardo Guzmán de los Riscos
-Todos los derechos reservados. Uso exclusivamente docente para alumnado matriculado.
-UrbanPulse: Plataforma cloud para
-la gestión inteligente de incidencias
-urbanas
+UrbanPulse: Plataforma cloud para la gestión inteligente de incidencias urbanas
+
 Presentación
 UrbanPulse se plantea como una plataforma cloud para la gestión inteligente de incidencias urbanas que
 integra la información reportada por la ciudadanía con datos contextuales de la ciudad para mejorar su
@@ -14,6 +11,7 @@ incidencia, la vincularán con información urbana, aportarán el contexto opera
 Partiremos de un monolito sencillo con tecnologías como Spring Boot y PostgreSQL y solo se incorporarán
 nuevos componentes cuando se introduzca un problema observable, una hipótesis comprobable y una decisión
 arquitectónica que pueda documentarse y evaluarse.
+
 1. Visión y propósito
 Problema:
 Las incidencias urbanas suelen llegar mediante canales heterogéneos, con descripciones incompletas y poca
@@ -23,8 +21,7 @@ como el estado del tráfico, las condiciones meteorológicas o eventos próximos
 La idea es que UrbanPulse transforme un reporte aislado en una unidad de trabajo enriquecida con datos
 contextuales, trazable y susceptible de análisis. La plataforma apoya al ciudadano, al operador municipal y al
 responsable de planificación sin sustituir la decisión humana en actuaciones sensibles.
-Universidad de Málaga. Eduardo Guzmán de los Riscos
-Todos los derechos reservados. Uso exclusivamente docente para alumnado matriculado.
+
 Visión del producto:
 Para la ciudadanía, UrbanPulse permitirá comunicar una incidencia, aportar localización y evidencias y
 seguir su evolución. Para el personal municipal, ofrecerá validación, asignación, priorización y contexto.
@@ -61,8 +58,7 @@ Casos de uso principales:
 § Determinar dirección, barrio y distrito a partir de la posición.
 § Asociar la incidencia al activo urbano más probable.
 § Obtener una visión de contexto urbano cercano al instante del reporte.
-Universidad de Málaga. Eduardo Guzmán de los Riscos
-Todos los derechos reservados. Uso exclusivamente docente para alumnado matriculado.
+
 § Validar o rechazar, calcular prioridad asistida y asignar departamento.
 § Actualizar el estado, añadir evidencias, notificar y mantener el historial completo.
 § Consultar mapa, listados paginados, filtros y estadísticas territoriales.
@@ -89,8 +85,7 @@ RF15 Estadísticas Se calcularán indicadores por categoría, territorio, estado
 RF16 Duplicados El sistema podrá sugerir incidencias similares por proximidad, tiempo y semántica.
 RF17 Análisis zonal Se podrán consultar incidencias y contexto agregado para una zona y periodo.
 RF18 Auditoría Se registrarán acciones administrativas, decisiones asistidas y cambios relevantes.
-Universidad de Málaga. Eduardo Guzmán de los Riscos
-Todos los derechos reservados. Uso exclusivamente docente para alumnado matriculado.
+
 ID Requisito Definición
 RF19 Informes El sistema generará informes operativos y territoriales exportables.
 RF20 Asistencia inteligente La plataforma podrá clasificar, priorizar, resumir y recomendar con indicación de confianza.
@@ -114,8 +109,7 @@ StatusChange Transición auditable con actor, instante, motivo y datos asociados
 ExternalObservation Dato normalizado con fuente, instante de observación, instante de ingesta, unidad y calidad.
 Notification Comunicación derivada de un evento y su estado de entrega.
 KnowledgeDocument Procedimiento o normativa versionada que puede indexarse para RAG.
-Universidad de Málaga. Eduardo Guzmán de los Riscos
-Todos los derechos reservados. Uso exclusivamente docente para alumnado matriculado.
+
 UrbanAsset
 Conecta una incidencia con el elemento físico afectado. La asociación puede ser explícita, inferida por
 proximidad o confirmada por un operador. Debe conservar id, tipo, fuente, geometría, metadatos, distancia a
@@ -129,14 +123,10 @@ conservar su procedencia, fecha de observación, cuándo fue registrada, cuándo
 Ciclo de vida de la incidencia:
 Estado Significado
 REPORTED Incidencia recibida y pendiente de revisión.
-VALIDATED Contenido suficiente y competencia municipal
-confirmada.
-REJECTED Fuera de alcance, inválida o duplicada con motivo
-registrado.
+VALIDATED Contenido suficiente y competencia municipal confirmada.
+REJECTED Fuera de alcance, inválida o duplicada con motivo registrado.
 ASSIGNED Asignada a departamento, equipo o técnico.
 IN PROGRESS Existe una actuación en curso.
 RESOLVED Actuación completada y documentada.
-REOPENED La resolución no fue efectiva o aparece nueva
-evidencia.
-CLOSED Cierre definitivo después de verificación o plazo
-establecido.
+REOPENED La resolución no fue efectiva o aparece nueva evidencia.
+CLOSED Cierre definitivo después de verificación o plazo establecido.

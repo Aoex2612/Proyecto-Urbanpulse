@@ -19,7 +19,10 @@ export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = authService.getUser();
-  const hasOperatorAccess = authService.hasAnyRole(['OPERATOR', 'ADMIN']);
+  const hasOperatorAccess = authService.hasAnyRole(['OPERATOR', 'ADMIN', 'TECHNICIAN']);
+  const hasAnalyticsAccess = authService.hasAnyRole(['ANALYST', 'ADMIN', 'OPERATOR']);
+  const isTechnician = user?.role === 'TECHNICIAN';
+  const operatorPanelLabel = isTechnician ? 'Mis Asignaciones' : 'Panel de Operador';
 
   // Control de descarte de la alerta asociado a la clave de navegación actual
   const [dismissedLocationKey, setDismissedLocationKey] = useState(null);
@@ -27,7 +30,7 @@ export default function HomePage() {
   const isAlertDismissed = dismissedLocationKey === location.key;
   const hasAccessDenied = Boolean(location.state?.accessDenied) && !isAlertDismissed;
   const accessDeniedMessage = hasAccessDenied
-    ? location.state?.message || 'Acceso denegado: no dispones de permisos de operador o administrador'
+    ? location.state?.message || 'Acceso denegado: no dispones de permisos de operador, técnico o administrador'
     : null;
 
   /**
@@ -93,7 +96,17 @@ export default function HomePage() {
               className="operator-nav-link"
               onClick={handleNavClick}
             >
-              Panel de Operador
+              {operatorPanelLabel}
+            </Link>
+          )}
+          {hasAnalyticsAccess && (
+            <Link
+              to="/analytics"
+              className="home-analytics-nav-link"
+              onClick={handleNavClick}
+              title="Ir al panel de analítica urbana y reportes"
+            >
+              Analítica
             </Link>
           )}
           <button
@@ -167,18 +180,37 @@ export default function HomePage() {
 
           {hasOperatorAccess && (
             <div className="feature-card operator-feature-card">
-              <div className="operator-feature-tag">Rol Operativo Activo</div>
-              <h3>Centro de Triaje de Incidencias</h3>
+              <div className="operator-feature-tag">{isTechnician ? 'Rol Técnico en Campo' : 'Rol Operativo Activo'}</div>
+              <h3>{isTechnician ? 'Mis Asignaciones Técnicas' : 'Centro de Triaje de Incidencias'}</h3>
               <p>
-                Dispones de credenciales de operador o administrador. Accede al panel para revisar,
-                priorizar y tramitar los estados de incidencias reportadas.
+                {isTechnician
+                  ? 'Dispones de credenciales técnicas. Accede para consultar tus intervenciones asignadas, iniciar trabajos y reportar resoluciones.'
+                  : 'Dispones de credenciales de operador o administrador. Accede al panel para revisar, priorizar y tramitar los estados de incidencias reportadas.'}
               </p>
               <Link
                 to="/operator-panel"
                 className="operator-feature-btn"
                 onClick={handleNavClick}
               >
-                Acceder al Panel de Operador &rarr;
+                {isTechnician ? 'Ver Mis Asignaciones →' : 'Acceder al Panel de Operador →'}
+              </Link>
+            </div>
+          )}
+
+          {hasAnalyticsAccess && (
+            <div className="feature-card analytics-feature-card">
+              <div className="analytics-feature-tag">Módulo Analítico Estratégico</div>
+              <h3>Analítica Urbana y Reportes</h3>
+              <p>
+                Supervisa el desempeño global de la ciudad con indicadores clave (MTTT, MTTR, SLAs),
+                análisis territorial y genera informes ejecutivos en formato PDF.
+              </p>
+              <Link
+                to="/analytics"
+                className="analytics-feature-btn"
+                onClick={handleNavClick}
+              >
+                Acceder a Analítica &rarr;
               </Link>
             </div>
           )}

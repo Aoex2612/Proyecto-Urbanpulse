@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,10 +34,11 @@ import java.util.List;
  * integración con el cliente frontend y el codificador de contraseñas mediante BCrypt.</p>
  *
  * @author UrbanPulse Team
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -83,9 +85,13 @@ public class SecurityConfig {
      * de CORS y define las siguientes reglas de autorización:</p>
      * <ul>
      *   <li>Rutas públicas {@code /api/auth/**} y {@code /h2-console/**}: permitidas sin autenticación ({@code permitAll()}).</li>
+     *   <li>Endpoints de observabilidad {@code /actuator/health}, {@code /actuator/info} y {@code /actuator/prometheus}: permitidos sin autenticación para sondas y scraping de Prometheus.</li>
      *   <li>Consulta cronológica de auditoría {@code GET /api/incidents/{id}/history}: restringida a usuarios con rol {@code ADMIN}.</li>
      *   <li>Operaciones de triaje y estado {@code PATCH /api/incidents/{id}/status}: restringidas a usuarios con rol {@code OPERATOR} o {@code ADMIN}.</li>
      *   <li>Seguimiento de avisos propios {@code GET /api/incidents/my-incidents} y geocodificación inversa {@code GET /api/incidents/geocode/reverse}: requieren autenticación ({@code authenticated()}).</li>
+     *   <li>Módulo de analítica urbana y reportes {@code /api/analytics/**}: restringido a usuarios con rol {@code ANALYST}, {@code ADMIN} u {@code OPERATOR}.</li>
+     *   <li>Rutas de departamentos {@code /api/departments/**}: requieren autenticación previa ({@code authenticated()}).</li>
+     *   <li>Rutas de notificaciones in-app {@code /api/notifications/**}: requieren autenticación previa ({@code authenticated()}).</li>
      *   <li>Rutas generales de incidencias {@code /api/incidents/**}: requiere autenticación previa ({@code authenticated()}).</li>
      *   <li>Cualquier otra petición: requiere autenticación previa ({@code authenticated()}).</li>
      * </ul>
@@ -109,12 +115,18 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/uploads/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/incidents/*/history").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/incidents/my-incidents").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/incidents/geocode/reverse").authenticated()
-                        .requestMatchers("/api/incidents/**").authenticated()
+                        .requestMatchers("/api/auth/**", "/api/v1/auth/**", "/api/v2/auth/**", "/h2-console/**", "/uploads/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/incidents/*/history", "/api/v1/incidents/*/history", "/api/v2/incidents/*/history").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status", "/api/v1/incidents/*/status", "/api/v2/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/incidents/*/assets/*/confirm", "/api/v1/incidents/*/assets/*/confirm", "/api/v2/incidents/*/assets/*/confirm").hasAnyRole("OPERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/incidents/*/assets/*", "/api/v1/incidents/*/assets/*", "/api/v2/incidents/*/assets/*").hasAnyRole("OPERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/incidents/my-incidents", "/api/v1/incidents/my-incidents", "/api/v2/incidents/my-incidents").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/incidents/geocode/reverse", "/api/v1/incidents/geocode/reverse", "/api/v2/incidents/geocode/reverse").authenticated()
+                        .requestMatchers("/api/analytics/**", "/api/v1/analytics/**", "/api/v2/analytics/**").hasAnyRole("ANALYST", "ADMIN", "OPERATOR")
+                        .requestMatchers("/api/departments/**", "/api/v1/departments/**", "/api/v2/departments/**").authenticated()
+                        .requestMatchers("/api/notifications/**", "/api/v1/notifications/**", "/api/v2/notifications/**").authenticated()
+                        .requestMatchers("/api/incidents/**", "/api/v1/incidents/**", "/api/v2/incidents/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))

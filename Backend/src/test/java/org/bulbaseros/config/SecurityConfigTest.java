@@ -7,6 +7,7 @@ import org.bulbaseros.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -40,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureObservability
 class SecurityConfigTest {
 
     @Autowired
@@ -168,6 +170,20 @@ class SecurityConfigTest {
     }
 
     /**
+     * Verifica que los endpoints de observabilidad de Actuator sean accesibles sin token,
+     * de modo que Prometheus pueda hacer scraping de métricas y las sondas de salud funcionen.
+     */
+    @Test
+    @DisplayName("Endpoints /actuator/health y /actuator/prometheus no deben requerir autenticación previa")
+    void shouldAllowActuatorEndpointsWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/actuator/prometheus"))
+                .andExpect(status().isOk());
+    }
+
+    /**
      * Verifica que una petición no autenticada a PATCH /api/incidents/1/status responda 401 Unauthorized
      * con el DTO ErrorResponse estructurado.
      */
@@ -250,6 +266,104 @@ class SecurityConfigTest {
     @DisplayName("Cualquier otra ruta protegida con usuario autenticado supera la barrera perimetral")
     void shouldAllowAuthenticatedAccessToGeneralProtectedRoutes() throws Exception {
         mockMvc.perform(get("/api/incidents"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que peticiones no autenticadas a /api/analytics/** respondan 401 Unauthorized.
+     */
+    @Test
+    @DisplayName("Petición sin autenticación a GET /api/analytics/summary debe responder 401 Unauthorized")
+    void shouldRejectUnauthenticatedAccessToAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    /**
+     * Verifica que usuarios con rol CITIZEN en /api/analytics/** reciban 403 Forbidden.
+     */
+    @Test
+    @WithMockUser(roles = "CITIZEN")
+    @DisplayName("Usuario con rol CITIZEN en GET /api/analytics/summary debe recibir 403 Forbidden")
+    void shouldRejectCitizenRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    /**
+     * Verifica que usuarios con rol TECHNICIAN en /api/analytics/** reciban 403 Forbidden.
+     */
+    @Test
+    @WithMockUser(roles = "TECHNICIAN")
+    @DisplayName("Usuario con rol TECHNICIAN en GET /api/analytics/summary debe recibir 403 Forbidden")
+    void shouldRejectTechnicianRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    /**
+     * Verifica que usuarios con rol ANALYST sean autorizados para acceder a /api/analytics/**.
+     */
+    @Test
+    @WithMockUser(roles = "ANALYST")
+    @DisplayName("Usuario con rol ANALYST debe ser autorizado en GET /api/analytics/summary")
+    void shouldAuthorizeAnalystRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que usuarios con rol ADMIN sean autorizados para acceder a /api/analytics/**.
+     */
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("Usuario con rol ADMIN debe ser autorizado en GET /api/analytics/summary")
+    void shouldAuthorizeAdminRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que usuarios con rol OPERATOR sean autorizados para acceder a /api/analytics/**.
+     */
+    @Test
+    @WithMockUser(roles = "OPERATOR")
+    @DisplayName("Usuario con rol OPERATOR debe ser autorizado en GET /api/analytics/summary")
+    void shouldAuthorizeOperatorRoleOnAnalyticsSummary() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().is(not(401)))
+                .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que peticiones no autenticadas a /api/notifications respondan 401 Unauthorized.
+     */
+    @Test
+    @DisplayName("Petición sin autenticación a GET /api/notifications debe responder 401 Unauthorized")
+    void shouldRejectUnauthenticatedAccessToNotifications() throws Exception {
+        mockMvc.perform(get("/api/notifications"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    /**
+     * Verifica que usuarios autenticados puedan acceder a /api/notifications superando el filtro perimetral.
+     */
+    @Test
+    @WithMockUser(roles = "CITIZEN")
+    @DisplayName("Usuario autenticado con rol CITIZEN debe ser autorizado en GET /api/notifications")
+    void shouldAuthorizeCitizenRoleOnNotifications() throws Exception {
+        mockMvc.perform(get("/api/notifications"))
                 .andExpect(status().is(not(401)))
                 .andExpect(status().is(not(403)));
     }

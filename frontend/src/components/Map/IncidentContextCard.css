@@ -1,0 +1,92 @@
+/* ==========================================================================
+   IncidentContextCard - Estilos para Observaciones de Contexto Externo (HU17)
+   ========================================================================== */
+
+.incident-context-card {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 10px;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+}
+
+.incident-context-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.context-header-icon {
+  margin-right: 0.5rem;
+}
+
+.context-timestamp {
+  font-size: 0.8rem;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.incident-context-empty {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0.5rem 0 0;
+}
+
+.context-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.85rem;
+}
+
+.context-metric-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.context-metric-box:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.metric-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.metric-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.metric-value {
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 640px) {
+  .context-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

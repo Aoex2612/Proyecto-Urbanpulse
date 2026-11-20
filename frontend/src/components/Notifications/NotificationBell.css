@@ -1,0 +1,214 @@
+/* Contenedor relativo de la campana */
+.notification-bell-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Botón de activación */
+.notification-bell-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.45rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  color: inherit;
+  outline: none;
+}
+
+.notification-bell-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.notification-bell-btn:focus-visible {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.notification-bell-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* Badge numérico para avisos no leídos */
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  transform: translate(25%, -25%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+/* Menú desplegable flotante */
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  width: 350px;
+  max-height: 440px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1050;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: notificationDropdownFade 0.18s ease-out;
+}
+
+@keyframes notificationDropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Cabecera del desplegable */
+.notification-dropdown-header {
+  padding: 0.85rem 1rem 0.65rem;
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #fafafa;
+  flex-shrink: 0;
+}
+
+.notification-dropdown-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Lista de notificaciones con scroll */
+.notification-list {
+  overflow-y: auto;
+  flex: 1;
+  max-height: 380px;
+}
+
+/* Mensajes de carga y lista vacía */
+.notification-loading,
+.notification-empty {
+  padding: 1.8rem 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Fila individual de notificación */
+.notification-item {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.notification-item:hover {
+  background-color: #f9fafb;
+}
+
+.notification-item--unread {
+  background-color: #eff6ff;
+}
+
+.notification-item--unread:hover {
+  background-color: #dbeafe;
+}
+
+/* Cabecera de la fila con punto azul indicador */
+.notification-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.notification-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+}
+
+/* Botón de título para abrir modal */
+.notification-item-title {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.35;
+}
+
+.notification-item-title:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Mensaje explicativo */
+.notification-item-message {
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin: 0 0 0.45rem;
+  line-height: 1.4;
+  padding-left: 0.2rem;
+}
+
+/* Pie de la fila */
+.notification-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-left: 0.2rem;
+}
+
+.notification-item-date {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+/* Botón de marcado individual */
+.notification-mark-read-btn {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.notification-mark-read-btn:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+  text-decoration: underline;
+}

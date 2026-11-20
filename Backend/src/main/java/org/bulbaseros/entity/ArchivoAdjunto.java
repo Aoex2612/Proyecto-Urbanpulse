@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Entidad de dominio JPA que representa un archivo multimedia adjunto a una incidencia urbana.
@@ -42,6 +43,9 @@ public class ArchivoAdjunto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     /**
      * Incidencia urbana a la que pertenece este archivo adjunto.
@@ -85,6 +89,9 @@ public class ArchivoAdjunto {
      */
     @PrePersist
     public void prePersist() {
+        if (this.publicId == null) {
+            this.publicId = UUID.randomUUID();
+        }
         if (this.uploadedAt == null) {
             this.uploadedAt = OffsetDateTime.now();
         }

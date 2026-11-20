@@ -1,12 +1,16 @@
 package org.bulbaseros.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AttachmentResponse;
+import org.bulbaseros.dto.v2.AttachmentResponseV2;
 import org.bulbaseros.entity.ArchivoAdjunto;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.exception.IncidentNotFoundException;
 import org.bulbaseros.mappers.AttachmentMapper;
+import org.bulbaseros.mappers.AttachmentMapperV2;
 import org.bulbaseros.repository.ArchivoAdjuntoRepository;
 import org.bulbaseros.repository.IncidenciaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,6 +41,7 @@ import java.util.UUID;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class AttachmentService {
 
     /**
@@ -52,25 +57,30 @@ public class AttachmentService {
     private final IncidenciaRepository incidenciaRepository;
     private final ArchivoAdjuntoRepository archivoAdjuntoRepository;
     private final AttachmentMapper attachmentMapper;
+    private final AttachmentMapperV2 attachmentMapperV2;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    /**
-     * Constructor con inyección de dependencias para el servicio de archivos adjuntos.
-     *
-     * @param incidenciaRepository    Repositorio para consultar y verificar incidencias.
-     * @param archivoAdjuntoRepository Repositorio para persistir metadatos de archivos adjuntos.
-     * @param attachmentMapper        Mapeador para convertir entidades {@link ArchivoAdjunto} a DTOs.
-     */
     public AttachmentService(
             IncidenciaRepository incidenciaRepository,
             ArchivoAdjuntoRepository archivoAdjuntoRepository,
             AttachmentMapper attachmentMapper
     ) {
+        this(incidenciaRepository, archivoAdjuntoRepository, attachmentMapper, new AttachmentMapperV2());
+    }
+
+    @Autowired
+    public AttachmentService(
+            IncidenciaRepository incidenciaRepository,
+            ArchivoAdjuntoRepository archivoAdjuntoRepository,
+            AttachmentMapper attachmentMapper,
+            @Autowired(required = false) AttachmentMapperV2 attachmentMapperV2
+    ) {
         this.incidenciaRepository = incidenciaRepository;
         this.archivoAdjuntoRepository = archivoAdjuntoRepository;
         this.attachmentMapper = attachmentMapper;
+        this.attachmentMapperV2 = attachmentMapperV2 != null ? attachmentMapperV2 : new AttachmentMapperV2();
     }
 
     /**
@@ -167,5 +177,27 @@ public class AttachmentService {
 
         List<ArchivoAdjunto> attachments = archivoAdjuntoRepository.findByIncidentIdOrderByUploadedAtAsc(incidentId);
         return attachmentMapper.toDtoList(attachments);
+    }
+
+    @Transactional
+    public AttachmentResponseV2 saveAttachmentV2(UUID incidentPublicId, MultipartFile file) {
+        Incidencia incident = incidenciaRepository.findByPublicId(incidentPublicId)
+                .orElseThrow(() -> new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId));
+
+        AttachmentResponse v1Res = uploadAttachment(incident.getId(), file);
+
+        ArchivoAdjunto saved = archivoAdjuntoRepository.findById(v1Res.getId())
+                .orElseThrow(() -> new IllegalStateException("Adjunto guardado no encontrado"));
+        return attachmentMapperV2.toDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AttachmentResponseV2> getAttachmentsByIncidentPublicId(UUID incidentPublicId) {
+        if (!incidenciaRepository.existsByPublicId(incidentPublicId)) {
+            throw new IncidentNotFoundException("Incidencia no encontrada con publicId: " + incidentPublicId);
+        }
+
+        List<ArchivoAdjunto> attachments = archivoAdjuntoRepository.findByIncidentPublicIdOrderByUploadedAtAsc(incidentPublicId);
+        return attachmentMapperV2.toDtoList(attachments);
     }
 }
