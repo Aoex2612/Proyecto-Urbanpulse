@@ -7,6 +7,7 @@ import org.bulbaseros.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -40,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureObservability
 class SecurityConfigTest {
 
     @Autowired
@@ -165,6 +167,20 @@ class SecurityConfigTest {
         mockMvc.perform(get("/h2-console"))
                 .andExpect(status().is(not(401)))
                 .andExpect(status().is(not(403)));
+    }
+
+    /**
+     * Verifica que los endpoints de observabilidad de Actuator sean accesibles sin token,
+     * de modo que Prometheus pueda hacer scraping de métricas y las sondas de salud funcionen.
+     */
+    @Test
+    @DisplayName("Endpoints /actuator/health y /actuator/prometheus no deben requerir autenticación previa")
+    void shouldAllowActuatorEndpointsWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/actuator/prometheus"))
+                .andExpect(status().isOk());
     }
 
     /**
