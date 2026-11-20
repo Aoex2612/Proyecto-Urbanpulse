@@ -10,6 +10,15 @@ import { MemoryRouter } from 'react-router-dom';
 import MapPage from './MapPage';
 import incidentService from '../services/incidentService';
 import triageService from '../services/triageService';
+import logger from '../utils/logger';
+
+vi.mock('../utils/logger', () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 vi.mock('../components/Map', () => ({
   IncidentsMap: ({ incidents, onSelectIncident }) => (
@@ -179,6 +188,47 @@ describe('MapPage — filtros avanzados y RBAC', () => {
     expect(
       await screen.findByText(/No se encontraron incidencias con los filtros aplicados/i)
     ).toBeInTheDocument();
+  });
+
+  it('registra en el logger el fallo al cargar el catalogo de departamentos', async () => {
+    mockUser = { role: 'OPERATOR', fullName: 'Operador Test' };
+    const error = new Error('Catalogo no disponible');
+    triageService.getDepartments.mockRejectedValue(error);
+
+    renderMap();
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('departamentos'),
+        expect.objectContaining({
+          operation: 'getDepartments',
+          error,
+        })
+      );
+    });
+  });
+
+  it('registra en el logger el fallo de la busqueda multicriterio', async () => {
+    const error = new Error('Busqueda no disponible');
+    incidentService.searchIncidents.mockRejectedValue(error);
+
+    renderMap();
+
+    await screen.findByLabelText(/Distrito:/i);
+    fireEvent.change(screen.getByLabelText(/Distrito:/i), { target: { value: 'Centro' } });
+
+    await waitFor(
+      () => {
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('busqueda multicriterio'),
+          expect.objectContaining({
+            operation: 'searchIncidents',
+            error,
+          })
+        );
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('conserva el distrito seleccionado al abrir y cerrar el modal de detalle (RF-15)', async () => {
