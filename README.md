@@ -84,9 +84,10 @@ El proyecto sigue una arquitectura desacoplada basada en microservicios/monolito
 │   ├── roadmap.md           # Hoja de ruta y estado de las funcionalidades
 │   └── tech-stack.md        # Especificación técnica detallada y convenciones
 ├── docs/                    # Documentación técnica de diseño
-│   ├── ADR/                 # Architectural Decision Records (ADR-01: Persistencia de Enums con JPA)
+│   ├── ADR/                 # Architectural Decision Records (ADR-01 a ADR-07)
+│   ├── SDD/                 # Software Design Documents (DD-001 a DD-012), enlazados a los ADR
 │   └── api.md               # Especificación de contratos de API REST
-├── features/                # Especificaciones SDD (spec.md, plan.md, tasks.md)
+├── features/                # Especificaciones del flujo SDD = Spec-Driven Development (spec.md, plan.md, tasks.md)
 ├── docker-compose.yml       # Orquestación del contenedor PostgreSQL
 └── README.md                # Este documento
 ```
@@ -191,8 +192,9 @@ La base de datos incluye usuarios semilla precargados con contraseñas seguras h
 
 - **Misión y Gobernanza:** Consulta los principios rectores en [`constitution/mission.md`](constitution/mission.md).
 - **Especificación Técnica:** Revisa las directrices de arquitectura y límites en [`constitution/tech-stack.md`](constitution/tech-stack.md).
-- **Decisiones de Arquitectura:** Registradas en [`docs/ADR/`](docs/ADR/) (ver [`ADR-01: Persistencia de Enums con JPA`](docs/ADR/ADR-01-persistencia-enums-jpa.md)).
-- **Gestión de Funcionalidades (SDD):** Cada funcionalidad cuenta con su especificación (`spec.md`), plan (`plan.md`) y tareas (`tasks.md`) dentro de [`features/`](features/).
+- **Decisiones de Arquitectura:** Registradas en [`docs/ADR/`](docs/ADR/) (ver [`ADR-01: Persistencia de Enums con JPA`](docs/ADR/ADR-01-persistencia-enums-jpa.md)). El ADR de geolocalización nativa se numera [`ADR-07`](docs/ADR/ADR-07-geolocalizacion-nativa-navegador.md) para evitar la colisión histórica con el ADR-06 de Datos Abiertos.
+- **Software Design Documents (DD):** Propuestas y revisiones de diseño en [`docs/SDD/`](docs/SDD/), una por ADR y por funcionalidad, construidas con la plantilla [`.github/SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md`](.github/SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md). Cada DD enlaza sus ADR y cada ADR enlaza al DD correspondiente.
+- **Gestión de Funcionalidades (SDD = Spec-Driven Development):** Cada funcionalidad cuenta con su especificación (`spec.md`), plan (`plan.md`) y tareas (`tasks.md`) dentro de [`features/`](features/). No debe confundirse con los Software Design Documents anteriores.
 
 ---
 

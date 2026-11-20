@@ -29,3 +29,7 @@ Optamos por la **Opción 2: columnas `VARCHAR` con restricciones `CHECK`** (`VAR
 * **Positivo:** Eliminación de errores de arranque en Hibernate con `ddl-auto=update` / `validate`, compatibilidad directa con los 116 tests unitarios existentes y facilidad de despliegue en Docker.
 * **Negativo:** En PostgreSQL un `VARCHAR` ocupa ligeramente más espacio en disco que un `ENUM` interno de 4 bytes, aunque con el volumen esperado de registros del dominio este impacto es insignificante.
 * **Neutral:** Si se añade un nuevo valor a un enum en el código Java (por ejemplo, un nuevo rol en `RolUsuario`), es necesario actualizar la restricción `CHECK` del script SQL de inicialización.
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-001: Persistencia de enumeraciones con VARCHAR y CHECK](../SDD/DD-001-persistencia-enums-jpa.md). También respalda los DD de las features [001](../SDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md), [002](../SDD/DD-009-autenticacion-y-control-de-acceso-rbac.md), [004](../SDD/DD-011-reporte-y-seguimiento-de-incidencias.md) y [006](../SDD/DD-012-adjuntos-multimedia-en-incidencias.md).

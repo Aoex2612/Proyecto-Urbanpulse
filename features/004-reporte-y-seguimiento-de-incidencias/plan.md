@@ -1,6 +1,6 @@
 # 004 — Reporte y Seguimiento de Incidencias con Detección Territorial — Plan
 
-_Cómo se implementa lo descrito en `spec.md`. Respeta estrictamente la `constitution/`, los principios de diseño de UrbanPulse y el [ADR-06](file:///home/joalts8/Ingenieria/Cc/Proyecto-Urbanpulse/docs/ADR/ADR-06-integracion-datos-abiertos-malaga-degradacion-controlada.md)._
+_Cómo se implementa lo descrito en `spec.md`. Respeta estrictamente la `constitution/`, los principios de diseño de UrbanPulse y el [ADR-06](../../docs/ADR/ADR-06-integracion-datos-abiertos-malaga-degradacion-controlada.md)._
 
 ## Enfoque
 
@@ -77,7 +77,7 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
 
 ## Decisiones
 
-- **Integración centralizada con Datos Abiertos y fallback en Backend (ver [ADR-06](file:///home/joalts8/Ingenieria/Cc/Proyecto-Urbanpulse/docs/ADR/ADR-06-integracion-datos-abiertos-malaga-degradacion-controlada.md)):**
+- **Integración centralizada con Datos Abiertos y fallback en Backend (ver [ADR-06](../../docs/ADR/ADR-06-integracion-datos-abiertos-malaga-degradacion-controlada.md)):**
   - _Justificación:_ Garantiza política estricta de degradación controlada (timeout 3s), resuelve problemas de confianza en certificados SSL de administraciones públicas y proporciona resiliencia inmediata mediante Nominatim sin exponer clientes frontend a bloqueos de red o CORS.
 - **Factoría SSL permisiva (`createSecureClientHttpRequestFactory`):**
   - _Justificación:_ Evita excepciones `SunCertPathBuilderException` producidas cuando el servidor remoto usa certificados de CAs españolas (FNMT, Camerfirma) no incluidas en el truststore estándar de OpenJDK.

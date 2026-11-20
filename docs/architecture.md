@@ -2,6 +2,10 @@
 
 Documento oficial de arquitectura de **UrbanPulse**, diseñado bajo el modelo **C4 (Contexto, Contenedores y Componentes)** para representar la organización estática y dinámica de la plataforma conforme a la constitución del proyecto y el código fuente real implementado.
 
+## Documentos de diseño relacionados
+
+Los cambios estructurales se justifican en los [Software Design Documents](SDD/README.md) (`DD-001` a `DD-012`), construidos con la plantilla [`.github/SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md`](../.github/SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md). Cada DD enlaza a los [ADR que lo respaldan](ADR/), y cada ADR incorpora un enlace inverso al DD que lo originó. Los diagramas C4 de este documento son la vista operativa vigente; los DD son el registro de la propuesta y su revisión.
+
 ---
 
 ## 1. Diagrama de Contexto (C4: Nivel 1)

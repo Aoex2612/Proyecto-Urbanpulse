@@ -27,3 +27,7 @@ Optamos por la **Opción 2: Autenticación sin estado mediante JWT (JJWT con alg
 * **Positivo:** Escalabilidad total del servidor de API, control estricto de accesos por rol (RBAC), interoperabilidad con interceptores de Axios en el frontend y compatibilidad transparente en pruebas unitarias y de integración.
 * **Negativo:** Los tokens JWT válidos no se pueden invalidar de forma inmediata en el servidor sin implementar una lista de revocación (blacklist o Redis); se mitiga definiendo un tiempo de expiración acotado.
 * **Neutral:** El frontend asume la responsabilidad de almacenar el token de forma segura (localStorage/memoria) e inyectarlo en cada cabecera `Authorization: Bearer <token>`.
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-002: Autenticación JWT, BCrypt y RBAC](../SDD/DD-002-autenticacion-jwt-bcrypt-rbac.md). También respalda los DD de las features [001](../SDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md) y [002](../SDD/DD-009-autenticacion-y-control-de-acceso-rbac.md).
