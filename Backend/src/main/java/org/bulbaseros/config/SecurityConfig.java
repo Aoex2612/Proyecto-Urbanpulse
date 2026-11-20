@@ -85,6 +85,7 @@ public class SecurityConfig {
      * de CORS y define las siguientes reglas de autorización:</p>
      * <ul>
      *   <li>Rutas públicas {@code /api/auth/**} y {@code /h2-console/**}: permitidas sin autenticación ({@code permitAll()}).</li>
+     *   <li>Endpoints de observabilidad {@code /actuator/health}, {@code /actuator/info} y {@code /actuator/prometheus}: permitidos sin autenticación para sondas y scraping de Prometheus.</li>
      *   <li>Consulta cronológica de auditoría {@code GET /api/incidents/{id}/history}: restringida a usuarios con rol {@code ADMIN}.</li>
      *   <li>Operaciones de triaje y estado {@code PATCH /api/incidents/{id}/status}: restringidas a usuarios con rol {@code OPERATOR} o {@code ADMIN}.</li>
      *   <li>Seguimiento de avisos propios {@code GET /api/incidents/my-incidents} y geocodificación inversa {@code GET /api/incidents/geocode/reverse}: requieren autenticación ({@code authenticated()}).</li>
@@ -115,6 +116,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**", "/api/v1/auth/**", "/api/v2/auth/**", "/h2-console/**", "/uploads/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/incidents/*/history", "/api/v1/incidents/*/history", "/api/v2/incidents/*/history").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/incidents/*/status", "/api/v1/incidents/*/status", "/api/v2/incidents/*/status").hasAnyRole("OPERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/incidents/*/assets/*/confirm", "/api/v1/incidents/*/assets/*/confirm", "/api/v2/incidents/*/assets/*/confirm").hasAnyRole("OPERATOR", "ADMIN")
