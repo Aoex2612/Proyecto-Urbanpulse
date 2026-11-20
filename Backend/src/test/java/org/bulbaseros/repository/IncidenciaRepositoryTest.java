@@ -141,6 +141,26 @@ class IncidenciaRepositoryTest {
         setCreatedAt(inc3, OffsetDateTime.parse("2026-01-03T10:00:00Z"));
         entityManager.clear();
 
+        entityManager.getEntityManager()
+                .createNativeQuery("UPDATE incidents SET created_at = :d WHERE id = :id")
+                .setParameter("d", OffsetDateTime.now().minusDays(3))
+                .setParameter("id", inc1.getId())
+                .executeUpdate();
+
+        entityManager.getEntityManager()
+                .createNativeQuery("UPDATE incidents SET created_at = :d WHERE id = :id")
+                .setParameter("d", OffsetDateTime.now().minusDays(1))
+                .setParameter("id", inc2.getId())
+                .executeUpdate();
+
+        entityManager.getEntityManager()
+                .createNativeQuery("UPDATE incidents SET created_at = :d WHERE id = :id")
+                .setParameter("d", OffsetDateTime.now())
+                .setParameter("id", inc3.getId())
+                .executeUpdate();
+
+        entityManager.clear();
+
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
                 0, 2, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
         );
