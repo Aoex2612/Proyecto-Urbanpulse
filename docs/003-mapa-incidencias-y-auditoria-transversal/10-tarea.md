@@ -9,7 +9,7 @@
 
 ## 1. Resumen de la Tarea
 
-En esta tarea se diseñó e implementó la capa utilitaria de geolocalización en el cliente para el frontend de UrbanPulse (`frontend/src/utils/geolocationUtils.js`), alineada con las directrices técnicas del [ADR-06](../../docs/ADR/ADR-06-geolocalizacion-nativa-navegador.md) y respaldada por una exhaustiva suite de pruebas unitarias (`frontend/src/utils/geolocationUtils.test.js`) en Vitest:
+En esta tarea se diseñó e implementó la capa utilitaria de geolocalización en el cliente para el frontend de UrbanPulse (`frontend/src/utils/geolocationUtils.js`), alineada con las directrices técnicas del [ADR-07](../../docs/ADR/ADR-07-geolocalizacion-nativa-navegador.md) y respaldada por una exhaustiva suite de pruebas unitarias (`frontend/src/utils/geolocationUtils.test.js`) en Vitest:
 
 1. **Detección segura de soporte y contexto seguro (`isGeolocationSupported`):**
    - Comprobación de la presencia de `navigator.geolocation` y de `window.isSecureContext` (requerido por las especificaciones W3C para habilitar la geolocalización bajo HTTPS o en localhost).

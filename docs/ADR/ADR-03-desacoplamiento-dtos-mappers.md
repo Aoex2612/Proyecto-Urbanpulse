@@ -29,3 +29,7 @@ Optamos por la **Opción 3: DTOs dedicados y capa de Mappers desacoplados**, imp
 * **Positivo:** Eliminación de errores de serialización JSON y `LazyInitializationException`, protección robusta contra exposición de credenciales y datos sensibles, y desacoplamiento limpio entre capas.
 * **Negativo:** Requiere escribir y mantener clases DTO adicionales y sus respectivos mappers.
 * **Neutral:** El equipo debe seguir la convención arquitectónica de inyectar y utilizar los mappers en `service`, manteniendo los controladores limpios de lógica de transformación.
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-003: Desacoplamiento mediante DTOs y mappers](../SDD/DD-003-desacoplamiento-dtos-mappers.md). También respalda los DD de las features [001](../SDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md), [002](../SDD/DD-009-autenticacion-y-control-de-acceso-rbac.md), [004](../SDD/DD-011-reporte-y-seguimiento-de-incidencias.md) y [006](../SDD/DD-012-adjuntos-multimedia-en-incidencias.md).

@@ -32,3 +32,9 @@ Optamos por la **Opción 3: Servicio backend de integración y resolución terri
   - Introduce una dependencia de red externa durante el proceso de guardado o previsualización, requiriendo un manejo riguroso de timeouts para no penalizar el tiempo de respuesta.
 * **Neutral / Compromiso:** 
   - Se debe implementar un mock en pruebas unitarias y de integración para simular respuestas exitosas, fallos de red y timeouts del portal de datos abiertos sin depender de la conectividad en entornos de integración continua (CI).
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-006: Integración con Datos Abiertos de Málaga y degradación controlada](../SDD/DD-006-integracion-datos-abiertos-malaga-degradacion-controlada.md). También respalda el [DD-011: Reporte y seguimiento de incidencias](../SDD/DD-011-reporte-y-seguimiento-de-incidencias.md).
+
+> Tras la refactorización documental de 2026-11-20, este ADR conserva el número 06. El ADR de geolocalización nativa, que antes compartía esa numeración, pasó a ser [ADR-07](ADR-07-geolocalizacion-nativa-navegador.md).

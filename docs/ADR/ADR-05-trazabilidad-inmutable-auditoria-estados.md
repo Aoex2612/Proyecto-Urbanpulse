@@ -28,3 +28,7 @@ Optamos por la **Opción 3: Tabla relacional dedicada e inmutable (`status_chang
 * **Positivo:** Trazabilidad inmutable completa y transparente, soporte directo para el componente de línea temporal (`Timeline`) en el frontend, y facilidad para que analistas y operadores consulten métricas de tiempo de ciclo.
 * **Negativo:** El volumen de la tabla `status_changes` crece linealmente con cada transición; requerirá estrategias de particionado o archivado a largo plazo si la plataforma gestiona millones de incidencias.
 * **Neutral:** La responsabilidad de registrar el cambio de estado en la tabla de auditoría debe ser orquestada atómicamente (`@Transactional`) dentro del servicio (`IncidentService`) al modificar el estado de la incidencia.
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-005: Trazabilidad inmutable de cambios de estado](../SDD/DD-005-trazabilidad-inmutable-auditoria-estados.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
