@@ -8,9 +8,10 @@ Este directorio contiene las plantillas estandarizadas para GitHub Web, GitHub C
 
 ```text
 .github/
-├── PULL_REQUEST_TEMPLATE.md       # Plantilla por defecto para Pull Requests
-├── pull_request_template.md       # Alternativa de PR soportada por GitHub
-└── ISSUE_TEMPLATE/                # Plantillas para nuevos Issues
+├── PULL_REQUEST_TEMPLATE.md              # Plantilla por defecto para Pull Requests
+├── pull_request_template.md              # Alternativa de PR soportada por GitHub
+├── SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md  # Plantilla de Software Design Documents (DD)
+└── ISSUE_TEMPLATE/                       # Plantillas para nuevos Issues
     ├── feature_request.md         # Plantilla para proponer funcionalidades
     └── bug_report.md              # Plantilla para reportar incidencias/bugs
 ```
@@ -62,3 +63,17 @@ Si prefieres tener una unica plantilla predeterminada general para cualquier iss
 
 ### Desde el MCP de GitHub (Asistente de IA)
 Al solicitar la creacion de una PR o Issue via MCP (`create_pull_request`, `issue_write`), el asistente lee el contenido de estos ficheros en `.github/` y genera el cuerpo del mensaje respetando los apartados exactos de tu plantilla.
+
+---
+
+## 3. Plantilla de Software Design Document
+
+[`SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md`](SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md) es la plantilla para los Design Docs de UrbanPulse (no confundir con los `spec.md` del flujo *Spec-Driven Development*).
+
+Para crear uno:
+
+1. Copia la plantilla a `docs/SDD/DD-NNN-titulo.md` usando el siguiente número libre del [índice](../docs/SDD/README.md).
+2. Sustituye todos los campos entre corchetes y elimina las indicaciones de la plantilla.
+3. Incluye la sección **8.1 Decisiones arquitectónicas derivadas** con enlaces a los ADR existentes; si la decisión es nueva, crea primero su ADR con [`docs/ADR/ADR-NN.md`](../docs/ADR/ADR-NN.md).
+4. Añade el enlace inverso en cada ADR implicado (sección *Design Doc relacionado*).
+5. Registra el nuevo DD en [`docs/SDD/README.md`](../docs/SDD/README.md) y usa siempre rutas relativas.

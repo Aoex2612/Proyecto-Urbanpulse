@@ -128,7 +128,7 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
 - **Desacoplamiento del componente `Timeline`:**
   - _Justificación:_ Garantiza que habilitar la visualización del historial al rol `OPERATOR` requiera únicamente modificar una regla de acceso sin refactorizar la lógica visual.
 - **Captura con API nativa W3C `navigator.geolocation` frente a librerías externas o geolocalización IP (HU14.4):**
-  - _Justificación:_ Proporciona máxima precisión física del hardware (GPS) sin cuotas ni dependencias externas ([ADR-06: Captura de ubicación con API nativa W3C Geolocation en el cliente](file:///C:/Users/Yesu/Proyecto-Urbanpulse/docs/ADR/ADR-06-geolocalizacion-nativa-navegador.md)).
+  - _Justificación:_ Proporciona máxima precisión física del hardware (GPS) sin cuotas ni dependencias externas ([ADR-07: Captura de ubicación con API nativa W3C Geolocation en el cliente](../../docs/ADR/ADR-07-geolocalizacion-nativa-navegador.md)).
 - **Ubicación en el bloque de coordenadas del modal frente a control externo en mapa (HU14.4):**
   - _Justificación:_ Actúa como atajo contextual directo al revisar los datos de ubicación sin sobrecargar la barra de mandos del mapa.
 - **Preservación de coordenadas previas ante error de geolocalización (HU14.4):**

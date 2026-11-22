@@ -28,3 +28,7 @@ Optamos por la **Opción 3: Leaflet 1.9.x y React-Leaflet con teselas estándar 
 * **Positivo:** Sin costes recurrentes de API, sin riesgos de bloqueo por cuotas mensuales, integración limpia en la SPA y desarrollo local inmediato sin configuración de credenciales externas.
 * **Negativo:** El servidor de teselas estándar de OpenStreetMap (`tile.openstreetmap.org`) tiene políticas de uso aceptable estrictas que desaconsejan tráfico masivo en producción intensiva; requerirá configurar un proveedor de teselas comercial (como Stadia Maps o MapTiler) o un servidor de teselas propio en caso de despliegue a gran escala municipal.
 * **Neutral:** El renderizado es basado en imágenes raster en lugar de renderizado vectorial por GPU (WebGL), lo cual es suficiente para la escala urbana del proyecto.
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-004: Cartografía con Leaflet y OpenStreetMap](../SDD/DD-004-cartografia-interactiva-leaflet-openstreetmap.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).

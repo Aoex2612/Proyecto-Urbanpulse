@@ -1,4 +1,4 @@
-# ADR-06: Captura de ubicación con API nativa W3C Geolocation en el cliente
+# ADR-07: Captura de ubicación con API nativa W3C Geolocation en el cliente
 
 * Estado: aceptado
 * Fecha: 2026-10-28
@@ -27,3 +27,9 @@ Optamos por la **Opción 1: API nativa W3C `navigator.geolocation` encapsulada e
 * **Positivo:** Precisión óptima en dispositivos móviles y portátiles; 0 bytes adicionales de dependencias de terceros; compatibilidad total con navegadores modernos; control granular de estados de carga, permisos denegados y timeouts.
 * **Negativo:** En navegadores de escritorio sin GPS o conexiones de red cableada sin geolocalización asistida, la precisión puede ser inferior a la de un dispositivo móvil (mitigado permitiendo al usuario corregir o mantener el punto fijado en el mapa).
 * **Neutral:** Requiere que la aplicación se sirva bajo contexto seguro (HTTPS en producción o `localhost` en desarrollo) para que los navegadores autoricen el acceso a la API.
+
+## Design Doc relacionado
+
+Esta decisión se documenta y aplica en [DD-007: Geolocalización nativa del navegador](../SDD/DD-007-geolocalizacion-nativa-navegador.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
+
+> **Nota:** este ADR se denominaba `ADR-06-geolocalizacion-nativa-navegador.md` y se renombró a ADR-07 el 2026-11-20 para eliminar la colisión de numeración con el ADR de Datos Abiertos de Málaga. Su contenido y decisión no han cambiado.
