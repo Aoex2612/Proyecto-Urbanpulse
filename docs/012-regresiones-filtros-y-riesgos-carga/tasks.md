@@ -7,9 +7,9 @@ _Checklist accionable derivada del `plan.md`. Tareas principales y subtareas peq
 - [x] Aplicar la misma validación estricta con `fail(...)` en `k6/baseline.js` y `k6/experimento-2-saturacion.js`.
 - [x] Validar sintácticamente los scripts de k6.
 
-## [ ] Tarea 2: Consistencia documental del Experimento 3 — Depende de Tarea 1 — RF: DOC-K6-METRICAS
-- [ ] Actualizar `docs/rendimiento/experimento-3-emergencia.md` aclarando que las 1.022 peticiones totales corresponden a 1 petición de login en `setup` + 1.021 checks/reqs bajo carga (446 lecturas de mapa + 575 reportes de emergencia).
-- [ ] Alinear las tablas y conclusiones para mantener consistencia estricta en todo el documento.
+## [x] Tarea 2: Consistencia documental del Experimento 3 — Depende de Tarea 1 — RF: DOC-K6-METRICAS
+- [x] Actualizar `docs/rendimiento/experimento-3-emergencia.md` aclarando que las 1.022 peticiones totales corresponden a 1 petición de login en `setup` + 1.021 checks/reqs bajo carga (446 lecturas de mapa + 575 reportes de emergencia).
+- [x] Alinear las tablas y conclusiones para mantener consistencia estricta en todo el documento.
 
 ## [ ] Tarea 3: Corrección de resultados obsoletos y estado de carga en Frontend — Sin dependencias — RF: RF-FILTROS-UX
 - [ ] En `frontend/src/pages/MapPage.jsx`, gestionar el estado de carga y cancelar o invalidar peticiones de búsqueda obsoletas para que no se muestren datos del filtro previo durante el debounce.
