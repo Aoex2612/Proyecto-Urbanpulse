@@ -658,4 +658,59 @@ describe('OperatorPanelPage — Integración de Triaje Operativo', () => {
       await screen.findByText(/No se encontraron incidencias con los filtros aplicados/i)
     ).toBeInTheDocument();
   });
+
+  it('muestra estado visual de carga durante el debounce/búsqueda y descarta respuestas desfasadas', async () => {
+    incidentService.getAllIncidents.mockResolvedValue(filterableIncidents);
+
+    let resolveFirst;
+    let resolveSecond;
+    const firstPromise = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondPromise = new Promise((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    incidentService.searchIncidents
+      .mockImplementationOnce(() => firstPromise)
+      .mockImplementationOnce(() => secondPromise);
+
+    renderPanel();
+
+    await screen.findByText('Bache en el Centro');
+    const districtSelect = screen.getByLabelText(/Distrito:/i);
+
+    // Primer filtro: Centro
+    fireEvent.change(districtSelect, { target: { value: 'Centro' } });
+    expect(screen.getByText(/Buscando incidencias.../i)).toBeInTheDocument();
+
+    // Esperar a que se dispare la primera búsqueda tras debounce
+    await waitFor(() => {
+      expect(incidentService.searchIncidents).toHaveBeenCalledTimes(1);
+    });
+
+    // Segundo filtro mientras la primera está en curso: Este
+    fireEvent.change(districtSelect, { target: { value: 'Este' } });
+    expect(screen.getByText(/Buscando incidencias.../i)).toBeInTheDocument();
+
+    // Esperar a que se dispare la segunda búsqueda tras debounce
+    await waitFor(() => {
+      expect(incidentService.searchIncidents).toHaveBeenCalledTimes(2);
+    });
+
+    // Resolvemos el segundo con 'Farola fundida en el Este'
+    resolveSecond([filterableIncidents[1]]);
+    await waitFor(() => {
+      expect(screen.queryByText(/Buscando incidencias.../i)).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Farola fundida en el Este')).toBeInTheDocument();
+    expect(screen.queryByText('Bache en el Centro')).not.toBeInTheDocument();
+
+    // Llega tarde la respuesta 1 con 'Bache en el Centro'
+    resolveFirst([filterableIncidents[0]]);
+
+    // Verificamos que se ignora la respuesta desfasada y se mantienen los datos de la última petición
+    expect(screen.getByText('Farola fundida en el Este')).toBeInTheDocument();
+    expect(screen.queryByText('Bache en el Centro')).not.toBeInTheDocument();
+  });
 });

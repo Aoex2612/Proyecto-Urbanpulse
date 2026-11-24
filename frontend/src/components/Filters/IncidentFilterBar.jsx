@@ -28,6 +28,7 @@ const INCIDENT_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
  * @param {Function} props.onFilterChange - Callback invocado al modificar cualquier filtro con el objeto de criterios.
  * @param {string} [props.userRole] - Rol funcional del usuario autenticado (ej. CITIZEN, OPERATOR, ADMIN).
  * @param {boolean} [props.hasResults=true] - Indicador booleano para mostrar aviso de búsqueda sin resultados.
+ * @param {boolean} [props.isLoading=false] - Indicador booleano de búsqueda o filtrado en progreso.
  * @param {Array<{id?: number|string, publicId?: string, name: string}>} [props.departments=[]] - Catálogo de departamentos municipales.
  * @returns {import('react').JSX.Element} Elemento JSX de la barra de filtros.
  */
@@ -35,6 +36,7 @@ export default function IncidentFilterBar({
   onFilterChange,
   userRole,
   hasResults = true,
+  isLoading = false,
   departments = [],
 }) {
   const [filters, setFilters] = useState({
@@ -224,7 +226,14 @@ export default function IncidentFilterBar({
         Limpiar filtros
       </button>
 
-      {!hasResults && (
+      {isLoading && (
+        <span className="filter-loading-indicator" role="status" aria-live="polite">
+          <span className="filter-spinner" aria-hidden="true" />
+          <span>Buscando incidencias...</span>
+        </span>
+      )}
+
+      {!isLoading && !hasResults && (
         <span className="filter-no-results" role="status">
           No se encontraron incidencias con los filtros aplicados.
         </span>

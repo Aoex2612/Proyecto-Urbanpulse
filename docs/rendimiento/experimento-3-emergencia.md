@@ -39,7 +39,8 @@ Reporte interactivo generado: [k6/reports/exp3_emergencia_spike.html](file:///ho
 
 | Métrica | Valor Obtenido | Umbral (*Threshold*) Definido | Estado |
 | :--- | :---: | :---: | :---: |
-| **Peticiones Totales** | **1.022 peticiones** | - | Completado |
+| **Peticiones Totales (HTTP)** | **1.022 peticiones** (1 login en `setup()` + 1.021 bajo carga) | - | Completado |
+| **Checks de Validación bajo Carga** | **1.021 checks** (446 lecturas + 575 escrituras) | - | Completado (100% éxito) |
 | **Throughput Global** | **4,24 req/s** | - | Estable bajo saturación |
 | **Tasa Global de Errores** | **0,00 %** (0 de 1.022) | `< 5 %` | **SUPERADO (Excelente Fiabilidad)** |
 | **Tasa Fallo Lecturas Mapa** | **0,00 %** (0 de 446) | `< 5 %` | **SUPERADO** |
@@ -47,6 +48,8 @@ Reporte interactivo generado: [k6/reports/exp3_emergencia_spike.html](file:///ho
 | **Latencia p95 Mapa (`read_map_duration`)** | **20.273 ms (~20,3 s)** | `< 1.500 ms` | **INCUMPLIDO (Cuello de botella)** |
 | **Latencia p95 Creación (`write_incident_duration`)** | **15.210 ms (~15,2 s)** | `< 2.500 ms` | **INCUMPLIDO (Contención severa)** |
 | **Volumen de Datos Transferidos** | **2,0 GB recibidos** | - | **8,3 MB/s** |
+
+> **Nota sobre el desglose de peticiones y checks:** En la ejecución global de k6 se contabilizan un total de **1.022 peticiones HTTP**: 1 petición técnica inicial de login ejecutada durante la fase `setup()` para obtener el token JWT de operador, y **1.021 peticiones evaluadas con checks bajo carga** correspondientes a los dos escenarios concurrentes: 446 lecturas de mapa (`GET /incidents`) y 575 reportes de emergencia (`POST /incidents`) (446 + 575 = 1.021).
 
 ---
 
@@ -66,7 +69,7 @@ Reporte interactivo generado: [k6/reports/exp3_emergencia_spike.html](file:///ho
 ## 4. Diagnóstico y Análisis Arquitectónico
 
 ### Hallazgo 1: Fiabilidad impecable (0 % errores) pero degradación severa de latencia
-A pesar de la brusquedad del pico (subida instantánea a 50 VUs creando incidencias y 40 VUs leyendo), **el servidor no arrojó un solo error HTTP 500, 503 o 504**. Todos los 1.021 checks pasaron con éxito (status 200 y 201). El sistema es resiliente a caídas, pero sufre de una **altísima contención en cola**.
+A pesar de la brusquedad del pico (subida instantánea a 50 VUs creando incidencias y 40 VUs leyendo), **el servidor no arrojó un solo error HTTP 500, 503 o 504**. Todos los 1.021 checks bajo carga pasaron con éxito (status 200 para las 446 lecturas y 201 para las 575 creaciones), sumando junto al login inicial 1.022 peticiones HTTP exitosas. El sistema es resiliente a caídas, pero sufre de una **altísima contención en cola**.
 
 ### Hallazgo 2: ¿Por qué la lectura del mapa fue el doble de lenta que la escritura?
 * La creación (`POST`) tuvo una mediana de **5,5 s**, mientras que la lectura del mapa (`GET`) se disparó a **10,5 s** (y más de **20 s** en p95).

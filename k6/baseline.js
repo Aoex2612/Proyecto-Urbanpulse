@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check, sleep, fail } from 'k6';
 import { Trend, Rate } from 'k6/metrics';
 
 // Métricas personalizadas para segmentar por endpoint
@@ -48,12 +48,14 @@ export function setup() {
   }
 
   if (res.status !== 200) {
-    console.warn(`[SETUP] Login fallido (Status ${res.status}): ${res.body}`);
-    return { token: null };
+    fail(`[SETUP] Login fallido (Status ${res.status}): ${res.body}`);
   }
 
   const jsonBody = res.json();
   const token = jsonBody.token || (jsonBody.data && jsonBody.data.token);
+  if (!token) {
+    fail(`[SETUP] No se pudo obtener el token JWT de autenticación de la respuesta: ${res.body}`);
+  }
   return { token: token };
 }
 

@@ -250,4 +250,60 @@ describe('MapPage — filtros avanzados y RBAC', () => {
     expect(screen.queryByRole('dialog', { name: 'Detalle de incidencia' })).not.toBeInTheDocument();
     expect(screen.getByLabelText(/Distrito:/i)).toHaveValue('Centro');
   });
+
+  it('muestra estado visual de carga durante el debounce/búsqueda y no aplica resultados desfasados', async () => {
+    mockUser = { role: 'OPERATOR', fullName: 'Operador Test' };
+
+    let resolveFirst;
+    let resolveSecond;
+    const firstPromise = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondPromise = new Promise((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    incidentService.searchIncidents
+      .mockImplementationOnce(() => firstPromise)
+      .mockImplementationOnce(() => secondPromise);
+
+    renderMap();
+
+    await screen.findByLabelText(/Distrito:/i);
+    const districtSelect = screen.getByLabelText(/Distrito:/i);
+
+    // Primer cambio de filtro
+    fireEvent.change(districtSelect, { target: { value: 'Centro' } });
+
+    // Inmediatamente debe verse el estado de búsqueda
+    expect(screen.getByText(/Buscando incidencias.../i)).toBeInTheDocument();
+
+    // Esperar a que se dispare la primera llamada tras debounce (300ms)
+    await waitFor(() => {
+      expect(incidentService.searchIncidents).toHaveBeenCalledTimes(1);
+    });
+
+    // Segundo cambio mientras la primera llamada está aún pendiente
+    fireEvent.change(districtSelect, { target: { value: 'Este' } });
+    expect(screen.getByText(/Buscando incidencias.../i)).toBeInTheDocument();
+
+    // Esperar que se haya disparado la segunda búsqueda tras debounce
+    await waitFor(() => {
+      expect(incidentService.searchIncidents).toHaveBeenCalledTimes(2);
+    });
+
+    // Resolvemos la segunda petición primero con datos de 'Este'
+    resolveSecond([mockIncidents[1]]);
+    await waitFor(() => {
+      expect(screen.queryByText(/Buscando incidencias.../i)).not.toBeInTheDocument();
+    });
+
+    // Ahora resolvemos la primera petición desfasada (que llegó tarde con datos de 'Centro')
+    resolveFirst([mockIncidents[0]]);
+
+    // La interfaz no debe reemplazar los resultados con los desfasados de la petición 1
+    // (el selector sigue en 'Este')
+    expect(districtSelect).toHaveValue('Este');
+    expect(screen.queryByText(/Buscando incidencias.../i)).not.toBeInTheDocument();
+  });
 });
