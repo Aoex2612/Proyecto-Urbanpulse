@@ -5,7 +5,7 @@
  * rechazo y colaboración mediante notas internas y avisos públicos conectados en tiempo real a PostgreSQL.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import incidentService from '../services/incidentService';
@@ -90,6 +90,8 @@ export default function OperatorPanelPage() {
 
   // Resultado de la busqueda multicriterio en servidor (null = usar el conjunto completo)
   const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const activeSearchRequestIdRef = useRef(0);
 
   // Catalogo de departamentos para el selector interno (no bloqueante)
   const [departments, setDepartments] = useState([]);
@@ -169,19 +171,34 @@ export default function OperatorPanelPage() {
   // Criterios "de servidor" activos; las fechas se filtran en cliente
   const hasServerCriteria = SERVER_FILTER_KEYS.some((key) => filterCriteria[key]);
 
-  // Busqueda multicriterio con debounce de 300 ms y descarte de respuestas obsoletas
+  const handleFilterChange = useCallback((criteria) => {
+    const hasServer = SERVER_FILTER_KEYS.some((key) => criteria[key]);
+    if (hasServer) {
+      setIsSearching(true);
+      setSearchResults(null);
+    } else {
+      setIsSearching(false);
+      setSearchResults(null);
+    }
+    setFilterCriteria(criteria);
+  }, []);
+
+  // Busqueda multicriterio con debounce de 300 ms, control de estado de carga y descarte de respuestas obsoletas
   useEffect(() => {
     if (!hasServerCriteria) {
+      activeSearchRequestIdRef.current += 1;
       return undefined;
     }
 
-    let cancelled = false;
+    const requestId = ++activeSearchRequestIdRef.current;
+
     const timer = setTimeout(() => {
       incidentService
         .searchIncidents(toSearchParams(filterCriteria))
         .then((data) => {
-          if (!cancelled) {
+          if (activeSearchRequestIdRef.current === requestId) {
             setSearchResults(Array.isArray(data) ? data : []);
+            setIsSearching(false);
           }
         })
         .catch((err) => {
@@ -190,14 +207,14 @@ export default function OperatorPanelPage() {
             criteria: toSearchParams(filterCriteria),
             error: err,
           });
-          if (!cancelled) {
+          if (activeSearchRequestIdRef.current === requestId) {
             setSearchResults(null);
+            setIsSearching(false);
           }
         });
     }, 300);
 
     return () => {
-      cancelled = true;
       clearTimeout(timer);
     };
   }, [hasServerCriteria, filterCriteria]);
@@ -629,10 +646,11 @@ export default function OperatorPanelPage() {
           )}
 
           <IncidentFilterBar
-            onFilterChange={setFilterCriteria}
+            onFilterChange={handleFilterChange}
             userRole={user?.role}
             departments={departments}
             hasResults={displayedIncidents.length > 0}
+            isLoading={isSearching}
           />
 
           {loading ? (
