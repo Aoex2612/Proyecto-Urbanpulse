@@ -72,8 +72,8 @@ Al solicitar la creacion de una PR o Issue via MCP (`create_pull_request`, `issu
 
 Para crear uno:
 
-1. Copia la plantilla a `docs/SDD/DD-NNN-titulo.md` usando el siguiente número libre del [índice](../docs/SDD/README.md).
+1. Copia la plantilla a `../docs/SWDD` usando el siguiente número libre del [índice](../docs/SWDD/README.md).
 2. Sustituye todos los campos entre corchetes y elimina las indicaciones de la plantilla.
 3. Incluye la sección **8.1 Decisiones arquitectónicas derivadas** con enlaces a los ADR existentes; si la decisión es nueva, crea primero su ADR con [`docs/ADR/ADR-NN.md`](../docs/ADR/ADR-NN.md).
 4. Añade el enlace inverso en cada ADR implicado (sección *Design Doc relacionado*).
-5. Registra el nuevo DD en [`docs/SDD/README.md`](../docs/SDD/README.md) y usa siempre rutas relativas.
+5. Registra el nuevo DD en [`../docs/SWDD`](../docs/SWDD/README.md) y usa siempre rutas relativas.

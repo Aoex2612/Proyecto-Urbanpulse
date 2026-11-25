@@ -32,4 +32,4 @@ Optamos por la **Opción 3: DTOs dedicados y capa de Mappers desacoplados**, imp
 
 ## Design Doc relacionado
 
-Esta decisión se documenta y aplica en [DD-003: Desacoplamiento mediante DTOs y mappers](../SDD/DD-003-desacoplamiento-dtos-mappers.md). También respalda los DD de las features [001](../SDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md), [002](../SDD/DD-009-autenticacion-y-control-de-acceso-rbac.md), [004](../SDD/DD-011-reporte-y-seguimiento-de-incidencias.md) y [006](../SDD/DD-012-adjuntos-multimedia-en-incidencias.md).
+Esta decisión se documenta y aplica en [DD-003: Desacoplamiento mediante DTOs y mappers](../SWDD/DD-003-desacoplamiento-dtos-mappers.md). También respalda los DD de las features [001](../SWDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md), [002](../SWDD/DD-009-autenticacion-y-control-de-acceso-rbac.md), [004](../SWDD/DD-011-reporte-y-seguimiento-de-incidencias.md) y [006](../SWDD/DD-012-adjuntos-multimedia-en-incidencias.md).

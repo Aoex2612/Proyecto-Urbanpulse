@@ -31,4 +31,4 @@ Optamos por la **Opción 3: Leaflet 1.9.x y React-Leaflet con teselas estándar 
 
 ## Design Doc relacionado
 
-Esta decisión se documenta y aplica en [DD-004: Cartografía con Leaflet y OpenStreetMap](../SDD/DD-004-cartografia-interactiva-leaflet-openstreetmap.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
+Esta decisión se documenta y aplica en [DD-004: Cartografía con Leaflet y OpenStreetMap](../SWDD/DD-004-cartografia-interactiva-leaflet-openstreetmap.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SWDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
