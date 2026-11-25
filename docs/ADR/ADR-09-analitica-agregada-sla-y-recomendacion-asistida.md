@@ -1,4 +1,4 @@
-# ADR-08: Motor de Analítica Agregada, Evaluación de SLAs y Asistencia Inteligente Desacoplada
+# ADR-09: Motor de Analítica Agregada, Evaluación de SLAs y Asistencia Inteligente Desacoplada
 
 * Estado: aceptado
 * Fecha: 2026-11-06

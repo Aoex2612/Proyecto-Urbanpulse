@@ -4,7 +4,7 @@
 
 En esta tarea se ha completado la orquestación e integración de los subsistemas de **Activos Urbanos** (`UrbanAssetService`) y **Contexto Externo** (`ExternalContextService`) dentro del flujo principal del ciclo de vida de incidencias en `IncidentService`.
 
-Esta integración da cumplimiento a los requisitos funcionales **RF-1, RF-5, RF-8, RF-10 y RF-15** definidos en la especificación (`spec.md`) y en los registros de decisión de arquitectura **ADR-06** y **ADR-09**, asegurando **degradación controlada absoluta**: la creación de la incidencia (`HTTP 201 Created`) y la consulta de su detalle siempre se completan con éxito independientemente de la disponibilidad, latencia o caídas transitorias de los servicios de activos o APIs remotas de terceros (Open-Meteo, tráfico municipal).
+Esta integración da cumplimiento a los requisitos funcionales **RF-1, RF-5, RF-8, RF-10 y RF-15** definidos en la especificación (`spec.md`) y en los registros de decisión de arquitectura **ADR-06** y **ADR-11**, asegurando **degradación controlada absoluta**: la creación de la incidencia (`HTTP 201 Created`) y la consulta de su detalle siempre se completan con éxito independientemente de la disponibilidad, latencia o caídas transitorias de los servicios de activos o APIs remotas de terceros (Open-Meteo, tráfico municipal).
 
 ---
 

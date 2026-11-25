@@ -1,6 +1,6 @@
 # 005 — Gestión y Triaje Operativo de Incidencias — Plan
 
-_Cómo se implementa lo descrito en `spec.md`. Respeta escrupulosamente los principios de `constitution/` y referencia la arquitectura decidida en `docs/ADR/ADR-07-gestion-ciclo-vida-asignacion-multidepartamental.md`._
+_Cómo se implementa lo descrito en `spec.md`. Respeta escrupulosamente los principios de `constitution/` y referencia la arquitectura decidida en `docs/ADR/ADR-08-gestion-ciclo-vida-asignacion-multidepartamental.md`._
 
 ## Enfoque
 
@@ -120,7 +120,7 @@ La documentación de la API se autogenera mediante SpringDoc OpenAPI a partir de
 
 ## Decisiones
 
-- **Servicio Centralizado de Triaje vs Máquina de Estados Externa:** Se optó por centralizar las transiciones en `IncidentTriageService` con validaciones de guardas en código en lugar de introducir librerías de Workflow/BPM complejas como Spring StateMachine o Camunda. Permite código directo, limpio, testeable con Mockito y sin configuraciones propietarias opacas. *(Documentado en [ADR-07](file:///C:/Users/Jorge/Desktop/Ingenieria/Proyecto-Urbanpulse/docs/ADR/ADR-07-gestion-ciclo-vida-asignacion-multidepartamental.md))*.
+- **Servicio Centralizado de Triaje vs Máquina de Estados Externa:** Se optó por centralizar las transiciones en `IncidentTriageService` con validaciones de guardas en código en lugar de introducir librerías de Workflow/BPM complejas como Spring StateMachine o Camunda. Permite código directo, limpio, testeable con Mockito y sin configuraciones propietarias opacas. *(Documentado en [ADR-08](../../docs/ADR/ADR-08-gestion-ciclo-vida-asignacion-multidepartamental.md))*.
 - **Permisos Universales de Ciclo de Vida para ADMIN:** El administrador ostenta la capacidad de gestionar y desbloquear incidencias en cualquier estado operativo sin obligarle a autoasignarse artificialmente como técnico de campo.
 - **Segregación de Incidencias en Backend para TECHNICIAN:** La restricción de visión del técnico se garantiza en la capa de servicio (`IncidentService`), evitando fugas de información operacional no pertinente para su labor.
 - **Matriz de Priorización Asistida Determinista:** Se implementa un motor de reglas puras en `PriorityService` desacoplado de dependencias externas. Se descartó el uso de modelos de lenguaje o machine learning en este sprint para garantizar determinismo absoluto, respuesta inmediata (< 5 ms) y explicabilidad transparente sin costes de inferencia.
