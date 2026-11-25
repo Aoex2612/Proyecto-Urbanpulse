@@ -18,7 +18,7 @@ Este documento recoge la metodología, resultados obtenidos y análisis arquitec
 
 ## 2. Metodología de la Prueba
 
-El script implementado ([k6/experimento-3-emergencia.js](file:///home/alejandro/Documentos/ETSII/4%20curso/Desarrollo%20Software%20en%20Plataformas%20en%20la%20Nube/Proyecto-Urbanpulse/k6/experimento-3-emergencia.js)) ejecutó dos escenarios simultáneos durante ~4 minutos con un máximo de **90 usuarios virtuales concurrentes**:
+El script implementado ([k6/experimento-3-emergencia.js](../../k6/experimento-3-emergencia.js)) ejecutó dos escenarios simultáneos durante ~4 minutos con un máximo de **90 usuarios virtuales concurrentes**:
 
 1. **`map_readers` (Carga continua de lectura en mapa):**
    * Endpoint: `GET /api/v1/incidents`
@@ -29,7 +29,7 @@ El script implementado ([k6/experimento-3-emergencia.js](file:///home/alejandro/
    * Concurrencia: Pico violento de 1 a **50 VUs simultáneos** en 15 segundos, sostenido durante 1 minuto.
    * Total de peticiones ejecutadas: **575 escrituras**.
 
-Reporte interactivo generado: [k6/reports/exp3_emergencia_spike.html](file:///home/alejandro/Documentos/ETSII/4%20curso/Desarrollo%20Software%20en%20Plataformas%20en%20la%20Nube/Proyecto-Urbanpulse/k6/reports/exp3_emergencia_spike.html).
+Reporte interactivo generado: [k6/reports/exp3_emergencia_spike.html](../../k6/reports/exp3_emergencia_spike.html).
 
 ---
 
@@ -90,7 +90,7 @@ A pesar de la brusquedad del pico (subida instantánea a 50 VUs creando incidenc
 2. **¿Aparecen errores durante el pico?**
    * No. La tasa de fallo fue del **0,00 %**. Las peticiones no sufrieron *timeout* de conexión ni desbordamiento con rechazo, lo que demuestra buena tolerancia bajo carga extrema sin caída de procesos.
 3. **¿Cuánto aumenta la latencia frente a la línea base?**
-   * En la baseline ([baseline.js](file:///home/alejandro/Documentos/ETSII/4%20curso/Desarrollo%20Software%20en%20Plataformas%20en%20la%20Nube/Proyecto-Urbanpulse/k6/baseline.js)), `list_incidents` rondaba los ~15-25 ms y `create_incident` los ~30-40 ms. Durante el pico de emergencia urbana, las latencias se multiplicaron por un factor de **x400 a x800** (alcanzando 15-20 segundos).
+   * En la baseline ([baseline.js](../../k6/baseline.js)), `list_incidents` rondaba los ~15-25 ms y `create_incident` los ~30-40 ms. Durante el pico de emergencia urbana, las latencias se multiplicaron por un factor de **x400 a x800** (alcanzando 15-20 segundos).
 4. **¿Qué medidas arquitectónicas mitigarían este cuello de botella?**
    * **Endpoint optimizado para mapa (Bounding Box / Clústeres / DTO ligero):** En lugar de devolver entidades completas con descripciones e historiales, el mapa debe consumir un endpoint paginado o filtrado por coordenadas geográficas (`/api/v1/incidents/map?bbox=...`) con campos mínimos (`id`, `lat`, `lng`, `category`, `status`). Esto reduciría el consumo de red de 2.0 GB a unos pocos megabytes.
    * **Caché de segundo nivel o Redis para lecturas del mapa:** Evitar que cada consulta toque directamente PostgreSQL cuando hay cientos de lecturas concurrentes.

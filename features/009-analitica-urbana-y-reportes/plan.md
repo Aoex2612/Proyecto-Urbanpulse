@@ -98,11 +98,11 @@ _Pasos técnicos concretos, en orden. Indica los archivos y módulos afectados._
 
 ## Decisiones
 
-_Elecciones de diseño relevantes y su justificación técnica. Referencia oficial: [ADR-08](file:///home/alejandro/Documentos/ETSII/4 curso/Desarrollo Software en Plataformas en la Nube/Proyecto-Urbanpulse/docs/ADR/ADR-08-analitica-agregada-sla-y-recomendacion-asistida.md)._
+_Elecciones de diseño relevantes y su justificación técnica. Referencia oficial: [ADR-09](../../docs/ADR/ADR-09-analitica-agregada-sla-y-recomendacion-asistida.md)._
 
-- **Cómputo analítico en capa de servicio sobre PostgreSQL (ADR-08)** — Se procesan las agregaciones mediante consultas indexadas y cálculo en memoria en Java 21, descartando almacenes OLAP externos (ClickHouse/Elasticsearch) por sobredimensión arquitectónica y sobrecoste de mantenimiento para el volumen actual del sistema.
-- **Motor heurístico autónomo local (ADR-08)** — El recomendador de departamentos opera de forma autónoma en el servidor sin dependencias de APIs de LLM externas de pago (OpenAI/Anthropic). Se garantiza latencia $< 50$ ms, funcionamiento sin internet y coste cero.
-- **Generación estructurada del informe PDF (ADR-08)** — El backend provee el dataset enriquecido consolidado y el cliente compila directamente el documento PDF, descartando frameworks pesados headless como Puppeteer en el servidor para no degradar el consumo de memoria del backend.
+- **Cómputo analítico en capa de servicio sobre PostgreSQL (ADR-09)** — Se procesan las agregaciones mediante consultas indexadas y cálculo en memoria en Java 21, descartando almacenes OLAP externos (ClickHouse/Elasticsearch) por sobredimensión arquitectónica y sobrecoste de mantenimiento para el volumen actual del sistema.
+- **Motor heurístico autónomo local (ADR-09)** — El recomendador de departamentos opera de forma autónoma en el servidor sin dependencias de APIs de LLM externas de pago (OpenAI/Anthropic). Se garantiza latencia $< 50$ ms, funcionamiento sin internet y coste cero.
+- **Generación estructurada del informe PDF (ADR-09)** — El backend provee el dataset enriquecido consolidado y el cliente compila directamente el documento PDF, descartando frameworks pesados headless como Puppeteer en el servidor para no degradar el consumo de memoria del backend.
 - **Gráficos interactivos en SVG nativo** — Las visualizaciones de distribución y SLAs se implementan mediante componentes SVG nativos reactivos y accesibles, evitando librerías de gráficos sobredimensionadas que aumenten el peso del bundle de Vite.
 
 ---

@@ -43,7 +43,7 @@ Se ha configurado la infraestructura de cliente HTTP en el frontend React/Vite p
   - `getUser()`: Retorna la información parseada del usuario actual o `null`.
 
 ### 2.5 Documentación JSDoc y Linting
-- Todas las funciones, parámetros (`@param`), tipos y valores de retorno (`@returns`) fueron documentados siguiendo el estándar JSDoc estricto según la directriz de `AGENTS.MD`.
+- Todas las funciones, parámetros (`@param`), tipos y valores de retorno (`@returns`) fueron documentados siguiendo el estándar JSDoc estricto según la directriz de `AGENTS.md`.
 - Se validó el código mediante `npm run lint` en `frontend/` sin ninguna advertencia o error de ESLint.
 - Se comprobó la compilación mediante `npm run build` sin errores.
 

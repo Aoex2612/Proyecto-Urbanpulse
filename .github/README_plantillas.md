@@ -21,10 +21,10 @@ Este directorio contiene las plantillas estandarizadas para GitHub Web, GitHub C
 ## 1. Como anadir tus propias plantillas
 
 ### Para Pull Requests:
-Edita directamente el fichero [`.github/PULL_REQUEST_TEMPLATE.md`](file:///.github/PULL_REQUEST_TEMPLATE.md) y pega el contenido que tengas preparado.
+Edita directamente el fichero [`.github/PULL_REQUEST_TEMPLATE.md`](PULL_REQUEST_TEMPLATE.md) y pega el contenido que tengas preparado.
 
 ### Para Issues:
-Crea o edita archivos dentro de [`.github/ISSUE_TEMPLATE/`](file:///.github/ISSUE_TEMPLATE/). 
+Crea o edita archivos dentro de [`.github/ISSUE_TEMPLATE/`](ISSUE_TEMPLATE/). 
 Para que GitHub Web y GitHub CLI muestren el selector interactivo con titulo y descripcion, los archivos deben incluir cabeceras frontmatter YAML al principio. Por ejemplo:
 
 ```markdown
@@ -39,7 +39,7 @@ assignees: ''
 [Aqui va el contenido de tu plantilla]
 ```
 
-Si prefieres tener una unica plantilla predeterminada general para cualquier issue (sin selector web), puedes crear [`.github/ISSUE_TEMPLATE.md`](file:///.github/ISSUE_TEMPLATE.md).
+Si prefieres tener una unica plantilla predeterminada general para cualquier issue (sin selector web), puedes crear el fichero `.github/ISSUE_TEMPLATE.md`.
 
 ---
 

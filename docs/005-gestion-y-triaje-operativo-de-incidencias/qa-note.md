@@ -3,10 +3,10 @@
 **Estado de Validación:** ✅ VALIDADA CON ÉXITO (`sdd-validate` APROBADO)  
 **Fecha de validación:** 2026-11-06  
 **Rama de desarrollo:** `feature/Feature-005-Gestion-y-Triaje-Operativo-de-Incidencias`  
-**Referencia arquitectónica:** [ADR-07: Gestión del Ciclo de Vida y Asignación Multidepartamental](file:///c:/Users/felix/Desktop/Desarrollo_en_la_nube/Proyecto-Urbanpulse/docs/ADR/ADR-07-gestion-ciclo-vida-asignacion-multidepartamental.md)  
-**Especificación funcional:** [spec.md](file:///c:/Users/felix/Desktop/Desarrollo_en_la_nube/Proyecto-Urbanpulse/features/005-gestion-y-triaje-operativo-de-incidencias/spec.md)  
-**Plan técnico:** [plan.md](file:///c:/Users/felix/Desktop/Desarrollo_en_la_nube/Proyecto-Urbanpulse/features/005-gestion-y-triaje-operativo-de-incidencias/plan.md)  
-**Desglose de tareas:** [tasks.md](file:///c:/Users/felix/Desktop/Desarrollo_en_la_nube/Proyecto-Urbanpulse/features/005-gestion-y-triaje-operativo-de-incidencias/tasks.md)  
+**Referencia arquitectónica:** [ADR-08: Gestión del Ciclo de Vida y Asignación Multidepartamental](../ADR/ADR-08-gestion-ciclo-vida-asignacion-multidepartamental.md)  
+**Especificación funcional:** [spec.md](../../features/005-gestion-y-triaje-operativo-de-incidencias/spec.md)  
+**Plan técnico:** [plan.md](../../features/005-gestion-y-triaje-operativo-de-incidencias/plan.md)  
+**Desglose de tareas:** [tasks.md](../../features/005-gestion-y-triaje-operativo-de-incidencias/tasks.md)  
 
 ---
 
@@ -221,6 +221,6 @@ Credenciales sembradas de forma predeterminada en PostgreSQL (`database/init/dia
 
 ## 7. Conclusión y Veredicto Final
 
-La **Feature 005: Gestión y Triaje Operativo de Incidencias** satisface la totalidad de los requisitos funcionales (RF-1 al RF-25), los requisitos no funcionales de seguridad, trazabilidad inmutable y tiempos de respuesta, así como las directrices de diseño y arquitectura de `constitution/` y `ADR-07`.
+La **Feature 005: Gestión y Triaje Operativo de Incidencias** satisface la totalidad de los requisitos funcionales (RF-1 al RF-25), los requisitos no funcionales de seguridad, trazabilidad inmutable y tiempos de respuesta, así como las directrices de diseño y arquitectura de `constitution/` y `ADR-08`.
 
 **Veredicto Final:** ✅ **APROBADO PARA PRODUCCIÓN / MERGE EN DEVELOP**.

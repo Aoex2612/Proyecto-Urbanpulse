@@ -29,7 +29,7 @@ docker run --rm -i --net="host" -v $(pwd):/work -w /work grafana/k6 run k6/basel
 
 ## 2. Experimento 1: Medición de la Baseline (`baseline.js`)
 
-El script [k6/baseline.js](file:///home/alejandro/Documentos/ETSII/4%20curso/Desarrollo%20Software%20en%20Plataformas%20en%20la%20Nube/Proyecto-Urbanpulse/k6/baseline.js) permite medir el rendimiento en condiciones estables (por defecto **10 usuarios virtuales durante 2 minutos**).
+El script [k6/baseline.js](baseline.js) permite medir el rendimiento en condiciones estables (por defecto **10 usuarios virtuales durante 2 minutos**).
 
 ### Características del Script:
 * **Autenticación automática (`setup`):** Inicia sesión con `admin@urbanpulse.es` / `Admin1234` contra `/api/v1/auth/login` y obtiene el JWT Bearer para las peticiones que requieren RBAC.

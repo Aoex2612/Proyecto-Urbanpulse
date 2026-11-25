@@ -2,7 +2,7 @@
 
 **Feature:** `008-busqueda-notificaciones-y-duplicados`  
 **Estado:** Completada ✅ (Subtareas 2.1 a 2.4 implementadas y verificadas)  
-**Requisitos funcionales relacionados:** RF-12, RF-13, RF-14, RF-16, RF-17, RNF-Control de Acceso y Privacidad, [ADR-08](../../docs/ADR/ADR-08-notificaciones-in-app-deteccion-duplicados-filtrado-multicriterio.md)  
+**Requisitos funcionales relacionados:** RF-12, RF-13, RF-14, RF-16, RF-17, RNF-Control de Acceso y Privacidad, [ADR-10](../../docs/ADR/ADR-10-notificaciones-in-app-deteccion-duplicados-filtrado-multicriterio.md)  
 
 ---
 

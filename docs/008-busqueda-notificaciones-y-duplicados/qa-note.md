@@ -3,10 +3,10 @@
 **Estado de Validación:** ✅ VALIDADA CON ÉXITO (`sdd-validate` APROBADO)  
 **Fecha de validación:** 2026-11-08  
 **Rama de desarrollo:** `feature/009busqueda_notificaciones_y_duplicados`  
-**Referencia arquitectónica:** [ADR-08: Motor de Detección de Duplicados y Centro de Notificaciones In-App](file:///c:/Users/Germán/Documents/DesarrolloSoftwareNube/Proyecto-Urbanpulse/docs/ADR/ADR-08-deteccion-duplicados-y-notificaciones.md)  
-**Especificación funcional:** [spec.md](file:///c:/Users/Germán/Documents/DesarrolloSoftwareNube/Proyecto-Urbanpulse/features/008-busqueda-notificaciones-y-duplicados/spec.md)  
-**Plan técnico:** [plan.md](file:///c:/Users/Germán/Documents/DesarrolloSoftwareNube/Proyecto-Urbanpulse/features/008-busqueda-notificaciones-y-duplicados/plan.md)  
-**Desglose de tareas:** [tasks.md](file:///c:/Users/Germán/Documents/DesarrolloSoftwareNube/Proyecto-Urbanpulse/features/008-busqueda-notificaciones-y-duplicados/tasks.md)  
+**Referencia arquitectónica:** [ADR-10: Motor de Detección de Duplicados y Centro de Notificaciones In-App](../ADR/ADR-10-notificaciones-in-app-deteccion-duplicados-filtrado-multicriterio.md)  
+**Especificación funcional:** [spec.md](../../features/008-busqueda-notificaciones-y-duplicados/spec.md)  
+**Plan técnico:** [plan.md](../../features/008-busqueda-notificaciones-y-duplicados/plan.md)  
+**Desglose de tareas:** [tasks.md](../../features/008-busqueda-notificaciones-y-duplicados/tasks.md)  
 
 ---
 

@@ -104,4 +104,4 @@ El script inicializa automáticamente datos de prueba con contraseñas hasheadas
 | `operator@urbanpulse.es` | `Operator1234` | `OPERATOR` | Acceso a triaje (`PATCH /api/incidents/{id}/status`) y panel operador |
 | `citizen@urbanpulse.es` | `Citizen1234` | `CITIZEN` | Usuario estándar con 1 incidencia inicial asociada |
 
-Consulta [`BD.md`](../BD.md) en la raíz del proyecto para la documentación detallada del modelo relacional.
+Consulta [`init/diagramUrbanPulse.sql`](init/diagramUrbanPulse.sql) para el detalle del modelo relacional (DDL, claves, índices y triggers).

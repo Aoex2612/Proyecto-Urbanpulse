@@ -1,4 +1,4 @@
-# ADR-10: Adopcion de Identificadores Publicos UUID v4 y Versionado de API v2
+# ADR-12: Adopcion de Identificadores Publicos UUID v4 y Versionado de API v2
 
 * Estado: Propuesto
 * Fecha: 2026-11-09

@@ -1,4 +1,4 @@
-# ADR-08: Notificaciones Persistentes In-App, Detección Espaciotemporal de Duplicados y Filtrado Dinámico RBAC
+# ADR-10: Notificaciones Persistentes In-App, Detección Espaciotemporal de Duplicados y Filtrado Dinámico RBAC
 
 * Estado: aceptado
 * Fecha: 2026-11-08

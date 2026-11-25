@@ -1,6 +1,6 @@
 # 008 — Búsqueda, Notificaciones y Duplicados — Plan
 
-_Cómo se implementa lo descrito en `spec.md`. Respeta estrictamente la `constitution/`, los principios de diseño de UrbanPulse y el [ADR-08](../../docs/ADR/ADR-08-notificaciones-in-app-deteccion-duplicados-filtrado-multicriterio.md)._
+_Cómo se implementa lo descrito en `spec.md`. Respeta estrictamente la `constitution/`, los principios de diseño de UrbanPulse y el [ADR-10](../../docs/ADR/ADR-10-notificaciones-in-app-deteccion-duplicados-filtrado-multicriterio.md)._
 
 ## Enfoque
 
@@ -94,7 +94,7 @@ _Pasos técnicos ordenados por capas y módulos afectados:_
 
 _Elecciones de diseño relevantes y su justificación. Alternativas descartadas y por qué._
 
-- **Persistencia Relacional de Notificaciones vs Brokers Externos (ADR-08):**
+- **Persistencia Relacional de Notificaciones vs Brokers Externos (ADR-10):**
   - *Decisión:* Tabla relacional `notifications` en PostgreSQL y endpoints REST.
   - *Justificación:* Evita dependencias pesadas innecesarias (Kafka/RabbitMQ) y garantiza consistencia transaccional ACID con el ciclo de vida de incidencias.
 - **Fórmula de Haversine en Capa de Servicio vs Extensión PostGIS:**

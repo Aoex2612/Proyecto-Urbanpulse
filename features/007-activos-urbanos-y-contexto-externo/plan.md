@@ -1,6 +1,6 @@
 # 007 — Activos Urbanos y Contexto Externo — Plan
 
-_Cómo se implementa lo descrito en `spec.md`. Respeta la `constitution/` y se sustenta en [ADR-09](../../docs/ADR/ADR-09-activos-urbanos-contexto-externo-y-resiliencia.md)._
+_Cómo se implementa lo descrito en `spec.md`. Respeta la `constitution/` y se sustenta en [ADR-11](../../docs/ADR/ADR-11-activos-urbanos-contexto-externo-y-resiliencia.md)._
 
 ## Enfoque
 

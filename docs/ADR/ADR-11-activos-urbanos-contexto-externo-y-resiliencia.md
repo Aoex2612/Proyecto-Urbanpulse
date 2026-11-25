@@ -1,4 +1,4 @@
-# ADR-09: Enriquecimiento Contextual Externo y Asociación de Activos con Resiliencia Circuit Breaker
+# ADR-11: Enriquecimiento Contextual Externo y Asociación de Activos con Resiliencia Circuit Breaker
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-11-08

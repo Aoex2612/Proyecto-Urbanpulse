@@ -2,7 +2,7 @@
 
 ## Resumen de la Tarea
 
-En esta tarea se ha implementado el componente de resiliencia concurrente `CircuitBreaker` y el servicio de enriquecimiento ambiental y territorial `ExternalContextService`, junto con sus respectivas suites de pruebas unitarias exhaustivas (`CircuitBreakerTest` y `ExternalContextServiceTest`), satisfaciendo íntegramente los requisitos funcionales **RF-8, RF-9, RF-11, RF-12, RF-13, RF-14 y RF-15** definidos en la especificación (`spec.md`) y en los registros de decisión de arquitectura **ADR-06** y **ADR-09**.
+En esta tarea se ha implementado el componente de resiliencia concurrente `CircuitBreaker` y el servicio de enriquecimiento ambiental y territorial `ExternalContextService`, junto con sus respectivas suites de pruebas unitarias exhaustivas (`CircuitBreakerTest` y `ExternalContextServiceTest`), satisfaciendo íntegramente los requisitos funcionales **RF-8, RF-9, RF-11, RF-12, RF-13, RF-14 y RF-15** definidos en la especificación (`spec.md`) y en los registros de decisión de arquitectura **ADR-06** y **ADR-11**.
 
 ---
 

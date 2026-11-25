@@ -1,4 +1,4 @@
-# ADR-07: Control Centralizado del Ciclo de Vida y Asignación Multidepartamental en Capa de Servicio
+# ADR-08: Control Centralizado del Ciclo de Vida y Asignación Multidepartamental en Capa de Servicio
 
 * Estado: aceptado
 * Fecha: 2026-11-05
