@@ -19,6 +19,7 @@ import org.bulbaseros.dto.ValidateIncidentRequest;
 import org.bulbaseros.service.AssignmentService;
 import org.bulbaseros.service.CommentService;
 import org.bulbaseros.service.IncidentTriageService;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,26 +49,12 @@ import java.util.List;
  */
 @RestController
 @RequestMapping({"/api/v1/incidents", "/api/incidents"})
+@AllArgsConstructor
 public class IncidentTriageController {
 
     private final IncidentTriageService incidentTriageService;
     private final AssignmentService assignmentService;
     private final CommentService commentService;
-
-    /**
-     * Construye una nueva instancia de {@link IncidentTriageController} inyectando los servicios de negocio requeridos.
-     *
-     * @param incidentTriageService Servicio de orquestación del ciclo de vida y triaje operativo.
-     * @param assignmentService     Servicio de gestión de asignaciones multidepartamentales y técnicas.
-     * @param commentService        Servicio de gestión de notas internas y comentarios colaborativos.
-     */
-    public IncidentTriageController(IncidentTriageService incidentTriageService,
-                                    AssignmentService assignmentService,
-                                    CommentService commentService) {
-        this.incidentTriageService = incidentTriageService;
-        this.assignmentService = assignmentService;
-        this.commentService = commentService;
-    }
 
     /**
      * Calcula la prioridad sugerida asistida para una incidencia según los factores de vía y riesgo de seguridad.

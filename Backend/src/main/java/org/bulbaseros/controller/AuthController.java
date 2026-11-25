@@ -1,6 +1,7 @@
 package org.bulbaseros.controller;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.bulbaseros.dto.AuthResponse;
 import org.bulbaseros.dto.LoginRequest;
 import org.bulbaseros.dto.RegisterRequest;
@@ -25,18 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping({"/api/v2/auth", "/api/v1/auth", "/api/auth"})
+@AllArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-
-    /**
-     * Constructor con inyección del servicio de autenticación.
-     *
-     * @param authService Servicio que contiene la lógica de negocio de autenticación y registro.
-     */
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     /**
      * Endpoint para el registro de nuevos ciudadanos en la plataforma.

@@ -1,8 +1,8 @@
 package org.bulbaseros.controller.v2;
 
+import lombok.AllArgsConstructor;
 import org.bulbaseros.dto.v2.NotificationResponseV2;
 import org.bulbaseros.service.NotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,14 +20,10 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v2/notifications")
+@AllArgsConstructor
 public class NotificationControllerV2 {
 
     private final NotificationService notificationService;
-
-    @Autowired
-    public NotificationControllerV2(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
 
     @GetMapping
     public ResponseEntity<List<NotificationResponseV2>> getUserNotifications(Authentication authentication) {

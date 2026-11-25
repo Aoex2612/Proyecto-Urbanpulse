@@ -1,13 +1,13 @@
 package org.bulbaseros.controller;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AnalyticsFilterRequest;
 import org.bulbaseros.dto.AnalyticsSummaryResponse;
 import org.bulbaseros.dto.DepartmentRecommendationResponse;
 import org.bulbaseros.service.AnalyticsService;
 import org.bulbaseros.service.IntelligentRecommendationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,24 +38,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping({"/api/v1/analytics", "/api/analytics"})
 @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN', 'OPERATOR')")
+@AllArgsConstructor
 @Slf4j
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
     private final IntelligentRecommendationService intelligentRecommendationService;
-
-    /**
-     * Construye una nueva instancia de {@link AnalyticsController} inyectando los servicios de negocio requeridos.
-     *
-     * @param analyticsService                 Servicio central de analítica urbana, evaluación de SLAs y agregaciones.
-     * @param intelligentRecommendationService Servicio de asistencia inteligente y cálculo de confianza heurística.
-     */
-    @Autowired
-    public AnalyticsController(AnalyticsService analyticsService,
-                               IntelligentRecommendationService intelligentRecommendationService) {
-        this.analyticsService = analyticsService;
-        this.intelligentRecommendationService = intelligentRecommendationService;
-    }
 
     /**
      * Recupera el resumen consolidado de analítica urbana en función de los criterios de filtrado temporal y territorial.
