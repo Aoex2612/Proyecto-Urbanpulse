@@ -30,4 +30,4 @@ Optamos por la **Opción 2: Autenticación sin estado mediante JWT (JJWT con alg
 
 ## Design Doc relacionado
 
-Esta decisión se documenta y aplica en [DD-002: Autenticación JWT, BCrypt y RBAC](../SDD/DD-002-autenticacion-jwt-bcrypt-rbac.md). También respalda los DD de las features [001](../SDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md) y [002](../SDD/DD-009-autenticacion-y-control-de-acceso-rbac.md).
+Esta decisión se documenta y aplica en [DD-002: Autenticación JWT, BCrypt y RBAC](../SWDD/DD-002-autenticacion-jwt-bcrypt-rbac.md). También respalda los DD de las features [001](../SWDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md) y [002](../SWDD/DD-009-autenticacion-y-control-de-acceso-rbac.md).

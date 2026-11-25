@@ -31,4 +31,4 @@ Optamos por la **Opción 3: Tabla relacional dedicada e inmutable (`status_chang
 
 ## Design Doc relacionado
 
-Esta decisión se documenta y aplica en [DD-005: Trazabilidad inmutable de cambios de estado](../SDD/DD-005-trazabilidad-inmutable-auditoria-estados.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
+Esta decisión se documenta y aplica en [DD-005: Trazabilidad inmutable de cambios de estado](../SWDD/DD-005-trazabilidad-inmutable-auditoria-estados.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SWDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).

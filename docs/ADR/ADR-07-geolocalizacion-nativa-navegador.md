@@ -30,6 +30,6 @@ Optamos por la **Opción 1: API nativa W3C `navigator.geolocation` encapsulada e
 
 ## Design Doc relacionado
 
-Esta decisión se documenta y aplica en [DD-007: Geolocalización nativa del navegador](../SDD/DD-007-geolocalizacion-nativa-navegador.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
+Esta decisión se documenta y aplica en [DD-007: Geolocalización nativa del navegador](../SWDD/DD-007-geolocalizacion-nativa-navegador.md). También respalda el [DD-010: Mapa de incidencias y auditoría transversal](../SWDD/DD-010-mapa-incidencias-y-auditoria-transversal.md).
 
 > **Nota:** este ADR se denominaba `ADR-06-geolocalizacion-nativa-navegador.md` y se renombró a ADR-07 el 2026-11-20 para eliminar la colisión de numeración con el ADR de Datos Abiertos de Málaga. Su contenido y decisión no han cambiado.

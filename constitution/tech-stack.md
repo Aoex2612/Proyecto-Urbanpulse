@@ -33,7 +33,7 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
   - `README.md` — Parámetros de conexión y comandos de orquestación.
 - `docker-compose.yml` — Definición del servicio de base de datos PostgreSQL con volumen persistente y healthcheck.
 - `docs/ADR/` — Registro formal de Decisiones de Arquitectura (ADRs).
-- `docs/SDD/` — Software Design Documents (`DD-001` a `DD-012`), uno por ADR y por funcionalidad, con enlace bidireccional a los ADR.
+- `../docs/SWDD` — Software Design Documents (`DD-001` a `DD-012`), uno por ADR y por funcionalidad, con enlace bidireccional a los ADR.
 - `.github/SOFTWARE_DESIGN_DOCUMENT_TEMPLATE.md` — Plantilla obligatoria para nuevos Software Design Documents.
 
 ## Comandos

@@ -32,4 +32,4 @@ Optamos por la **Opción 2: columnas `VARCHAR` con restricciones `CHECK`** (`VAR
 
 ## Design Doc relacionado
 
-Esta decisión se documenta y aplica en [DD-001: Persistencia de enumeraciones con VARCHAR y CHECK](../SDD/DD-001-persistencia-enums-jpa.md). También respalda los DD de las features [001](../SDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md), [002](../SDD/DD-009-autenticacion-y-control-de-acceso-rbac.md), [004](../SDD/DD-011-reporte-y-seguimiento-de-incidencias.md) y [006](../SDD/DD-012-adjuntos-multimedia-en-incidencias.md).
+Esta decisión se documenta y aplica en [DD-001: Persistencia de enumeraciones con VARCHAR y CHECK](../SWDD/DD-001-persistencia-enums-jpa.md). También respalda los DD de las features [001](../SWDD/DD-008-registro-e-inicio-de-sesion-de-ciudadanos.md), [002](../SWDD/DD-009-autenticacion-y-control-de-acceso-rbac.md), [004](../SWDD/DD-011-reporte-y-seguimiento-de-incidencias.md) y [006](../SWDD/DD-012-adjuntos-multimedia-en-incidencias.md).
