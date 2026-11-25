@@ -1,5 +1,6 @@
 package org.bulbaseros.controller;
 
+import lombok.AllArgsConstructor;
 import org.bulbaseros.dto.DepartmentResponse;
 import org.bulbaseros.dto.UserSummaryResponse;
 import org.bulbaseros.entity.Departamento;
@@ -32,26 +33,12 @@ import java.util.List;
  */
 @RestController
 @RequestMapping({"/api/v1/departments", "/api/departments"})
+@AllArgsConstructor
 public class DepartmentController {
 
     private final DepartamentoRepository departamentoRepository;
     private final UserRepository userRepository;
     private final DepartmentMapper departmentMapper;
-
-    /**
-     * Construye una nueva instancia de {@link DepartmentController} con sus dependencias requeridas.
-     *
-     * @param departamentoRepository Repositorio de consulta de departamentos municipales.
-     * @param userRepository         Repositorio de usuarios del sistema.
-     * @param departmentMapper       Mapeador de conversión a DTOs de departamento y usuario.
-     */
-    public DepartmentController(DepartamentoRepository departamentoRepository,
-                                UserRepository userRepository,
-                                DepartmentMapper departmentMapper) {
-        this.departamentoRepository = departamentoRepository;
-        this.userRepository = userRepository;
-        this.departmentMapper = departmentMapper;
-    }
 
     /**
      * Recupera el catálogo completo de departamentos municipales ordenados alfabéticamente por nombre.

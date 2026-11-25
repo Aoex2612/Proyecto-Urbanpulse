@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.dto.AuthResponse;
 import org.bulbaseros.dto.LoginRequest;
@@ -26,25 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  */
 @Service
+@AllArgsConstructor
 @Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-
-    /**
-     * Constructor con inyección de dependencias para el servicio de autenticación.
-     *
-     * @param userRepository  Repositorio JPA para la persistencia y consulta de usuarios.
-     * @param passwordEncoder Componente para el hashing y verificación segura de contraseñas.
-     * @param jwtService      Servicio para la generación y firma de tokens JWT.
-     */
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-    }
 
     /**
      * Registra a un nuevo usuario en la plataforma con el rol por defecto {@link RolUsuario#CITIZEN}.

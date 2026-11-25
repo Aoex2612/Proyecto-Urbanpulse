@@ -1,5 +1,6 @@
 package org.bulbaseros.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bulbaseros.entity.Incidencia;
 import org.bulbaseros.entity.RolUsuario;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  * @version 1.0
  */
 @Service
+@AllArgsConstructor
 @Slf4j
 public class DuplicateDetectionService {
 
@@ -48,21 +50,6 @@ public class DuplicateDetectionService {
     private final IncidenciaRepository incidenciaRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
-
-    /**
-     * Construye una nueva instancia con las dependencias inyectadas por constructor.
-     *
-     * @param incidenciaRepository Repositorio de incidencias para consultar candidatos.
-     * @param userRepository       Repositorio de usuarios para recuperar operadores y técnicos.
-     * @param notificationService  Servicio de notificaciones para emitir alertas de duplicado.
-     */
-    public DuplicateDetectionService(IncidenciaRepository incidenciaRepository,
-                                     UserRepository userRepository,
-                                     NotificationService notificationService) {
-        this.incidenciaRepository = incidenciaRepository;
-        this.userRepository = userRepository;
-        this.notificationService = notificationService;
-    }
 
     /**
      * Busca incidencias candidatas a duplicado respecto a una nueva incidencia recién creada o recibida.

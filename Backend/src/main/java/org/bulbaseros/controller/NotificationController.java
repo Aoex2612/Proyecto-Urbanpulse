@@ -1,5 +1,6 @@
 package org.bulbaseros.controller;
 
+import lombok.AllArgsConstructor;
 import org.bulbaseros.dto.NotificationResponse;
 import org.bulbaseros.service.NotificationService;
 import org.springframework.http.ResponseEntity;
@@ -27,18 +28,10 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping({"/api/v1/notifications", "/api/notifications"})
+@AllArgsConstructor
 public class NotificationController {
 
     private final NotificationService notificationService;
-
-    /**
-     * Construye una nueva instancia de {@link NotificationController} inyectando el servicio de notificaciones.
-     *
-     * @param notificationService Servicio de lógica de negocio transaccional de notificaciones.
-     */
-    public NotificationController(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
 
     /**
      * Recupera todas las notificaciones pertenecientes al usuario autenticado en orden cronológico descendente.
