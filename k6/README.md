@@ -70,3 +70,11 @@ O para un solo endpoint:
 * `VUS`: Número de usuarios concurrentes (por defecto `10`).
 * `DURATION`: Tiempo de prueba (por defecto `2m`).
 * `USER_EMAIL` / `USER_PASSWORD`: Credenciales para obtener el JWT token.
+
+## 4. Experimento 4: Influencia del volumen de datos
+
+El procedimiento reproducible, los scripts SQL para preparar y limpiar datos,
+las opciones de índices y la tabla de resultados están documentados en
+[`docs/rendimiento/experimento-4-volumen-datos.md`](../docs/rendimiento/experimento-4-volumen-datos.md).
+El script `experimento-4-volumen-datos.js` acepta `MODE=filtered_search`,
+`MODE=paginated` o `MODE=analytics`, además de `VUS`, `DURATION` y `BASE_URL`.
